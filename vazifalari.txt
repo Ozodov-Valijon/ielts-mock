@@ -1,0 +1,811 @@
+=====================================================
+   JUNYOR DASTURCHI UCHUN VAZIFALAR
+   IELTS Mock Test Platform — Backend (Python/FastAPI)
+=====================================================
+
+Salom! Bu loyihada sen backend qismining ODDIY fayllarini yozasan.
+Har bir vazifada NIMA QILISH KERAK va NAMUNA KOD bor.
+Tartib bilan bajara bor — har biri keyingisiga asos bo'ladi.
+
+Jami: 24 ta fayl yaratasan.
+Qiyinlik: Oson va o'rtacha (murakkab narsalar boshqa dasturchi qiladi).
+
+=====================================================
+VAZIFA 1: requirements.txt — Kerakli kutubxonalar
+=====================================================
+
+FAYL: backend/requirements.txt
+
+NIMA QILISH: Loyihada ishlatiladigan barcha Python kutubxonalar ro'yxatini yozish.
+
+YOZILISHI KERAK:
+
+fastapi==0.115.0
+uvicorn==0.30.0
+sqlalchemy==2.0.35
+psycopg2-binary==2.9.9
+pydantic==2.9.0
+pydantic[email]
+pydantic-settings
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+python-dotenv==1.0.1
+alembic==1.13.2
+openai==1.50.0
+httpx==0.27.0
+
+TEKSHIRISH: pip install -r requirements.txt buyrug'ini ishga tushir — xatosiz ishlashi kerak.
+
+
+=====================================================
+VAZIFA 2: .env.example — Sozlamalar namunasi
+=====================================================
+
+FAYL: backend/.env.example
+
+NIMA QILISH: Loyihaning maxfiy sozlamalari uchun namuna fayl yaratish.
+
+YOZILISHI KERAK:
+
+DATABASE_URL=postgresql://postgres:password@localhost:5432/ielts_mock
+SECRET_KEY=sizning-maxfiy-kalitingiz-bu-yerda
+OPENAI_API_KEY=sk-...
+UPLOAD_DIR=uploads
+
+
+=====================================================
+VAZIFA 3: config.py — Konfiguratsiya fayli
+=====================================================
+
+FAYL: backend/app/config.py
+
+NIMA QILISH: .env fayldagi sozlamalarni o'qib, dasturga uzatadigan konfiguratsiya klassi yozish.
+
+YOZILISHI KERAK:
+
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    # Ma'lumotlar bazasi
+    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/ielts_mock"
+    
+    # JWT (autentifikatsiya uchun)
+    SECRET_KEY: str = "sizning-maxfiy-kalitingiz-bu-yerda"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    
+    # OpenAI (AI tahlil uchun)
+    OPENAI_API_KEY: str = ""
+    
+    # Fayl saqlash
+    UPLOAD_DIR: str = "uploads"
+    
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+
+TUSHUNTIRISH:
+- BaseSettings — .env fayldan sozlamalarni avtomatik o'qiydi
+- DATABASE_URL — PostgreSQL bazaga ulanish manzili
+- SECRET_KEY — JWT tokenlarni shifrlash uchun kalit
+- settings = Settings() — boshqa fayllar shu obyekt orqali sozlamalarga kiradi
+
+
+=====================================================
+VAZIFA 4: database.py — Ma'lumotlar bazasiga ulanish
+=====================================================
+
+FAYL: backend/app/database.py
+
+NIMA QILISH: PostgreSQL bazaga ulanish va SQLAlchemy session yaratish.
+
+YOZILISHI KERAK:
+
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from app.config import settings
+
+# Bazaga ulanish
+engine = create_engine(settings.DATABASE_URL)
+
+# Session yaratish (har bir so'rov uchun)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Barcha modellar shu Base dan meros oladi
+Base = declarative_base()
+
+# Har bir API so'rovda yangi session ochib, oxirida yopish
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+TUSHUNTIRISH:
+- engine — bazaga ulanish "dvigateli"
+- SessionLocal — har bir so'rov uchun alohida session (ulanish) yaratadi
+- Base — barcha modellar (jadvallar) shu klassdan meros oladi
+- get_db() — FastAPI har bir endpointda bazaga ulanish uchun ishlatadi
+
+
+=====================================================
+VAZIFA 5: models/user.py — Foydalanuvchi modeli
+=====================================================
+
+FAYL: backend/app/models/user.py
+
+NIMA QILISH: users jadvalini yaratadigan SQLAlchemy modeli yozish.
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, String, DateTime, func
+from app.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    phone = Column(String(20), nullable=True)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    role = Column(String(20), default="student")  # "student" yoki "admin"
+    created_at = Column(DateTime, server_default=func.now())
+
+TUSHUNTIRISH:
+- __tablename__ — bazadagi jadval nomi
+- Column — jadval ustuni (column)
+- primary_key=True — asosiy kalit (har bir qator uchun yagona raqam)
+- unique=True — takrorlanmasligi kerak (masalan, email)
+- nullable=False — bo'sh bo'lishi MUMKIN EMAS
+- nullable=True — bo'sh bo'lishi MUMKIN
+- default="student" — agar ko'rsatilmasa, "student" bo'ladi
+- server_default=func.now() — avtomatik hozirgi vaqtni yozadi
+
+
+=====================================================
+VAZIFA 6: models/test.py — Test sessiyalari
+=====================================================
+
+FAYL: backend/app/models/test.py
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, func
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class Test(Base):
+    __tablename__ = "tests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(String(20), default="in_progress")  # "in_progress" yoki "completed"
+    overall_band_score = Column(Float, nullable=True)
+    started_at = Column(DateTime, server_default=func.now())
+    completed_at = Column(DateTime, nullable=True)
+    
+    # Bog'lanish — bu test qaysi foydalanuvchiga tegishli
+    user = relationship("User", backref="tests")
+
+TUSHUNTIRISH:
+- ForeignKey("users.id") — bu ustun users jadvalidagi id ga bog'lanadi
+- relationship("User") — Python kodda test.user deb foydalanuvchini olish mumkin
+- backref="tests" — user.tests deb foydalanuvchining barcha testlarini olish mumkin
+
+
+=====================================================
+VAZIFA 7: models/reading.py — Reading javoblari
+=====================================================
+
+FAYL: backend/app/models/reading.py
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class ReadingAnswer(Base):
+    __tablename__ = "reading_answers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    question_id = Column(Integer, nullable=False)
+    user_answer = Column(String(500), nullable=False)
+    correct_answer = Column(String(500), nullable=False)
+    is_correct = Column(Boolean, default=False)
+    score = Column(Float, default=0.0)
+    
+    test = relationship("Test", backref="reading_answers")
+
+
+=====================================================
+VAZIFA 8: models/listening.py — Listening javoblari
+=====================================================
+
+FAYL: backend/app/models/listening.py
+
+TUSHUNTIRISH: Reading bilan deyarli bir xil — faqat jadval nomi va klass nomi boshqa.
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class ListeningAnswer(Base):
+    __tablename__ = "listening_answers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    question_id = Column(Integer, nullable=False)
+    user_answer = Column(String(500), nullable=False)
+    correct_answer = Column(String(500), nullable=False)
+    is_correct = Column(Boolean, default=False)
+    score = Column(Float, default=0.0)
+    
+    test = relationship("Test", backref="listening_answers")
+
+
+=====================================================
+VAZIFA 9: models/writing.py — Writing javoblari
+=====================================================
+
+FAYL: backend/app/models/writing.py
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class WritingAnswer(Base):
+    __tablename__ = "writing_answers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    task_number = Column(Integer, nullable=False)      # 1 yoki 2
+    user_text = Column(Text, nullable=False)            # Talaba yozgan matn
+    ai_analysis = Column(Text, nullable=True)           # AI tahlili
+    ai_score = Column(Float, nullable=True)             # AI bergan ball
+    admin_feedback = Column(Text, nullable=True)        # Admin izohi
+    admin_score = Column(Float, nullable=True)          # Admin bergan ball
+    status = Column(String(20), default="pending")      # "pending", "reviewed", "approved"
+    reviewed_at = Column(DateTime, nullable=True)
+    
+    test = relationship("Test", backref="writing_answers")
+
+TUSHUNTIRISH:
+- Text — uzun matnlar uchun (String cheklangan uzunlikka ega)
+- status — "pending" (kutilmoqda), "reviewed" (ko'rib chiqildi), "approved" (tasdiqlandi)
+- ai_analysis va admin_feedback — AI va admin alohida-alohida tahlil yozadi
+
+
+=====================================================
+VAZIFA 10: models/speaking.py — Speaking javoblari
+=====================================================
+
+FAYL: backend/app/models/speaking.py
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class SpeakingAnswer(Base):
+    __tablename__ = "speaking_answers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), nullable=False)
+    part_number = Column(Integer, nullable=False)       # 1, 2 yoki 3
+    audio_url = Column(String(500), nullable=True)      # Audio fayl manzili
+    transcript = Column(Text, nullable=True)            # Matnga o'girilgan nutq
+    ai_analysis = Column(Text, nullable=True)
+    ai_score = Column(Float, nullable=True)
+    admin_feedback = Column(Text, nullable=True)
+    admin_score = Column(Float, nullable=True)
+    status = Column(String(20), default="pending")
+    reviewed_at = Column(DateTime, nullable=True)
+    
+    test = relationship("Test", backref="speaking_answers")
+
+
+=====================================================
+VAZIFA 11: models/feedback.py — Natijalar va feedback
+=====================================================
+
+FAYL: backend/app/models/feedback.py
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, Float, Text, ForeignKey
+from sqlalchemy.orm import relationship
+from app.database import Base
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    test_id = Column(Integer, ForeignKey("tests.id"), unique=True, nullable=False)
+    reading_score = Column(Float, default=0.0)
+    listening_score = Column(Float, default=0.0)
+    writing_score = Column(Float, default=0.0)
+    speaking_score = Column(Float, default=0.0)
+    overall_band = Column(Float, default=0.0)
+    strengths = Column(Text, nullable=True)         # Kuchli tomonlar
+    weaknesses = Column(Text, nullable=True)        # Kuchsiz tomonlar
+    recommendations = Column(Text, nullable=True)   # Tavsiyalar
+    
+    test = relationship("Test", backref="feedback")
+
+
+=====================================================
+VAZIFA 12: models/question.py — Savollar banki
+=====================================================
+
+FAYL: backend/app/models/question.py
+
+YOZILISHI KERAK:
+
+from sqlalchemy import Column, Integer, String, Text, JSON
+from app.database import Base
+
+class TestQuestion(Base):
+    __tablename__ = "test_questions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    section = Column(String(20), nullable=False)        # "reading", "listening", "writing", "speaking"
+    set_number = Column(Integer, default=1)             # Test to'plami raqami
+    question_type = Column(String(50), nullable=False)  # "multiple_choice", "true_false", "fill_blank"
+    question_text = Column(Text, nullable=False)        # Savol matni
+    passage_text = Column(Text, nullable=True)          # Reading uchun matn
+    audio_url = Column(String(500), nullable=True)      # Listening uchun audio link
+    options = Column(JSON, nullable=True)               # Variantlar: ["A", "B", "C", "D"]
+    correct_answer = Column(String(500), nullable=True) # To'g'ri javob
+    order_num = Column(Integer, default=0)              # Tartib raqami
+
+TUSHUNTIRISH:
+- JSON — murakkab ma'lumot (masalan, ro'yxat) saqlash uchun
+- options — ["A variant matni", "B variant matni", "C variant matni"] ko'rinishida
+
+
+=====================================================
+VAZIFA 13: models/__init__.py — Modellarni birlashtirish
+=====================================================
+
+FAYL: backend/app/models/__init__.py
+
+YOZILISHI KERAK:
+
+from app.models.user import User
+from app.models.test import Test
+from app.models.reading import ReadingAnswer
+from app.models.listening import ListeningAnswer
+from app.models.writing import WritingAnswer
+from app.models.speaking import SpeakingAnswer
+from app.models.feedback import Feedback
+from app.models.question import TestQuestion
+
+TUSHUNTIRISH:
+Bu fayl tufayli boshqa joylarda:
+  from app.models import User
+deb yozish mumkin bo'ladi (to'liq yo'lni yozmasdan).
+
+
+=====================================================
+VAZIFA 14: schemas/user.py — Foydalanuvchi schemalar
+=====================================================
+
+FAYL: backend/app/schemas/user.py
+
+NIMA QILISH: API ga keladigan va chiqadigan ma'lumotlar shaklini belgilash.
+
+YOZILISHI KERAK:
+
+from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from typing import Optional
+
+# Ro'yxatdan o'tish uchun (API ga KELADI)
+class UserCreate(BaseModel):
+    email: EmailStr
+    phone: Optional[str] = None
+    password: str
+    full_name: str
+
+# Kirish uchun (API ga KELADI)
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+# Javob (API dan CHIQADI)
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    phone: Optional[str] = None
+    full_name: str
+    role: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True   # SQLAlchemy modeldan avtomatik o'qish
+
+# Token javob
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+TUSHUNTIRISH:
+- BaseModel — Pydantic klassi. Ma'lumotlarni tekshiradi (validatsiya).
+- EmailStr — faqat to'g'ri email formatini qabul qiladi
+- Optional[str] = None — bu maydon ixtiyoriy (bo'sh bo'lishi mumkin)
+- from_attributes = True — SQLAlchemy modelni avtomatik Pydantic ga o'giradi
+
+
+=====================================================
+VAZIFA 15: schemas/test.py
+=====================================================
+
+FAYL: backend/app/schemas/test.py
+
+YOZILISHI KERAK:
+
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
+
+class TestCreate(BaseModel):
+    pass  # Test boshlash uchun maxsus ma'lumot kerak emas
+
+class TestResponse(BaseModel):
+    id: int
+    user_id: int
+    status: str
+    overall_band_score: Optional[float] = None
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+=====================================================
+VAZIFA 16: schemas/question.py
+=====================================================
+
+FAYL: backend/app/schemas/question.py
+
+YOZILISHI KERAK:
+
+from pydantic import BaseModel
+from typing import Optional, List
+
+# Savol qo'shish (admin uchun)
+class QuestionCreate(BaseModel):
+    section: str            # "reading", "listening", "writing", "speaking"
+    set_number: int = 1
+    question_type: str      # "multiple_choice", "true_false", "fill_blank"
+    question_text: str
+    passage_text: Optional[str] = None
+    audio_url: Optional[str] = None
+    options: Optional[List[str]] = None
+    correct_answer: Optional[str] = None
+    order_num: int = 0
+
+class QuestionResponse(BaseModel):
+    id: int
+    section: str
+    set_number: int
+    question_type: str
+    question_text: str
+    passage_text: Optional[str] = None
+    audio_url: Optional[str] = None
+    options: Optional[List[str]] = None
+    correct_answer: Optional[str] = None
+    order_num: int
+    
+    class Config:
+        from_attributes = True
+
+# Talabaga savol ko'rsatishda — to'g'ri javob KO'RINMAYDI!
+class QuestionForStudent(BaseModel):
+    id: int
+    section: str
+    question_type: str
+    question_text: str
+    passage_text: Optional[str] = None
+    audio_url: Optional[str] = None
+    options: Optional[List[str]] = None
+    order_num: int
+    
+    class Config:
+        from_attributes = True
+
+
+=====================================================
+VAZIFA 17: schemas/answer.py
+=====================================================
+
+FAYL: backend/app/schemas/answer.py
+
+YOZILISHI KERAK:
+
+from pydantic import BaseModel
+from typing import Optional, List
+
+# Reading/Listening javob yuborish
+class AnswerSubmit(BaseModel):
+    question_id: int
+    user_answer: str
+
+class AnswerBatchSubmit(BaseModel):
+    answers: List[AnswerSubmit]
+
+# Natija
+class AnswerResult(BaseModel):
+    question_id: int
+    user_answer: str
+    correct_answer: str
+    is_correct: bool
+
+class SectionResult(BaseModel):
+    total_questions: int
+    correct_answers: int
+    score: float
+    details: List[AnswerResult]
+
+# Writing yuborish
+class WritingSubmit(BaseModel):
+    task_number: int    # 1 yoki 2
+    user_text: str
+
+# Speaking yuborish
+class SpeakingSubmit(BaseModel):
+    part_number: int    # 1, 2 yoki 3
+
+# Admin tekshirish
+class AdminReview(BaseModel):
+    admin_feedback: str
+    admin_score: float
+    status: str = "approved"
+
+
+=====================================================
+VAZIFA 18: schemas/feedback.py
+=====================================================
+
+FAYL: backend/app/schemas/feedback.py
+
+YOZILISHI KERAK:
+
+from pydantic import BaseModel
+from typing import Optional
+
+class FeedbackResponse(BaseModel):
+    id: int
+    test_id: int
+    reading_score: float
+    listening_score: float
+    writing_score: float
+    speaking_score: float
+    overall_band: float
+    strengths: Optional[str] = None
+    weaknesses: Optional[str] = None
+    recommendations: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+=====================================================
+VAZIFA 19: schemas/__init__.py
+=====================================================
+
+FAYL: backend/app/schemas/__init__.py
+
+YOZILISHI KERAK:
+
+from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
+from app.schemas.test import TestCreate, TestResponse
+from app.schemas.question import QuestionCreate, QuestionResponse, QuestionForStudent
+from app.schemas.answer import (
+    AnswerSubmit, AnswerBatchSubmit, AnswerResult,
+    SectionResult, WritingSubmit, SpeakingSubmit, AdminReview
+)
+from app.schemas.feedback import FeedbackResponse
+
+
+=====================================================
+VAZIFA 20: services/scoring.py — Avtomatik baholash
+=====================================================
+
+FAYL: backend/app/services/scoring.py
+
+NIMA QILISH: Reading va Listening javoblarini tekshirib, IELTS ball hisoblash.
+
+YOZILISHI KERAK:
+
+def check_answer(user_answer: str, correct_answer: str) -> bool:
+    """Javobni tekshirish — katta-kichik harfga e'tibor bermaydi"""
+    return user_answer.strip().lower() == correct_answer.strip().lower()
+
+
+def calculate_reading_score(correct_count: int, total_questions: int = 40) -> float:
+    """
+    IELTS Reading ball hisoblash.
+    40 ta savoldan nechta to'g'ri — band score ga o'tkazish.
+    """
+    # IELTS Academic Reading band score jadvali (taxminiy)
+    if correct_count >= 39: return 9.0
+    if correct_count >= 37: return 8.5
+    if correct_count >= 35: return 8.0
+    if correct_count >= 33: return 7.5
+    if correct_count >= 30: return 7.0
+    if correct_count >= 27: return 6.5
+    if correct_count >= 23: return 6.0
+    if correct_count >= 19: return 5.5
+    if correct_count >= 15: return 5.0
+    if correct_count >= 13: return 4.5
+    if correct_count >= 10: return 4.0
+    if correct_count >= 6:  return 3.5
+    if correct_count >= 4:  return 3.0
+    return 2.5
+
+
+def calculate_listening_score(correct_count: int, total_questions: int = 40) -> float:
+    """
+    IELTS Listening ball hisoblash.
+    """
+    if correct_count >= 39: return 9.0
+    if correct_count >= 37: return 8.5
+    if correct_count >= 35: return 8.0
+    if correct_count >= 32: return 7.5
+    if correct_count >= 30: return 7.0
+    if correct_count >= 26: return 6.5
+    if correct_count >= 23: return 6.0
+    if correct_count >= 18: return 5.5
+    if correct_count >= 16: return 5.0
+    if correct_count >= 13: return 4.5
+    if correct_count >= 10: return 4.0
+    if correct_count >= 6:  return 3.5
+    if correct_count >= 4:  return 3.0
+    return 2.5
+
+
+def calculate_overall_band(reading: float, listening: float,
+                           writing: float, speaking: float) -> float:
+    """
+    Umumiy band score hisoblash.
+    4 ta bo'lim o'rtachasi, 0.5 ga yaxlitlanadi.
+    """
+    average = (reading + listening + writing + speaking) / 4
+    # 0.5 ga yaxlitlash (IELTS qoidasi)
+    return round(average * 2) / 2
+
+
+=====================================================
+VAZIFA 21-24: Bo'sh __init__.py fayllar
+=====================================================
+
+Quyidagi fayllarni yarating, lekin ICHIGA HECH NARSA YOZMANG (bo'sh fayl):
+
+FAYL: backend/app/__init__.py
+FAYL: backend/app/services/__init__.py
+FAYL: backend/app/routers/__init__.py
+FAYL: backend/app/utils/__init__.py
+
+TUSHUNTIRISH:
+Python bu fayllarni ko'rib, papkani "modul" (paket) deb tushunadi.
+Bo'sh bo'lsa ham bo'ladi — mavjud bo'lishi muhim.
+
+
+=====================================================
+TEKSHIRISH JADVALI
+=====================================================
+
+Har bir vazifani tugatgandan keyin quyidagi buyruqlarni ishga tushirib tekshir:
+
+  1. requirements.txt
+     >> pip install -r requirements.txt
+     Natija: xatosiz o'rnatilishi kerak
+
+  2. config.py
+     >> python -c "from app.config import settings; print(settings.DATABASE_URL)"
+     Natija: postgresql://... manzil chiqishi kerak
+
+  3. database.py
+     >> python -c "from app.database import engine; print(engine)"
+     Natija: Engine(...) chiqishi kerak
+
+  4-13. Modellar
+     >> python -c "from app.models import User, Test, ReadingAnswer"
+     Natija: xatosiz ishlashi kerak
+
+  14-19. Schemalar
+     >> python -c "from app.schemas import UserCreate, TestResponse"
+     Natija: xatosiz ishlashi kerak
+
+  20. Scoring
+     >> python -c "from app.services.scoring import check_answer; print(check_answer('True', 'true'))"
+     Natija: True
+
+
+=====================================================
+YARATILISHI KERAK BO'LGAN FAYLLAR XULOSA JADVALI
+=====================================================
+
+ #  | Fayl                              | Qiyinlik
+----|-----------------------------------|----------
+ 1  | backend/requirements.txt          | * Juda oson
+ 2  | backend/.env.example              | * Juda oson
+ 3  | backend/app/config.py             | * Oson
+ 4  | backend/app/database.py           | * Oson
+ 5  | backend/app/models/user.py        | ** O'rtacha-oson
+ 6  | backend/app/models/test.py        | ** O'rtacha-oson
+ 7  | backend/app/models/reading.py     | ** O'rtacha-oson
+ 8  | backend/app/models/listening.py   | * Oson (reading ga o'xshash)
+ 9  | backend/app/models/writing.py     | ** O'rtacha-oson
+ 10 | backend/app/models/speaking.py    | ** O'rtacha-oson
+ 11 | backend/app/models/feedback.py    | ** O'rtacha-oson
+ 12 | backend/app/models/question.py    | ** O'rtacha-oson
+ 13 | backend/app/models/__init__.py    | * Oson
+ 14 | backend/app/schemas/user.py       | ** O'rtacha-oson
+ 15 | backend/app/schemas/test.py       | * Oson
+ 16 | backend/app/schemas/question.py   | ** O'rtacha-oson
+ 17 | backend/app/schemas/answer.py     | ** O'rtacha-oson
+ 18 | backend/app/schemas/feedback.py   | * Oson
+ 19 | backend/app/schemas/__init__.py   | * Oson
+ 20 | backend/app/services/scoring.py   | ** O'rtacha
+ 21 | backend/app/__init__.py           | * Juda oson (bo'sh)
+ 22 | backend/app/services/__init__.py  | * Juda oson (bo'sh)
+ 23 | backend/app/routers/__init__.py   | * Juda oson (bo'sh)
+ 24 | backend/app/utils/__init__.py     | * Juda oson (bo'sh)
+
+
+=====================================================
+MUHIM ESLATMALAR
+=====================================================
+
+1. TARTIBNI SAQLANG: Vazifalarni 1-dan 24-gacha tartib bilan bajaring.
+
+2. TUSHUNIB YOZING: Kodlarni ko'chirib olsa bo'ladi, lekin har bir 
+   qatorni tushunishga harakat qiling.
+
+3. POSTGRESQL KERAK: Bu vazifalarni bajarishdan oldin kompyuterda 
+   PostgreSQL o'rnatilgan va ielts_mock nomli baza yaratilgan bo'lishi kerak.
+   Baza yaratish: createdb ielts_mock
+
+4. PAPKA TUZILMASI: backend papkasida quyidagi papkalar bo'lishi kerak:
+   backend/
+     app/
+       models/
+       schemas/
+       services/
+       routers/
+       utils/
+
+5. SAVOL BO'LSA: Hech qaysi savolni ichingizda saqlamang — darhol so'rang!
+
+
+=====================================================
+KEYINGI BOSQICH
+=====================================================
+
+Siz yuqoridagi 24 ta faylni tugatgandan keyin, quyidagilar
+TAJRIBALI DASTURCHI tomonidan yoziladi:
+
+  - services/auth.py     — JWT autentifikatsiya (murakkab)
+  - services/ai_writing.py — OpenAI integratsiya (murakkab)
+  - services/ai_speaking.py — Whisper integratsiya (murakkab)
+  - routers/*.py          — API endpointlar (o'rtacha-murakkab)
+  - main.py              — FastAPI app (o'rtacha)
+
+=====================================================
+                    OMAD! 💪
+=====================================================
