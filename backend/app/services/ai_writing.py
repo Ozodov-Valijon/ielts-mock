@@ -8,15 +8,58 @@ def _heuristic_writing_analysis(text: str, task_number: int) -> dict:
     word_count = len(words)
     min_words = 150 if task_number == 1 else 250
 
-    if word_count < 30:
+    # 1. Agar birorta ham matn yo'q bo'lsa yoki 1 ta harf / 15 tadan kam so'z bo'lsa -> 0.0 BAND!
+    if word_count < 15:
         return {
             "ai_analysis": json.dumps({
-                "task_achievement": {"score": 3.0, "comment": f"Javob juda qisqa ({word_count} ta so'z). Minimal talab ({min_words} so'z) bajarilmadi."},
-                "coherence_cohesion": {"score": 3.0, "comment": "Matn deyarli tuzilmagan."},
-                "lexical_resource": {"score": 3.0, "comment": "Lug'at boyligi tahlil qilish uchun yetarli emas."},
-                "grammatical_range": {"score": 3.0, "comment": "Grammatik tuzilmalar yetarli emas."},
+                "task_achievement": {"score": 0.0, "comment": f"Javob berilmagan yoki ma'nosiz bitta harf/so'z kiritilgan ({word_count} so'z). IELTS me'yori bo'yicha insho hisobga olinmaydi."},
+                "coherence_cohesion": {"score": 0.0, "comment": "Matn va fikrlar mavjud emas."},
+                "lexical_resource": {"score": 0.0, "comment": "Lug'at boyligi mavjud emas."},
+                "grammatical_range": {"score": 0.0, "comment": "Grammatik tuzilmalar yo'q."},
+                "overall_band": 0.0,
+                "summary": f"Insho talabiga mutlaqo javob bermaydi ({word_count}/{min_words} so'z). Rasmiy IELTS qoidasiga ko'ra 0.0 ball berildi."
+            }, ensure_ascii=False),
+            "ai_score": 0.0
+        }
+
+    # 2. 15 tadan 35 tagacha so'z -> 1.0 BAND
+    if word_count < 35:
+        return {
+            "ai_analysis": json.dumps({
+                "task_achievement": {"score": 1.0, "comment": f"Insho juda qisqa ({word_count} ta so'z). Minimal talab ({min_words} so'z) bajarilmadi."},
+                "coherence_cohesion": {"score": 1.0, "comment": "Fikrlar bog'lanmagan."},
+                "lexical_resource": {"score": 1.0, "comment": "Faqat bir nechta ajratilgan so'zlar kiritilgan."},
+                "grammatical_range": {"score": 1.0, "comment": "To'liq gaplar deyarli yo'q."},
+                "overall_band": 1.0,
+                "summary": f"Juda qisqa va to'liq bo'lmagan javob ({word_count}/{min_words} so'z). Band 1.0."
+            }, ensure_ascii=False),
+            "ai_score": 1.0
+        }
+
+    # 3. 35 tadan 70 tagacha so'z -> 2.0 BAND
+    if word_count < 70:
+        return {
+            "ai_analysis": json.dumps({
+                "task_achievement": {"score": 2.0, "comment": f"Insho hajmi talab qilinganning 30% igayam yetmaydi ({word_count}/{min_words} so'z)."},
+                "coherence_cohesion": {"score": 2.0, "comment": "Mantiqiy tuzilma va abzaslar yo'q."},
+                "lexical_resource": {"score": 2.0, "comment": "Oddiy so'zlar takrorlangan."},
+                "grammatical_range": {"score": 2.0, "comment": "Grammatik tuzilmalar oddiy va xatoli."},
+                "overall_band": 2.0,
+                "summary": f"Yetarsiz insho ({word_count}/{min_words} so'z). Band 2.0."
+            }, ensure_ascii=False),
+            "ai_score": 2.0
+        }
+
+    # 4. 70 tadan 110 tagacha so'z -> 3.0 BAND
+    if word_count < 110:
+        return {
+            "ai_analysis": json.dumps({
+                "task_achievement": {"score": 3.0, "comment": f"Hajm kam ({word_count}/{min_words} so'z). Mavzu to'liq yoritilmagan."},
+                "coherence_cohesion": {"score": 3.0, "comment": "Bog'lovchi vositalar yetarli emas."},
+                "lexical_resource": {"score": 3.0, "comment": "Lug'at boyligi cheklangan."},
+                "grammatical_range": {"score": 3.0, "comment": "Oddiy sintaktik tuzilmalar."},
                 "overall_band": 3.0,
-                "summary": f"Insho talab qilingan me'yorga mutlaqo javob bermaydi ({word_count}/{min_words} so'z). Kamida {min_words} so'z yozish talab etiladi."
+                "summary": f"Insho hajmi va sifati yetarsiz ({word_count}/{min_words} so'z). Band 3.0."
             }, ensure_ascii=False),
             "ai_score": 3.0
         }
@@ -29,14 +72,11 @@ def _heuristic_writing_analysis(text: str, task_number: int) -> dict:
         ta_score = 6.5
         ta_comment = f"Yaxshi. So'zlar soni ({word_count}) minimal me'yorga ({min_words}) javob beradi. Asosiy g'oyalar ochib berilgan."
     elif word_count >= min_words * 0.75:
-        ta_score = 5.5
+        ta_score = 5.0
         ta_comment = f"Qisman bajarildi. So'zlar soni ({word_count}) minimal talabdan ({min_words}) kam bo'lgani uchun balldan chegirildi."
-    elif word_count >= min_words * 0.5:
-        ta_score = 4.5
-        ta_comment = f"Yetarsiz hajm. {word_count} ta so'z yozilgan (kamida {min_words} ta bo'lishi shart)."
     else:
         ta_score = 4.0
-        ta_comment = f"Hajm juda kam ({word_count} so'z). Qat'iy jarima qo'llanildi."
+        ta_comment = f"Hajm juda kam ({word_count}/{min_words} so'z). Qat'iy jarima qo'llanildi."
 
     # 2. Coherence & Cohesion (Mantiqiy bog'liqlik va abzaslar)
     paragraphs = [p for p in cleaned_text.split('\n') if len(p.strip()) > 15]

@@ -68,7 +68,10 @@ export default function ResultsPage() {
     if (band >= 6.5) return "Good User (B2/C1)";
     if (band >= 5.5) return "Competent User (B2)";
     if (band >= 4.5) return "Modest User (B1)";
-    return "Limited User (A2/B1)";
+    if (band >= 3.5) return "Limited User (A2/B1)";
+    if (band >= 2.0) return "Intermittent User (A1/A2)";
+    if (band >= 1.0) return "Non User (A1)";
+    return "Did Not Attempt / 0.0";
   };
 
   const antiCheat = feedback.anti_cheat || { tab_switches: 0, paste_attempts: 0, is_flagged_cheating: false };

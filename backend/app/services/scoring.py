@@ -65,44 +65,43 @@ def check_answer(user_answer: str, correct_answer: str) -> bool:
 def _score_by_percentage(percentage: float) -> float:
     """
     Rasmiy Cambridge / British Council IELTS ball shkalasi (foizga moslashtirilgan):
-    88%+ -> 9.0
-    83%-87% -> 8.5
-    78%-82% -> 8.0
-    73%-77% -> 7.5
-    68%-72% -> 7.0
-    60%-67% -> 6.5
-    52%-59% -> 6.0
-    43%-51% -> 5.5
-    35%-42% -> 5.0
-    28%-34% -> 4.5
-    20%-27% -> 4.0
-    13%-19% -> 3.5
-    8%-12% -> 3.0
-    0%-7% -> 2.5
+    90%-100% -> 9.0
+    82%-89%  -> 8.5
+    75%-81%  -> 8.0
+    68%-74%  -> 7.5
+    60%-67%  -> 7.0
+    53%-59%  -> 6.5
+    45%-52%  -> 6.0
+    38%-44%  -> 5.5
+    30%-37%  -> 5.0
+    23%-29%  -> 4.0
+    16%-22%  -> 3.0
+    8%-15%   -> 2.0
+    1%-7%    -> 1.0
+    0%       -> 0.0
     """
-    if percentage >= 0.88: return 9.0
+    if percentage >= 0.90: return 9.0
     if percentage >= 0.82: return 8.5
-    if percentage >= 0.77: return 8.0
-    if percentage >= 0.72: return 7.5
-    if percentage >= 0.67: return 7.0
-    if percentage >= 0.59: return 6.5
-    if percentage >= 0.51: return 6.0
-    if percentage >= 0.42: return 5.5
-    if percentage >= 0.34: return 5.0
-    if percentage >= 0.27: return 4.5
-    if percentage >= 0.19: return 4.0
-    if percentage >= 0.12: return 3.5
-    if percentage >= 0.05: return 3.0
-    if percentage > 0.0:  return 2.5
-    return 2.0
+    if percentage >= 0.75: return 8.0
+    if percentage >= 0.68: return 7.5
+    if percentage >= 0.60: return 7.0
+    if percentage >= 0.53: return 6.5
+    if percentage >= 0.45: return 6.0
+    if percentage >= 0.38: return 5.5
+    if percentage >= 0.30: return 5.0
+    if percentage >= 0.23: return 4.0
+    if percentage >= 0.16: return 3.0
+    if percentage >= 0.08: return 2.0
+    if percentage > 0.0:   return 1.0
+    return 0.0
 
 def calculate_reading_score(correct_count: int, total_questions: int = 40) -> float:
     """
     IELTS Reading ballini savollar soniga mutanosib (proporsional) hisoblash.
-    Agar testda 5 ta savol bo'lsa va 5 tasi to'g'ri bo'lsa -> Band 9.0 bo'ladi!
+    Agar bitta ham to'g'ri bo'lmasa -> 0.0 qaytariladi!
     """
     if total_questions <= 0 or correct_count <= 0:
-        return 2.0
+        return 0.0
     
     # 40 talik to'liq test bo'lsa rasmiy jadval
     if total_questions == 40:
@@ -119,8 +118,9 @@ def calculate_reading_score(correct_count: int, total_questions: int = 40) -> fl
         if correct_count >= 10: return 4.0
         if correct_count >= 6:  return 3.5
         if correct_count >= 4:  return 3.0
-        if correct_count >= 1:  return 2.5
-        return 2.0
+        if correct_count >= 2:  return 2.5
+        if correct_count >= 1:  return 1.0
+        return 0.0
 
     percentage = min(correct_count / total_questions, 1.0)
     return _score_by_percentage(percentage)
@@ -128,9 +128,10 @@ def calculate_reading_score(correct_count: int, total_questions: int = 40) -> fl
 def calculate_listening_score(correct_count: int, total_questions: int = 40) -> float:
     """
     IELTS Listening ballini savollar soniga mutanosib hisoblash.
+    Agar bitta ham to'g'ri bo'lmasa -> 0.0 qaytariladi!
     """
     if total_questions <= 0 or correct_count <= 0:
-        return 2.0
+        return 0.0
         
     if total_questions == 40:
         if correct_count >= 39: return 9.0
@@ -146,8 +147,9 @@ def calculate_listening_score(correct_count: int, total_questions: int = 40) -> 
         if correct_count >= 10: return 4.0
         if correct_count >= 6:  return 3.5
         if correct_count >= 4:  return 3.0
-        if correct_count >= 1:  return 2.5
-        return 2.0
+        if correct_count >= 2:  return 2.5
+        if correct_count >= 1:  return 1.0
+        return 0.0
 
     percentage = min(correct_count / total_questions, 1.0)
     return _score_by_percentage(percentage)
@@ -156,18 +158,21 @@ def calculate_overall_band(scores: list[float]) -> float:
     """
     IELTS qoidasiga ko'ra umumiy Band Score hisoblash:
     4 ta bo'lim o'rtachasi 0.25 va 0.75 chegaralari bo'yicha eng yaqin 0.5 ga yaxlitlanadi.
-    Masalan:
-    6.25 -> 6.5
-    6.75 -> 7.0
-    6.125 -> 6.0
+    Agar hamma bo'limlar 0 bo'lsa yoki topshirilmagan bo'lsa -> 0.0 qaytariladi!
     """
-    valid = [s for s in scores if s is not None and s > 0]
-    if not valid:
-        return 2.0
+    if not scores or len(scores) == 0:
+        return 0.0
+        
+    clean_scores = [float(s) if s is not None else 0.0 for s in scores]
+    if all(s == 0.0 for s in clean_scores):
+        return 0.0
     
-    avg = sum(valid) / len(valid)
+    # 4 ta bo'lim bo'yicha haqiqiy o'rtacha ball
+    avg = sum(clean_scores) / len(clean_scores)
+    if avg < 0.25:
+        return 0.0
+    
     decimal_part = avg - int(avg)
-    
     if decimal_part < 0.25:
         return float(int(avg))
     elif decimal_part < 0.75:

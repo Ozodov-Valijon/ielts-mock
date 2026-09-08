@@ -34,11 +34,32 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
     r_score = calculate_reading_score(r_correct_count, total_r_questions)
     l_score = calculate_listening_score(l_correct_count, total_l_questions)
     
-    w_scores = [w.admin_score if w.admin_score is not None else (w.ai_score or 0.0) for w in w_ans]
-    w_score = round((sum(w_scores) / len(w_scores)) * 2) / 2 if w_scores else 0.0
+    t1 = next((w for w in w_ans if w.task_number == 1), None)
+    t2 = next((w for w in w_ans if w.task_number == 2), None)
+    t1_score = (t1.admin_score if t1 and t1.admin_score is not None else (t1.ai_score if t1 and t1.ai_score is not None else 0.0))
+    t2_score = (t2.admin_score if t2 and t2.admin_score is not None else (t2.ai_score if t2 and t2.ai_score is not None else 0.0))
+    
+    # IELTS Writing: Task 1 (1/3 vazn), Task 2 (2/3 vazn). Agar topshirilmagan bo'lsa 0.0
+    if t1 or t2:
+        raw_w = (t1_score + 2 * t2_score) / 3.0
+        w_score = round(raw_w * 2) / 2
+    else:
+        w_score = 0.0
 
-    s_scores = [s.admin_score if s.admin_score is not None else (s.ai_score or 0.0) for s in s_ans]
-    s_score = round((sum(s_scores) / len(s_scores)) * 2) / 2 if s_scores else 0.0
+    p1 = next((s for s in s_ans if s.part_number == 1), None)
+    p2 = next((s for s in s_ans if s.part_number == 2), None)
+    p3 = next((s for s in s_ans if s.part_number == 3), None)
+    
+    p1_score = (p1.admin_score if p1 and p1.admin_score is not None else (p1.ai_score if p1 and p1.ai_score is not None else 0.0))
+    p2_score = (p2.admin_score if p2 and p2.admin_score is not None else (p2.ai_score if p2 and p2.ai_score is not None else 0.0))
+    p3_score = (p3.admin_score if p3 and p3.admin_score is not None else (p3.ai_score if p3 and p3.ai_score is not None else 0.0))
+    
+    # IELTS Speaking: 3 ta qismning o'rtachasi. Agar birortasi ham topshirilmagan bo'lsa 0.0
+    if p1 or p2 or p3:
+        raw_s = (p1_score + p2_score + p3_score) / 3.0
+        s_score = round(raw_s * 2) / 2
+    else:
+        s_score = 0.0
     
     overall = calculate_overall_band([r_score, l_score, w_score, s_score])
     

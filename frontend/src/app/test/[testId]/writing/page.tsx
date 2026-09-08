@@ -32,7 +32,7 @@ export default function WritingTestPage() {
           const hasTask2 = results.some((r: any) => r.task_number === 2);
           if (hasTask1 && hasTask2) {
             setIsSubmitted(true);
-            const scores = results.map((r: any) => r.ai_score || 6.0);
+            const scores = results.map((r: any) => (r.ai_score !== undefined && r.ai_score !== null ? r.ai_score : 0.0));
             setAiScore(Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 2) / 2);
           }
         }
@@ -53,9 +53,10 @@ export default function WritingTestPage() {
       const res1 = await api.submitWriting(testId, 1, task1Text || "No response provided for Task 1.");
       const res2 = await api.submitWriting(testId, 2, task2Text || "No response provided for Task 2.");
       
-      const score1 = res1.ai_analysis?.ai_score || 6.0;
-      const score2 = res2.ai_analysis?.ai_score || 6.0;
-      const combined = Math.round(((score1 + score2) / 2) * 2) / 2;
+      const score1 = res1.ai_analysis?.ai_score !== undefined && res1.ai_analysis?.ai_score !== null ? res1.ai_analysis.ai_score : 0.0;
+      const score2 = res2.ai_analysis?.ai_score !== undefined && res2.ai_analysis?.ai_score !== null ? res2.ai_analysis.ai_score : 0.0;
+      // IELTS Writing formula: Task 1 (1/3) + Task 2 (2/3)
+      const combined = Math.round(((score1 + 2 * score2) / 3) * 2) / 2;
       setAiScore(combined);
       setIsSubmitted(true);
     } catch (error: any) {

@@ -17,31 +17,62 @@ def transcribe_audio(file_path: str) -> str:
     return f"[Talabaning audio yozuvi saqlandi: {os.path.basename(file_path)}, hajmi: {file_size_kb:.1f} KB]"
 
 def _heuristic_speaking_analysis(transcript: str, part_number: int) -> dict:
-    fc_score = 6.0
-    lr_score = 6.0
-    gra_score = 6.0
-    pron_score = 6.5
-    overall = 6.0
+    # Agar transkript yo'q bo'lsa yoki bo'sh bo'lsa -> 0.0
+    if not transcript or transcript.strip() == "":
+        return {
+            "ai_analysis": json.dumps({
+                "fluency_coherence": {"score": 0.0, "comment": "Nutq aniqlanmadi yoki audio yozilmadi."},
+                "lexical_resource": {"score": 0.0, "comment": "So'zlar yo'q."},
+                "grammatical_range": {"score": 0.0, "comment": "Grammatik tuzilmalar mavjud emas."},
+                "pronunciation": {"score": 0.0, "comment": "Talaffuz aniqlanmadi."},
+                "overall_band": 0.0,
+                "summary": f"Speaking Part {part_number} topshirilmadi yoki audio bo'sh."
+            }, ensure_ascii=False),
+            "ai_score": 0.0
+        }
+
+    words = [w for w in transcript.split() if not w.startswith("[") and not w.endswith("]")]
+    word_count = len(words)
+
+    # Agar transkript juda kam bo'lsa (< 5 so'z)
+    if word_count < 5 and not transcript.startswith("[Talabaning audio"):
+        return {
+            "ai_analysis": json.dumps({
+                "fluency_coherence": {"score": 1.0, "comment": f"Nutq juda qisqa ({word_count} so'z). Savolga javob berilmadi."},
+                "lexical_resource": {"score": 1.0, "comment": "Lug'at boyligi yetarli emas."},
+                "grammatical_range": {"score": 1.0, "comment": "Gaplar tuzilmadi."},
+                "pronunciation": {"score": 1.0, "comment": "Talaffuzni baholash uchun material yetarli emas."},
+                "overall_band": 1.0,
+                "summary": f"Part {part_number} bo'yicha deyarli hech narsa aytilmadi ({word_count} so'z). Band 1.0."
+            }, ensure_ascii=False),
+            "ai_score": 1.0
+        }
+
+    fc_score = 5.5
+    lr_score = 5.5
+    gra_score = 5.5
+    pron_score = 5.5
+    overall = 5.5
 
     analysis = {
         "fluency_coherence": {
             "score": fc_score,
-            "comment": f"Part {part_number} uchun nutq tezligi va davomiyligi me'yorida. Savollarga mantiqiy javob berilgan."
+            "comment": f"Part {part_number} uchun audio qabul qilindi. Nutq sur'ati va davomiyligi mentor tomonidan to'liq tekshiriladi."
         },
         "lexical_resource": {
             "score": lr_score,
-            "comment": "Kundalik va akademik vaziyatlarga mos so'zlar tanlangan. So'z boyligini yana boyitish tavsiya qilinadi."
+            "comment": "So'z boyligi va akademik iboralar mentor tomonidan tasdiqlanadi."
         },
         "grammatical_range": {
             "score": gra_score,
-            "comment": "Gap tuzilishida asosiy grammatik qoidalarga rioya qilingan. Murakkab konstruksiyalarni qo'shish tavsiya etiladi."
+            "comment": "Gap tuzilmalari va grammatik to'g'rilik tekshiruv navbatida."
         },
         "pronunciation": {
             "score": pron_score,
-            "comment": "Talaffuz tushunarli, intonatsiya va urg'ular joyida."
+            "comment": "Talaffuz, intonatsiya va aksent mentor tomonidan baholanadi."
         },
         "overall_band": overall,
-        "summary": f"Speaking Part {part_number} javobi umumiy {overall} ball darajasida baholandi. Mentor tomonidan ko'rib chiqilib tasdiqlanadi."
+        "summary": f"Speaking Part {part_number} audio yozuvi saqlandi. Dastlabki baho {overall}, mentor tekshiruvidan so'ng yakuniy baho e'lon qilinadi."
     }
     return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
 
