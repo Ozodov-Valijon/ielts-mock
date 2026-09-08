@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AntiCheatGuard from '@/components/AntiCheatGuard';
 import Timer from '@/components/Timer';
@@ -18,6 +18,30 @@ export default function WritingTestPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [aiScore, setAiScore] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function loadExisting() {
+      try {
+        const results = await api.getWritingResults(testId);
+        if (results && results.length > 0) {
+          results.forEach((r: any) => {
+            if (r.task_number === 1 && r.user_text) setTask1Text(r.user_text);
+            if (r.task_number === 2 && r.user_text) setTask2Text(r.user_text);
+          });
+          const hasTask1 = results.some((r: any) => r.task_number === 1);
+          const hasTask2 = results.some((r: any) => r.task_number === 2);
+          if (hasTask1 && hasTask2) {
+            setIsSubmitted(true);
+            const scores = results.map((r: any) => r.ai_score || 6.0);
+            setAiScore(Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 2) / 2);
+          }
+        }
+      } catch (e) {
+        console.error("Mavjud writing javoblarini yuklashda xatolik:", e);
+      }
+    }
+    loadExisting();
+  }, [testId]);
 
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(word => word.length > 0).length;
 
@@ -55,7 +79,7 @@ export default function WritingTestPage() {
             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
               IELTS Writing (Anti-Cheat Faol)
             </span>
-            <h1 className="text-2xl font-bold text-gray-900 mt-1">Writing Bo'limi (Task 1 & Task 2)</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mt-1">Writing Bo&apos;limi (Task 1 &amp; Task 2)</h1>
           </div>
           {!isSubmitted && <Timer durationMinutes={60} onTimeUp={handleSubmit} />}
         </div>

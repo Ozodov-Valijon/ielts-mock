@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AntiCheatGuard from '@/components/AntiCheatGuard';
 import AudioRecorder from '@/components/AudioRecorder';
@@ -15,6 +15,26 @@ export default function SpeakingTestPage() {
   const [partStatus, setPartStatus] = useState<Record<number, 'pending' | 'uploading' | 'completed'>>({
     1: 'pending', 2: 'pending', 3: 'pending'
   });
+
+  useEffect(() => {
+    async function loadExisting() {
+      try {
+        const results = await api.getSpeakingResults(testId);
+        if (results && results.length > 0) {
+          setPartStatus(prev => {
+            const updated = { ...prev };
+            results.forEach((r: any) => {
+              if (r.part_number) updated[r.part_number] = 'completed';
+            });
+            return updated;
+          });
+        }
+      } catch (e) {
+        console.error("Mavjud speaking javoblarini yuklashda xatolik:", e);
+      }
+    }
+    loadExisting();
+  }, [testId]);
 
   const handleAudioComplete = async (part: number, blob: Blob) => {
     setPartStatus(prev => ({ ...prev, [part]: 'uploading' }));
@@ -82,8 +102,8 @@ export default function SpeakingTestPage() {
           <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
             IELTS Speaking
           </span>
-          <h1 className="text-3xl font-extrabold text-gray-900 mt-2">Speaking Bo'limi (Part 1, 2, 3)</h1>
-          <p className="text-gray-600 text-sm mt-1">Mikrofon orqali savollarga ingliz tilida javob bering va yozuvni to'xtating.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 mt-2">Speaking Bo&apos;limi (Part 1, 2, 3)</h1>
+          <p className="text-gray-600 text-sm mt-1">Mikrofon orqali savollarga ingliz tilida javob bering va yozuvni to&apos;xtating.</p>
         </div>
 
         {renderPart(1, 'Part 1: Introduction & Familiar Topics', "- Can you tell me a little bit about your hometown?\n- Do you work or are you a student?\n- What do you enjoy most about your daily routine?")}

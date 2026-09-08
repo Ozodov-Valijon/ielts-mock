@@ -145,7 +145,7 @@ export default function AdminReviewWritingDetail() {
             {parsedAi && (
               <div className="bg-blue-50 rounded-2xl shadow-sm border border-blue-200 p-6">
                 <div className="flex justify-between items-center mb-4 border-b border-blue-200 pb-3">
-                  <h2 className="text-lg font-bold text-blue-950">Sun'iy Intellekt (AI) Tahlili</h2>
+                  <h2 className="text-lg font-bold text-blue-950">Sun&apos;iy Intellekt (AI) Tahlili</h2>
                   <span className="text-3xl font-black text-blue-700">
                     {parsedAi.overall_band?.toFixed(1) || writing?.ai_score?.toFixed(1) || '6.0'}
                   </span>

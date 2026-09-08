@@ -30,7 +30,7 @@ export default function Home() {
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
           <div className="text-5xl mb-4">✍️</div>
           <h3 className="text-xl font-bold mb-2 text-gray-800">Writing</h3>
-          <p className="text-gray-600">Task 1 va Task 2. Sun'iy intellekt orqali tekshirish.</p>
+          <p className="text-gray-600">Task 1 va Task 2. Sun&apos;iy intellekt orqali tekshirish.</p>
         </div>
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition">
           <div className="text-5xl mb-4">🗣️</div>

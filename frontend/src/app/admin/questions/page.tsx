@@ -70,7 +70,7 @@ export default function AdminQuestionsPage() {
             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
               Savollar Banki
             </span>
-            <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Yangi Savol Qo'shish</h1>
+            <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Yangi Savol Qo&apos;shish</h1>
           </div>
           <Link 
             href="/admin" 
@@ -82,7 +82,7 @@ export default function AdminQuestionsPage() {
         
         {success && (
           <div className="bg-green-100 border border-green-300 text-green-800 p-4 rounded-xl mb-6 font-bold flex items-center space-x-2">
-            <span>✓ Savol bazaga muvaffaqiyatli qo'shildi!</span>
+            <span>✓ Savol bazaga muvaffaqiyatli qo&apos;shildi!</span>
           </div>
         )}
 
@@ -95,13 +95,13 @@ export default function AdminQuestionsPage() {
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Bo'lim (Section)</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Bo&apos;lim (Section)</label>
               <select 
                 value={section} 
                 onChange={(e) => setSection(e.target.value)} 
                 className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
               >
-                <option value="reading">Reading (O'qish)</option>
+                <option value="reading">Reading (O&apos;qish)</option>
                 <option value="listening">Listening (Eshitish)</option>
                 <option value="writing">Writing (Yozish)</option>
                 <option value="speaking">Speaking (Gapirish)</option>
@@ -116,7 +116,7 @@ export default function AdminQuestionsPage() {
               >
                 <option value="multiple_choice">Multiple Choice (Variantli)</option>
                 <option value="true_false">True / False / Not Given</option>
-                <option value="fill_blank">Fill in the Blank (Bo'sh joy to'ldirish)</option>
+                <option value="fill_blank">Fill in the Blank (Bo&apos;sh joy to&apos;ldirish)</option>
                 <option value="writing_task_1">Writing Task 1</option>
                 <option value="writing_task_2">Writing Task 2</option>
                 <option value="speaking_part_1">Speaking Part 1</option>
@@ -190,14 +190,14 @@ export default function AdminQuestionsPage() {
                 onClick={addOption} 
                 className="text-blue-600 font-bold text-xs mt-2 hover:underline"
               >
-                + Variant qo'shish
+                + Variant qo&apos;shish
               </button>
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To'g'ri javob</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To&apos;g&apos;ri javob</label>
               <input 
                 type="text" 
                 value={correctAnswer}

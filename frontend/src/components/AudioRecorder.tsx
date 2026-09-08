@@ -80,7 +80,7 @@ export default function AudioRecorder({ onRecordingComplete }: AudioRecorderProp
           className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-full transition shadow-md"
         >
           <div className="w-3 h-3 bg-red-500 animate-pulse rounded-full"></div>
-          <span>To'xtatish</span>
+          <span>To&apos;xtatish</span>
         </button>
       )}
     </div>

@@ -8,7 +8,7 @@ export default function ProgressChart({ tests }: { tests: { test_id: number; ove
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h3 className="text-lg font-bold mb-4 text-gray-800">O'sish dinamikasi</h3>
+      <h3 className="text-lg font-bold mb-4 text-gray-800">O&apos;sish dinamikasi</h3>
       <div className="space-y-4">
         {tests.map((test) => (
           <div key={test.test_id}>

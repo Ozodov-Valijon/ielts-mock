@@ -37,7 +37,7 @@ export default function AdminDashboard() {
             Boshqaruv Paneli
           </span>
           <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Admin Panel</h1>
-          <p className="text-gray-500 text-sm">Platforma statistikasi va o'quv jarayonini boshqarish</p>
+          <p className="text-gray-500 text-sm">Platforma statistikasi va o&apos;quv jarayonini boshqarish</p>
         </div>
         
         {loading ? (
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Link href="/admin/students" className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-200 text-center flex flex-col items-center justify-center h-40 group">
                 <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">👥</span>
-                <span className="font-bold text-gray-900 text-lg">Talabalar Ro'yxati</span>
+                <span className="font-bold text-gray-900 text-lg">Talabalar Ro&apos;yxati</span>
                 <span className="text-xs text-gray-500 mt-1">Barcha foydalanuvchilar va statistikalar</span>
               </Link>
               <Link href="/admin/review" className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-200 text-center flex flex-col items-center justify-center h-40 group relative">
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
               </Link>
               <Link href="/admin/questions" className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-200 text-center flex flex-col items-center justify-center h-40 group">
                 <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">➕</span>
-                <span className="font-bold text-gray-900 text-lg">Savol Qo'shish</span>
+                <span className="font-bold text-gray-900 text-lg">Savol Qo&apos;shish</span>
                 <span className="text-xs text-gray-500 mt-1">Reading, Listening, Writing, Speaking</span>
               </Link>
             </div>

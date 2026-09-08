@@ -34,11 +34,11 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
     r_score = calculate_reading_score(r_correct_count, total_r_questions)
     l_score = calculate_listening_score(l_correct_count, total_l_questions)
     
-    w_scores = [w.admin_score if w.admin_score is not None else (w.ai_score or 6.0) for w in w_ans]
-    w_score = round((sum(w_scores) / len(w_scores)) * 2) / 2 if w_scores else 6.0
+    w_scores = [w.admin_score if w.admin_score is not None else (w.ai_score or 0.0) for w in w_ans]
+    w_score = round((sum(w_scores) / len(w_scores)) * 2) / 2 if w_scores else 0.0
 
-    s_scores = [s.admin_score if s.admin_score is not None else (s.ai_score or 6.0) for s in s_ans]
-    s_score = round((sum(s_scores) / len(s_scores)) * 2) / 2 if s_scores else 6.0
+    s_scores = [s.admin_score if s.admin_score is not None else (s.ai_score or 0.0) for s in s_ans]
+    s_score = round((sum(s_scores) / len(s_scores)) * 2) / 2 if s_scores else 0.0
     
     overall = calculate_overall_band([r_score, l_score, w_score, s_score])
     
@@ -65,15 +65,21 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
 
     if w_score >= 6.5:
         strengths.append("Writing: Fikrlarni abzaslarga to'g'ri ajratish va akademik bog'lovchilarni qo'llash ko'nikmasi yaxshi.")
-    else:
+    elif w_score > 0:
         weaknesses.append("Writing: Fikrlarni kengroq asoslash va murakkab sintaktik tuzilmalarni ko'paytirish zarur.")
         recommendations.append("Task 1 grafiklarining asosiy trendlarini ajratish va Task 2 insho strukturasini mashq qiling.")
+    else:
+        weaknesses.append("Writing: Insho topshirilmagan. IELTS da to'liq band olish uchun Task 1 va Task 2 ni bajarish shart.")
+        recommendations.append("Writing bo'limida kamida bitta insho yozib mashq qiling.")
 
     if s_score >= 6.5:
         strengths.append("Speaking: Nutq ravonligi, so'z boyligi va savollarga javob berish ishonchliligi yuqori.")
-    else:
+    elif s_score > 0:
         weaknesses.append("Speaking: So'z qidirish sababli yuzaga keladigan ortiqcha pauzalarni kamaytirish lozim.")
         recommendations.append("Har kuni tanlangan savollarga 2 daqiqa to'xtovsiz javob berib, diktofon yozuvini tahlil qiling.")
+    else:
+        weaknesses.append("Speaking: Ovozli javob yozilmagan. Gapirish ko'nikmasini shakllantirish uchun audio topshiriqlarni bajaring.")
+        recommendations.append("Speaking bo'limida mikrofon orqali savollarga javob bering.")
 
     fb = db.query(Feedback).filter(Feedback.test_id == test_id).first()
     if not fb:

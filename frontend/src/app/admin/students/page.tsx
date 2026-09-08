@@ -37,9 +37,9 @@ export default function AdminStudentsPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Talabalar Ro'yxati
+              Talabalar Ro&apos;yxati
             </span>
-            <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Ro'yxatdan O'tgan Talabalar</h1>
+            <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Ro&apos;yxatdan O&apos;tgan Talabalar</h1>
           </div>
           <Link 
             href="/admin" 

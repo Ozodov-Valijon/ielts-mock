@@ -55,8 +55,8 @@ export default function RegisterPage() {
           <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
             Yangi Hisob
           </span>
-          <h1 className="text-2xl font-extrabold text-gray-900 mt-2">Ro'yxatdan O'tish</h1>
-          <p className="text-gray-500 text-xs mt-1">Platformadan bepul foydalanish uchun ma'lumotlaringizni kiriting</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 mt-2">Ro&apos;yxatdan O&apos;tish</h1>
+          <p className="text-gray-500 text-xs mt-1">Platformadan bepul foydalanish uchun ma&apos;lumotlaringizni kiriting</p>
         </div>
 
         {error && (
@@ -67,7 +67,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To'liq Ism (Full Name)</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To&apos;liq Ism (Full Name)</label>
             <input
               type="text"
               name="full_name"

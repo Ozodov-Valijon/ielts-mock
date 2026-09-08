@@ -53,7 +53,7 @@ export default function Dashboard() {
               Talaba Kabineti
             </span>
             <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Salom, {user?.full_name}!</h1>
-            <p className="text-gray-500 text-sm">O'z bilimingizni sinab ko'rishga tayyormisiz?</p>
+            <p className="text-gray-500 text-sm">O&apos;z bilimingizni sinab ko&apos;rishga tayyormisiz?</p>
           </div>
           <button 
             onClick={startNewTest}
@@ -78,7 +78,7 @@ export default function Dashboard() {
             <div className="p-12 text-center">
               <div className="text-5xl mb-3">📝</div>
               <h3 className="text-lg font-bold text-gray-800 mb-1">Hali hech qanday test topshirmadingiz</h3>
-              <p className="text-gray-500 text-sm mb-6">Birinchi to'liq IELTS mock testingizni hoziroq boshlang!</p>
+              <p className="text-gray-500 text-sm mb-6">Birinchi to&apos;liq IELTS mock testingizni hoziroq boshlang!</p>
               <button 
                 onClick={startNewTest}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl shadow transition"
@@ -117,12 +117,20 @@ export default function Dashboard() {
                       <td className="px-6 py-4 font-black text-center text-base text-blue-700">
                         {test.overall_band_score ? test.overall_band_score.toFixed(1) : '-'}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right space-x-2">
+                        {test.status === 'in_progress' && (
+                          <Link 
+                            href={`/test/${test.id}/reading`} 
+                            className="bg-green-50 text-green-700 hover:bg-green-100 font-bold px-3 py-1.5 rounded-lg text-xs transition inline-block"
+                          >
+                            Davom ettirish →
+                          </Link>
+                        )}
                         <Link 
                           href={`/test/${test.id}/results`} 
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-4 py-2 rounded-lg text-xs transition inline-block"
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-3 py-1.5 rounded-lg text-xs transition inline-block"
                         >
-                          Natijani Ko'rish →
+                          Natijani Ko&apos;rish →
                         </Link>
                       </td>
                     </tr>

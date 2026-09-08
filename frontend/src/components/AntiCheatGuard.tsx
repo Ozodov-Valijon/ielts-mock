@@ -14,8 +14,15 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isFlagged, setIsFlagged] = useState(false);
+  const lastEventTimeRef = React.useRef<number>(0);
 
   const reportEvent = useCallback(async (eventType: 'tab_switch' | 'paste_attempt', message: string) => {
+    const now = Date.now();
+    if (eventType === 'tab_switch' && now - lastEventTimeRef.current < 1500) {
+      return;
+    }
+    lastEventTimeRef.current = now;
+
     try {
       const res = await api.logAntiCheatEvent(testId, eventType);
       const newWarnings = (res.tab_switches || 0) + (res.paste_attempts || 0);
@@ -46,7 +53,7 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
         if (!document.hasFocus()) {
           reportEvent('tab_switch', "Brauzer oynasidan tashqariga chiqildi. Test paytida boshqa dasturlarni ochish taqiqlanadi!");
         }
-      }, 400);
+      }, 500);
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -86,9 +93,15 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
 
       // Ctrl + C (Nusxa ko'chirish)
       if ((e.ctrlKey || e.metaKey) && (e.key === 'C' || e.key === 'c')) {
-        e.preventDefault();
-        alert("Matndan nusxa ko'chirish (Copy) taqiqlangan!");
-        return;
+        // Agar forma maydoni ichida bo'lmasa, nusxalashni cheklash
+        const target = e.target as HTMLElement;
+        const isInputField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInputField) {
+          e.preventDefault();
+          setModalMessage("Test materiallaridan nusxa ko'chirish (Copy) qat'iyan taqiqlangan!");
+          setShowModal(true);
+          return;
+        }
       }
 
       // Ctrl + V (Paste)
@@ -100,8 +113,13 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
     };
 
     const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
-      alert("Test matnini nusxalash (Copy) taqiqlanadi!");
+      const target = e.target as HTMLElement;
+      const isInputField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+      if (!isInputField) {
+        e.preventDefault();
+        setModalMessage("Test matnini nusxalash (Copy) taqiqlanadi!");
+        setShowModal(true);
+      }
     };
 
     const handlePaste = (e: ClipboardEvent) => {
@@ -162,11 +180,11 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
               Ogohlantirish holati: <span className="text-base text-red-700">{warnings} / 3</span><br />
               {warnings >= 3 ? (
                 <span className="text-red-900 mt-1 block uppercase">
-                  ⚠️ 3 ta ogohlantirish to'ldi! Testingiz chiterlik shubhasi bilan mentorga yuborildi.
+                  ⚠️ 3 ta ogohlantirish to&apos;ldi! Testingiz chiterlik shubhasi bilan mentorga yuborildi.
                 </span>
               ) : (
                 <span className="text-gray-600 mt-1 block">
-                  Eslatma: 3 ta qoidabuzarlikdan so'ng test natijangiz bekor qilinadi.
+                  Eslatma: 3 ta qoidabuzarlikdan so&apos;ng test natijangiz bekor qilinadi.
                 </span>
               )}
             </div>
