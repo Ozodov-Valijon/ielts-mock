@@ -78,13 +78,41 @@ def run_tests():
     assert res.status_code == 200
     print("  [OK] Writing Task 2 qabul qilindi, AI bahosi:", res.json()["ai_analysis"]["ai_score"])
 
-    print("--- 9. Get Overall Feedback & Results ---")
+    print("--- 9. Anti-Cheat Event Tracking ---")
+    # Simulate tab switch and paste events
+    for _ in range(3):
+        res = client.post(
+            f"/api/v1/tests/{test_id}/anticheat-event",
+            headers=student_headers,
+            json={"event_type": "tab_switch", "details": "Foydalanuvchi boshqa tabga o'tdi"}
+        )
+        assert res.status_code == 200, f"Anti-cheat event failed: {res.text}"
+    
+    res = client.post(
+        f"/api/v1/tests/{test_id}/anticheat-event",
+        headers=student_headers,
+        json={"event_type": "paste_attempt", "details": "Nusxa qo'yishga urinildi"}
+    )
+    assert res.status_code == 200
+    ac_status = res.json()
+    assert ac_status["tab_switches"] == 3
+    assert ac_status["paste_attempts"] == 1
+    assert ac_status["is_flagged_cheating"] is True
+    print(f"  [OK] Anti-cheat signali qayd etildi: Tab switches={ac_status['tab_switches']}, Flagged={ac_status['is_flagged_cheating']}")
+
+    print("--- 10. Get Overall Feedback & Results Breakdown ---")
     res = client.get(f"/api/v1/tests/{test_id}/feedback", headers=student_headers)
     assert res.status_code == 200
     fb = res.json()
-    print(f"  [OK] Yakuniy Band Score: {fb['overall_band']} (Reading: {fb['reading_score']}, Listening: {fb['listening_score']}, Writing: {fb['writing_score']}, Speaking: {fb['speaking_score']})")
+    assert "anti_cheat" in fb
+    assert fb["anti_cheat"]["is_flagged_cheating"] is True
+    assert "reading_details" in fb
+    assert len(fb["reading_details"]) > 0
+    print(f"  [OK] Yakuniy Band Score: {fb['overall_band']} (Reading: {fb['reading_score']}, Listening: {fb['listening_score']}, Writing: {fb['writing_score']})")
+    print(f"  [OK] Anti-cheat xulosasi: Shubhali={fb['anti_cheat']['is_flagged_cheating']}, Tab switches={fb['anti_cheat']['tab_switches']}")
+    print(f"  [OK] Reading savolma-savol tahlil elementlari soni: {len(fb['reading_details'])} ta")
 
-    print("--- 10. Admin Login & Stats ---")
+    print("--- 11. Admin Login & Stats ---")
     res = client.post("/api/v1/auth/login", json={"email": "admin@ielts.uz", "password": "admin123"})
     assert res.status_code == 200
     admin_token = res.json()["access_token"]
@@ -98,9 +126,12 @@ def run_tests():
     assert res.status_code == 200
     pending = res.json()
     print(f"  [OK] Admin tekshiruv navbati: Writing ({len(pending['writing_pending'])} ta), Speaking ({len(pending['speaking_pending'])} ta)")
+    if len(pending["writing_pending"]) > 0:
+        first_w = pending["writing_pending"][0]
+        print(f"  [OK] Admin writing tekshiruvi anti-cheat ma'lumoti: {first_w.get('student_name')} | Tab switches: {first_w.get('tab_switches')}")
 
     print("\n=======================================================")
-    print("   BARCHA 10 TA INTEGRATION TEST MUVAFFAQITYATLI O'TDI! [OK]")
+    print("   BARCHA 11 TA INTEGRATION TEST MUVAFFAQITYATLI O'TDI! [OK]")
     print("=======================================================\n")
 
 if __name__ == "__main__":

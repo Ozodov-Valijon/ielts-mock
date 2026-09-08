@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AntiCheatGuard from '@/components/AntiCheatGuard';
 import Timer from '@/components/Timer';
 import QuestionCard from '@/components/QuestionCard';
 import { api } from '@/lib/api';
@@ -65,7 +66,8 @@ export default function ReadingTestPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6 min-h-[calc(100vh-140px)] p-4">
+      <AntiCheatGuard testId={testId}>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6 min-h-[calc(100vh-140px)] p-4">
         
         {/* Chap tomon: Passage */}
         <div className="w-full md:w-1/2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-y-auto p-6 md:p-8 max-h-[85vh]">
@@ -100,13 +102,13 @@ export default function ReadingTestPage() {
                   ✓
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Reading Yakunlandi!</h3>
-                <p className="text-gray-600 mb-4">Sizning Reading bo'limi bo'yicha bahongiz:</p>
+                <p className="text-gray-600 mb-4">Sizning Reading bo&apos;limi bo&apos;yicha bahongiz:</p>
                 <div className="text-6xl font-black text-blue-700 mb-6">{resultScore.toFixed(1)}</div>
                 <button
                   onClick={handleProceed}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-lg shadow transition transform hover:scale-105"
                 >
-                  Keyingi: Listening Bo'limiga O'tish →
+                  Keyingi: Listening Bo&apos;limiga O&apos;tish →
                 </button>
               </div>
             ) : (
@@ -138,6 +140,7 @@ export default function ReadingTestPage() {
         </div>
 
       </div>
+      </AntiCheatGuard>
     </ProtectedRoute>
   );
 }

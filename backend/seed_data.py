@@ -70,7 +70,7 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 passage_text=reading_passage,
                 question_text="According to the passage, who is traditionally credited with the discovery of tea in 2737 BC?",
                 options=["Emperor Shennong", "Lu Yu", "Portuguese merchants", "Marco Polo"],
-                correct_answer="Emperor Shennong"
+                correct_answer="Emperor Shennong / Shennong"
             ),
             TestQuestion(
                 section="reading",
@@ -154,7 +154,7 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 audio_url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
                 question_text="The library's weekend operating hours on Sunday conclude at ______ PM.",
                 options=None,
-                correct_answer="6"
+                correct_answer="6 / 6 PM / six / 6:00"
             ),
             TestQuestion(
                 section="listening",

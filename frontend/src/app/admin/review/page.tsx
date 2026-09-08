@@ -73,13 +73,22 @@ export default function AdminReviewPage() {
                       <Link href={`/admin/review/writing/${r.id}`} className="flex items-center justify-between p-6 hover:bg-gray-50 transition">
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="font-bold text-gray-900 text-base">Test #{r.test_id}</span>
+                            <span className="font-bold text-gray-900 text-base">{r.student_name || `Test #${r.test_id}`}</span>
                             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded">
                               Task {r.task_number}
                             </span>
+                            {r.is_flagged_cheating ? (
+                              <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                ⚠️ Shubhali ({r.tab_switches} tab, {r.paste_attempts} paste)
+                              </span>
+                            ) : (
+                              <span className="bg-green-50 text-green-700 text-xs font-medium px-2 py-0.5 rounded">
+                                🛡️ Anti-cheat: Toza
+                              </span>
+                            )}
                           </div>
                           <p className="text-gray-500 text-xs mt-1">
-                            AI Dastlabki Ball: <strong>{r.ai_score?.toFixed(1) || '6.0'}</strong> &bull; Status: <span className="text-orange-600 font-bold">{r.status}</span>
+                            Email: {r.student_email || '-'} &bull; AI Dastlabki Ball: <strong>{r.ai_score?.toFixed(1) || '6.0'}</strong> &bull; Status: <span className="text-orange-600 font-bold">{r.status}</span>
                           </p>
                         </div>
                         <div className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition">
@@ -90,7 +99,7 @@ export default function AdminReviewPage() {
                   ))}
                   {writingPending.length === 0 && (
                     <li className="p-12 text-center text-gray-500 font-medium">
-                      Barcha writing insholar tekshirilgan. Hozircha navbatda yangi insholar yo'q.
+                      Barcha writing insholar tekshirilgan. Hozircha navbatda yangi insholar yo&apos;q.
                     </li>
                   )}
                 </ul>
@@ -103,13 +112,22 @@ export default function AdminReviewPage() {
                       <Link href={`/admin/review/speaking/${r.id}`} className="flex items-center justify-between p-6 hover:bg-gray-50 transition">
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="font-bold text-gray-900 text-base">Test #{r.test_id}</span>
+                            <span className="font-bold text-gray-900 text-base">{r.student_name || `Test #${r.test_id}`}</span>
                             <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-0.5 rounded">
                               Part {r.part_number}
                             </span>
+                            {r.is_flagged_cheating ? (
+                              <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                ⚠️ Shubhali ({r.tab_switches} tab almashtirish)
+                              </span>
+                            ) : (
+                              <span className="bg-green-50 text-green-700 text-xs font-medium px-2 py-0.5 rounded">
+                                🛡️ Anti-cheat: Toza
+                              </span>
+                            )}
                           </div>
                           <p className="text-gray-500 text-xs mt-1">
-                            AI Dastlabki Ball: <strong>{r.ai_score?.toFixed(1) || '6.0'}</strong> &bull; Status: <span className="text-orange-600 font-bold">{r.status}</span>
+                            Email: {r.student_email || '-'} &bull; AI Dastlabki Ball: <strong>{r.ai_score?.toFixed(1) || '6.0'}</strong> &bull; Status: <span className="text-orange-600 font-bold">{r.status}</span>
                           </p>
                         </div>
                         <div className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition">
@@ -120,7 +138,7 @@ export default function AdminReviewPage() {
                   ))}
                   {speakingPending.length === 0 && (
                     <li className="p-12 text-center text-gray-500 font-medium">
-                      Barcha speaking yozuvlari tekshirilgan. Hozircha navbatda yangi yozuvlar yo'q.
+                      Barcha speaking yozuvlari tekshirilgan. Hozircha navbatda yangi yozuvlar yo&apos;q.
                     </li>
                   )}
                 </ul>

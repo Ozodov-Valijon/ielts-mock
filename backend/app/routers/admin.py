@@ -33,14 +33,67 @@ def list_students(admin: User = Depends(get_current_admin), db: Session = Depend
 def get_pending_reviews(admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
     writing = db.query(WritingAnswer).filter(WritingAnswer.status == "pending").all()
     speaking = db.query(SpeakingAnswer).filter(SpeakingAnswer.status == "pending").all()
-    return {"writing_pending": writing, "speaking_pending": speaking}
+    
+    writing_list = []
+    for w in writing:
+        test = db.query(Test).filter(Test.id == w.test_id).first()
+        student = db.query(User).filter(User.id == test.user_id).first() if test else None
+        writing_list.append({
+            "id": w.id,
+            "test_id": w.test_id,
+            "task_number": w.task_number,
+            "ai_score": w.ai_score,
+            "status": w.status,
+            "student_name": student.full_name if student else "Noma'lum",
+            "student_email": student.email if student else "",
+            "tab_switches": test.tab_switches if test else 0,
+            "paste_attempts": test.paste_attempts if test else 0,
+            "is_flagged_cheating": test.is_flagged_cheating if test else False,
+        })
+
+    speaking_list = []
+    for s in speaking:
+        test = db.query(Test).filter(Test.id == s.test_id).first()
+        student = db.query(User).filter(User.id == test.user_id).first() if test else None
+        speaking_list.append({
+            "id": s.id,
+            "test_id": s.test_id,
+            "part_number": s.part_number,
+            "ai_score": s.ai_score,
+            "status": s.status,
+            "student_name": student.full_name if student else "Noma'lum",
+            "student_email": student.email if student else "",
+            "tab_switches": test.tab_switches if test else 0,
+            "paste_attempts": test.paste_attempts if test else 0,
+            "is_flagged_cheating": test.is_flagged_cheating if test else False,
+        })
+
+    return {"writing_pending": writing_list, "speaking_pending": speaking_list}
 
 @router.get("/writing/{id}")
 def get_writing_detail(id: int, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
     w = db.query(WritingAnswer).filter(WritingAnswer.id == id).first()
     if not w:
         raise HTTPException(status_code=404, detail="Writing javobi topilmadi")
-    return w
+    test = db.query(Test).filter(Test.id == w.test_id).first()
+    student = db.query(User).filter(User.id == test.user_id).first() if test else None
+    return {
+        "id": w.id,
+        "test_id": w.test_id,
+        "task_number": w.task_number,
+        "user_text": w.user_text,
+        "ai_analysis": w.ai_analysis,
+        "ai_score": w.ai_score,
+        "admin_feedback": w.admin_feedback,
+        "admin_score": w.admin_score,
+        "status": w.status,
+        "reviewed_at": w.reviewed_at,
+        "student_name": student.full_name if student else "Noma'lum",
+        "student_email": student.email if student else "",
+        "tab_switches": test.tab_switches if test else 0,
+        "paste_attempts": test.paste_attempts if test else 0,
+        "is_flagged_cheating": test.is_flagged_cheating if test else False,
+    }
 
 @router.put("/writing/{id}/review")
 def review_writing(id: int, review: AdminReview, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
@@ -59,7 +112,26 @@ def get_speaking_detail(id: int, admin: User = Depends(get_current_admin), db: S
     s = db.query(SpeakingAnswer).filter(SpeakingAnswer.id == id).first()
     if not s:
         raise HTTPException(status_code=404, detail="Speaking javobi topilmadi")
-    return s
+    test = db.query(Test).filter(Test.id == s.test_id).first()
+    student = db.query(User).filter(User.id == test.user_id).first() if test else None
+    return {
+        "id": s.id,
+        "test_id": s.test_id,
+        "part_number": s.part_number,
+        "audio_url": s.audio_url,
+        "transcript": s.transcript,
+        "ai_analysis": s.ai_analysis,
+        "ai_score": s.ai_score,
+        "admin_feedback": s.admin_feedback,
+        "admin_score": s.admin_score,
+        "status": s.status,
+        "reviewed_at": s.reviewed_at,
+        "student_name": student.full_name if student else "Noma'lum",
+        "student_email": student.email if student else "",
+        "tab_switches": test.tab_switches if test else 0,
+        "paste_attempts": test.paste_attempts if test else 0,
+        "is_flagged_cheating": test.is_flagged_cheating if test else False,
+    }
 
 @router.put("/speaking/{id}/review")
 def review_speaking(id: int, review: AdminReview, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):

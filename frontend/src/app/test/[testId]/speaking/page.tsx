@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AntiCheatGuard from '@/components/AntiCheatGuard';
 import AudioRecorder from '@/components/AudioRecorder';
 import { api } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
@@ -75,7 +76,8 @@ export default function SpeakingTestPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <AntiCheatGuard testId={testId}>
+        <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="text-center mb-8">
           <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
             IELTS Speaking
@@ -90,19 +92,20 @@ export default function SpeakingTestPage() {
 
         {allCompleted && (
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-8 rounded-2xl text-center mt-8 shadow-xl">
-            <h2 className="text-2xl font-bold mb-2">🎉 Barcha Test Bo'limlari Yakunlandi!</h2>
+            <h2 className="text-2xl font-bold mb-2">🎉 Barcha Test Bo&apos;limlari Yakunlandi!</h2>
             <p className="text-blue-100 mb-6 text-sm">
-              Siz to'liq IELTS Mock testini (Reading, Listening, Writing, Speaking) muvaffaqiyatli topshirdingiz.
+              Siz to&apos;liq IELTS Mock testini (Reading, Listening, Writing, Speaking) muvaffaqiyatli topshirdingiz.
             </p>
             <button
               onClick={() => router.push(`/test/${testId}/results`)}
               className="bg-white text-blue-800 hover:bg-blue-50 px-10 py-4 rounded-xl font-extrabold text-lg transition shadow-lg transform hover:scale-105"
             >
-              Yakuniy Natijalarni Ko'rish →
+              Yakuniy Natijalarni Ko&apos;rish →
             </button>
           </div>
         )}
-      </div>
+        </div>
+      </AntiCheatGuard>
     </ProtectedRoute>
   );
 }

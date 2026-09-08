@@ -16,7 +16,7 @@ router = APIRouter(prefix="/tests/{test_id}/listening", tags=["listening"])
 def get_questions(test_id: int, set_number: int = 1, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
     if not test:
-        raise HTTPException(status_code=404, detail="Test not found")
+        raise HTTPException(status_code=404, detail="Test topilmadi")
     questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == set_number).order_by(TestQuestion.order_num).all()
     return questions
 
@@ -24,10 +24,17 @@ def get_questions(test_id: int, set_number: int = 1, current_user: User = Depend
 def submit_answers(test_id: int, batch: AnswerBatchSubmit, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
     if not test:
-        raise HTTPException(status_code=404, detail="Test not found")
+        raise HTTPException(status_code=404, detail="Test topilmadi")
+
+    # Avvalgi listening javoblari bo'lsa tozalaymiz
+    db.query(ListeningAnswer).filter(ListeningAnswer.test_id == test.id).delete()
         
     results = []
     correct_count = 0
+    total_listening_questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == 1).count()
+    if total_listening_questions == 0:
+        total_listening_questions = max(len(batch.answers), 1)
+
     for ans in batch.answers:
         q = db.query(TestQuestion).filter(TestQuestion.id == ans.question_id, TestQuestion.section == "listening").first()
         if not q:
@@ -41,13 +48,13 @@ def submit_answers(test_id: int, batch: AnswerBatchSubmit, current_user: User = 
             test_id=test.id,
             question_id=q.id,
             user_answer=ans.user_answer,
-            correct_answer=q.correct_answer,
+            correct_answer=q.correct_answer or "",
             is_correct=is_correct,
             score=1.0 if is_correct else 0.0
         )
         db.add(record)
-        results.append(AnswerResult(question_id=q.id, is_correct=is_correct, correct_answer=q.correct_answer))
+        results.append(AnswerResult(question_id=q.id, is_correct=is_correct, correct_answer=q.correct_answer or ""))
         
     db.commit()
-    final_score = calculate_listening_score(correct_count)
+    final_score = calculate_listening_score(correct_count, total_listening_questions)
     return SectionResult(score=final_score, results=results)

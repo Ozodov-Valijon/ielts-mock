@@ -79,9 +79,14 @@ export default function AdminReviewSpeakingDetail() {
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Part {speaking?.part_number || 1} Baholash
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                Part {speaking?.part_number || 1} Baholash
+              </span>
+              <span className="text-gray-500 text-sm font-semibold">
+                Talaba: <strong className="text-gray-900">{speaking?.student_name || "Noma'lum"}</strong> ({speaking?.student_email || 'Email yo\'q'})
+              </span>
+            </div>
             <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Speaking Javobini Tekshirish</h1>
           </div>
           <button 
@@ -90,6 +95,34 @@ export default function AdminReviewSpeakingDetail() {
           >
             ← Navbatga qaytish
           </button>
+        </div>
+
+        {/* Anti-Cheat Audit Banner */}
+        <div className={`mb-6 p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          speaking?.is_flagged_cheating 
+            ? 'bg-red-50 border-red-200 text-red-900' 
+            : 'bg-green-50 border-green-200 text-green-900'
+        }`}>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{speaking?.is_flagged_cheating ? '🚨' : '🛡️'}</span>
+            <div>
+              <p className="font-bold text-sm">
+                {speaking?.is_flagged_cheating 
+                  ? "DIQQAT: Ushbu testda chiterlik ehtimoli yuqori deb belgilangan!"
+                  : "Anti-Cheat Nazorati: Test intizom bilan topshirilgan."}
+              </p>
+              <p className="text-xs opacity-80 mt-0.5">
+                Vkladkani almashtirish (Tab switch): <strong>{speaking?.tab_switches ?? 0} marta</strong> &bull; Tashqaridan nusxa ko&apos;chirish (Paste): <strong>{speaking?.paste_attempts ?? 0} marta</strong>
+              </p>
+            </div>
+          </div>
+          <span className={`text-xs font-extrabold px-3 py-1 rounded-full self-start sm:self-auto ${
+            speaking?.is_flagged_cheating 
+              ? 'bg-red-200 text-red-800' 
+              : 'bg-green-200 text-green-800'
+          }`}>
+            {speaking?.is_flagged_cheating ? 'SHUBHALI TEST' : 'TOZA'}
+          </span>
         </div>
 
         {/* Audio pleer va transkript */}

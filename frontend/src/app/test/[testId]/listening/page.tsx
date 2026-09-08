@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AntiCheatGuard from '@/components/AntiCheatGuard';
 import Timer from '@/components/Timer';
 import QuestionCard from '@/components/QuestionCard';
 import AudioPlayer from '@/components/AudioPlayer';
@@ -72,7 +73,8 @@ export default function ListeningTestPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <AntiCheatGuard testId={testId}>
+        <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex-1 w-full">
             <div className="flex items-center space-x-2 mb-2">
@@ -98,13 +100,13 @@ export default function ListeningTestPage() {
                 ✓
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Listening Yakunlandi!</h3>
-              <p className="text-gray-600 mb-4">Sizning Listening bo'limi bo'yicha bahongiz:</p>
+              <p className="text-gray-600 mb-4">Sizning Listening bo&apos;limi bo&apos;yicha bahongiz:</p>
               <div className="text-6xl font-black text-blue-700 mb-6">{resultScore.toFixed(1)}</div>
               <button
                 onClick={handleProceed}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-lg shadow transition transform hover:scale-105"
               >
-                Keyingi: Writing Bo'limiga O'tish →
+                Keyingi: Writing Bo&apos;limiga O&apos;tish →
               </button>
             </div>
           ) : (
@@ -137,7 +139,8 @@ export default function ListeningTestPage() {
             </>
           )}
         </div>
-      </div>
+        </div>
+      </AntiCheatGuard>
     </ProtectedRoute>
   );
 }

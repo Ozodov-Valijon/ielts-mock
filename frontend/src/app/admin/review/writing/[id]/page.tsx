@@ -80,9 +80,14 @@ export default function AdminReviewWritingDetail() {
       <div className="max-w-6xl mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Task {writing?.task_number || 1} Baholash
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                Task {writing?.task_number || 1} Baholash
+              </span>
+              <span className="text-gray-500 text-sm font-semibold">
+                Talaba: <strong className="text-gray-900">{writing?.student_name || "Noma'lum"}</strong> ({writing?.student_email || 'Email yo\'q'})
+              </span>
+            </div>
             <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Writing Javobini Tekshirish</h1>
           </div>
           <button 
@@ -93,17 +98,45 @@ export default function AdminReviewWritingDetail() {
           </button>
         </div>
 
+        {/* Anti-Cheat Audit Banner */}
+        <div className={`mb-6 p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          writing?.is_flagged_cheating 
+            ? 'bg-red-50 border-red-200 text-red-900' 
+            : 'bg-green-50 border-green-200 text-green-900'
+        }`}>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{writing?.is_flagged_cheating ? '🚨' : '🛡️'}</span>
+            <div>
+              <p className="font-bold text-sm">
+                {writing?.is_flagged_cheating 
+                  ? "DIQQAT: Ushbu testda chiterlik ehtimoli yuqori deb belgilangan!"
+                  : "Anti-Cheat Nazorati: Test intizom bilan topshirilgan."}
+              </p>
+              <p className="text-xs opacity-80 mt-0.5">
+                Vkladkani almashtirish (Tab switch): <strong>{writing?.tab_switches ?? 0} marta</strong> &bull; Tashqaridan nusxa ko&apos;chirish (Paste): <strong>{writing?.paste_attempts ?? 0} marta</strong>
+              </p>
+            </div>
+          </div>
+          <span className={`text-xs font-extrabold px-3 py-1 rounded-full self-start sm:self-auto ${
+            writing?.is_flagged_cheating 
+              ? 'bg-red-200 text-red-800' 
+              : 'bg-green-200 text-green-800'
+          }`}>
+            {writing?.is_flagged_cheating ? 'SHUBHALI TEST' : 'TOZA'}
+          </span>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Chap ustun: Talaba matni */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
             <div className="flex justify-between items-center mb-3 border-b pb-3">
               <h2 className="text-lg font-bold text-gray-800">Talaba Inshosi</h2>
               <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-                So'zlar soni: <strong>{wordCount}</strong>
+                So&apos;zlar soni: <strong>{wordCount}</strong>
               </span>
             </div>
             <div className="prose max-w-none text-gray-800 whitespace-pre-wrap font-serif leading-relaxed bg-gray-50 p-5 rounded-xl border border-gray-200 flex-1 overflow-y-auto max-h-[500px]">
-              {writing?.user_text || "Matn yo'q"}
+              {writing?.user_text || "Matn mavjud emas"}
             </div>
           </div>
 

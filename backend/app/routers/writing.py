@@ -14,27 +14,40 @@ router = APIRouter(prefix="/tests/{test_id}/writing", tags=["writing"])
 async def submit_writing(test_id: int, writing: WritingSubmit, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
     if not test:
-        raise HTTPException(status_code=404, detail="Test not found")
+        raise HTTPException(status_code=404, detail="Test topilmadi")
         
     analysis = await analyze_writing(writing.user_text, writing.task_number)
     
-    answer = WritingAnswer(
-        test_id=test.id,
-        task_number=writing.task_number,
-        user_text=writing.user_text,
-        ai_analysis=analysis["ai_analysis"],
-        ai_score=analysis["ai_score"],
-        status="pending"
-    )
-    db.add(answer)
+    existing = db.query(WritingAnswer).filter(
+        WritingAnswer.test_id == test.id,
+        WritingAnswer.task_number == writing.task_number
+    ).first()
+
+    if existing:
+        existing.user_text = writing.user_text
+        existing.ai_analysis = analysis["ai_analysis"]
+        existing.ai_score = analysis["ai_score"]
+        existing.status = "pending"
+        answer = existing
+    else:
+        answer = WritingAnswer(
+            test_id=test.id,
+            task_number=writing.task_number,
+            user_text=writing.user_text,
+            ai_analysis=analysis["ai_analysis"],
+            ai_score=analysis["ai_score"],
+            status="pending"
+        )
+        db.add(answer)
+        
     db.commit()
     db.refresh(answer)
-    return {"message": "Submitted successfully", "ai_analysis": analysis}
+    return {"message": "Insho muvaffaqiyatli qabul qilindi", "ai_analysis": analysis}
 
 @router.get("/results")
 def get_writing_results(test_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
     if not test:
-        raise HTTPException(status_code=404, detail="Test not found")
-    results = db.query(WritingAnswer).filter(WritingAnswer.test_id == test_id).all()
+        raise HTTPException(status_code=404, detail="Test topilmadi")
+    results = db.query(WritingAnswer).filter(WritingAnswer.test_id == test_id).order_by(WritingAnswer.task_number).all()
     return results
