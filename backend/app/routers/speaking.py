@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.speaking import SpeakingAnswer
 from app.models.test import Test
+from app.models.question import TestQuestion
 from app.services.auth import get_current_user
 from app.models.user import User
 from app.services.ai_speaking import transcribe_audio, analyze_speaking
@@ -72,3 +73,11 @@ def get_speaking_results(test_id: int, current_user: User = Depends(get_current_
         raise HTTPException(status_code=404, detail="Test topilmadi")
     results = db.query(SpeakingAnswer).filter(SpeakingAnswer.test_id == test_id).order_by(SpeakingAnswer.part_number).all()
     return results
+
+@router.get("/topics")
+def get_speaking_topics(test_id: int, set_number: int = 1, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
+    if not test:
+        raise HTTPException(status_code=404, detail="Test topilmadi")
+    questions = db.query(TestQuestion).filter(TestQuestion.section == "speaking", TestQuestion.set_number == set_number).order_by(TestQuestion.order_num).all()
+    return questions

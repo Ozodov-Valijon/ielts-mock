@@ -5,23 +5,35 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AntiCheatGuard from '@/components/AntiCheatGuard';
 import Timer from '@/components/Timer';
 import { api } from '@/lib/api';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
 export default function WritingTestPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const testId = String(params.testId);
+  const setNumber = Number(searchParams?.get('set')) || 1;
 
   const [activeTab, setActiveTab] = useState<'task1' | 'task2'>('task1');
   const [task1Text, setTask1Text] = useState('');
   const [task2Text, setTask2Text] = useState('');
+  const [task1Prompt, setTask1Prompt] = useState('The bar chart illustrates the percentage of university graduates in three European countries who found full-time employment within six months of graduation between 2010 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.');
+  const [task2Prompt, setTask2Prompt] = useState('Some educators argue that technological advancement and artificial intelligence will eventually replace traditional classroom teaching, while others believe that the physical presence of a human teacher remains indispensable. Discuss both views and present your personal perspective with relevant examples.');
   const [submitting, setSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [aiScore, setAiScore] = useState<number | null>(null);
 
   useEffect(() => {
-    async function loadExisting() {
+    async function loadData() {
       try {
+        const topics = await api.getWritingTopics(testId, setNumber);
+        if (topics && topics.length > 0) {
+          const t1 = topics.find((t: any) => t.order_num === 1);
+          const t2 = topics.find((t: any) => t.order_num === 2);
+          if (t1?.question_text) setTask1Prompt(t1.question_text);
+          if (t2?.question_text) setTask2Prompt(t2.question_text);
+        }
+
         const results = await api.getWritingResults(testId);
         if (results && results.length > 0) {
           results.forEach((r: any) => {
@@ -37,11 +49,11 @@ export default function WritingTestPage() {
           }
         }
       } catch (e) {
-        console.error("Mavjud writing javoblarini yuklashda xatolik:", e);
+        console.error("Mavjud writing ma'lumotlarini yuklashda xatolik:", e);
       }
     }
-    loadExisting();
-  }, [testId]);
+    loadData();
+  }, [testId, setNumber]);
 
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(word => word.length > 0).length;
 
@@ -68,7 +80,7 @@ export default function WritingTestPage() {
   };
 
   const handleNext = () => {
-    router.push(`/test/${testId}/speaking`);
+    router.push(`/test/${testId}/speaking?set=${setNumber}`);
   };
 
   return (
@@ -78,7 +90,7 @@ export default function WritingTestPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              IELTS Writing (Anti-Cheat Faol)
+              IELTS Writing (Set #{setNumber})
             </span>
             <h1 className="text-2xl font-bold text-gray-900 mt-1">Writing Bo&apos;limi (Task 1 &amp; Task 2)</h1>
           </div>
@@ -131,8 +143,7 @@ export default function WritingTestPage() {
                 <div>
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 text-sm text-gray-800 leading-relaxed">
                     <strong className="block text-blue-900 font-bold mb-1">Task 1 Topshirig&apos;i:</strong>
-                    The bar chart illustrates the percentage of university graduates in three European countries who found full-time employment within six months of graduation between 2010 and 2020.
-                    Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
+                    {task1Prompt}
                   </div>
                   <textarea
                     value={task1Text}
@@ -155,8 +166,7 @@ export default function WritingTestPage() {
                 <div>
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 text-sm text-gray-800 leading-relaxed">
                     <strong className="block text-blue-900 font-bold mb-1">Task 2 Topshirig&apos;i:</strong>
-                    Some educators argue that technological advancement and artificial intelligence will eventually replace traditional classroom teaching, while others believe that the physical presence of a human teacher remains indispensable.
-                    Discuss both views and present your personal perspective with relevant examples.
+                    {task2Prompt}
                   </div>
                   <textarea
                     value={task2Text}

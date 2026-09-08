@@ -7,13 +7,15 @@ import Timer from '@/components/Timer';
 import QuestionCard from '@/components/QuestionCard';
 import { api } from '@/lib/api';
 import { Question } from '@/lib/types';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function ReadingTestPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const testId = String(params.testId);
+  const setNumber = Number(searchParams?.get('set')) || 1;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -25,7 +27,7 @@ export default function ReadingTestPage() {
     async function loadQuestions() {
       try {
         setLoading(true);
-        const data = await api.getReadingQuestions(testId);
+        const data = await api.getReadingQuestions(testId, setNumber);
         setQuestions(data);
       } catch (err: any) {
         console.error("Savollarni yuklashda xatolik:", err);
@@ -34,7 +36,7 @@ export default function ReadingTestPage() {
       }
     }
     loadQuestions();
-  }, [testId]);
+  }, [testId, setNumber]);
 
   const handleAnswerChange = (questionId: number, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -59,7 +61,7 @@ export default function ReadingTestPage() {
   };
 
   const handleProceed = () => {
-    router.push(`/test/${testId}/listening`);
+    router.push(`/test/${testId}/listening?set=${setNumber}`);
   };
 
   if (loading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
@@ -73,7 +75,7 @@ export default function ReadingTestPage() {
         <div className="w-full md:w-1/2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-y-auto p-6 md:p-8 max-h-[85vh]">
           <div className="flex items-center justify-between mb-4 border-b pb-3">
             <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Reading Section 1
+              Reading Test (Set #{setNumber})
             </span>
             <span className="text-xs text-gray-500 font-medium">Jami {questions.length} ta savol</span>
           </div>

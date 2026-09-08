@@ -5,20 +5,36 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AntiCheatGuard from '@/components/AntiCheatGuard';
 import AudioRecorder from '@/components/AudioRecorder';
 import { api } from '@/lib/api';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
 export default function SpeakingTestPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const testId = String(params.testId);
+  const setNumber = Number(searchParams?.get('set')) || 1;
 
   const [partStatus, setPartStatus] = useState<Record<number, 'pending' | 'uploading' | 'completed'>>({
     1: 'pending', 2: 'pending', 3: 'pending'
   });
 
+  const [part1Prompt, setPart1Prompt] = useState("- Can you tell me a little bit about your hometown?\n- Do you work or are you a student?\n- What do you enjoy most about your daily routine?");
+  const [part2Prompt, setPart2Prompt] = useState("Describe an ambitious goal that you have achieved in your life.\nYou should say:\n- What the goal was\n- When and why you set it\n- What steps you took to achieve it\nand explain how you felt when you successfully accomplished it.");
+  const [part3Prompt, setPart3Prompt] = useState("- In what ways do personal goals influence an individual's motivation?\n- Do you think people today set more realistic goals than previous generations?\n- How has technology affected people's expectations regarding personal success?");
+
   useEffect(() => {
-    async function loadExisting() {
+    async function loadData() {
       try {
+        const topics = await api.getSpeakingTopics(testId, setNumber);
+        if (topics && topics.length > 0) {
+          const p1 = topics.find((t: any) => t.order_num === 1);
+          const p2 = topics.find((t: any) => t.order_num === 2);
+          const p3 = topics.find((t: any) => t.order_num === 3);
+          if (p1?.question_text) setPart1Prompt(p1.question_text);
+          if (p2?.question_text) setPart2Prompt(p2.question_text);
+          if (p3?.question_text) setPart3Prompt(p3.question_text);
+        }
+
         const results = await api.getSpeakingResults(testId);
         if (results && results.length > 0) {
           setPartStatus(prev => {
@@ -30,11 +46,11 @@ export default function SpeakingTestPage() {
           });
         }
       } catch (e) {
-        console.error("Mavjud speaking javoblarini yuklashda xatolik:", e);
+        console.error("Mavjud speaking ma'lumotlarini yuklashda xatolik:", e);
       }
     }
-    loadExisting();
-  }, [testId]);
+    loadData();
+  }, [testId, setNumber]);
 
   const handleAudioComplete = async (part: number, blob: Blob) => {
     setPartStatus(prev => ({ ...prev, [part]: 'uploading' }));
@@ -100,15 +116,15 @@ export default function SpeakingTestPage() {
         <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="text-center mb-8">
           <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            IELTS Speaking
+            IELTS Speaking (Set #{setNumber})
           </span>
           <h1 className="text-3xl font-extrabold text-gray-900 mt-2">Speaking Bo&apos;limi (Part 1, 2, 3)</h1>
           <p className="text-gray-600 text-sm mt-1">Mikrofon orqali savollarga ingliz tilida javob bering va yozuvni to&apos;xtating.</p>
         </div>
 
-        {renderPart(1, 'Part 1: Introduction & Familiar Topics', "- Can you tell me a little bit about your hometown?\n- Do you work or are you a student?\n- What do you enjoy most about your daily routine?")}
-        {renderPart(2, 'Part 2: Individual Long Turn (Cue Card)', "Describe an ambitious goal that you have achieved in your life.\nYou should say:\n- What the goal was\n- When and why you set it\n- What steps you took to achieve it\nand explain how you felt when you successfully accomplished it.")}
-        {renderPart(3, 'Part 3: Two-way Discussion', "- In what ways do personal goals influence an individual's motivation?\n- Do you think people today set more realistic goals than previous generations?\n- How has technology affected people's expectations regarding personal success?")}
+        {renderPart(1, 'Part 1: Introduction & Familiar Topics', part1Prompt)}
+        {renderPart(2, 'Part 2: Individual Long Turn (Cue Card)', part2Prompt)}
+        {renderPart(3, 'Part 3: Two-way Discussion', part3Prompt)}
 
         {allCompleted && (
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-8 rounded-2xl text-center mt-8 shadow-xl">

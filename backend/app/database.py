@@ -5,24 +5,26 @@ import logging
 
 logger = logging.getLogger("ielts_database")
 
-# PostgreSQL ga ulanishni sinab ko'ramiz, xatolik bo'lsa SQLite fallback
-engine = None
-try:
-    if settings.DATABASE_URL.startswith("postgresql"):
-        test_engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
-        # Ulanishni sinab ko'rish
-        with test_engine.connect() as conn:
-            pass
-        engine = test_engine
-        logger.info("PostgreSQL ma'lumotlar bazasiga muvaffaqiyatli ulandi.")
-    else:
-        connect_args = {"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
-        engine = create_engine(settings.DATABASE_URL, connect_args=connect_args)
-except Exception as e:
-    logger.warning(f"PostgreSQL ga ulanib bo'lmadi ({e}). SQLite bazasiga o'tkazilmoqda...")
-    fallback_url = "sqlite:///./ielts_mock.db"
-    engine = create_engine(fallback_url, connect_args={"check_same_thread": False})
-    logger.info("SQLite bazasi ishga tushirildi: ielts_mock.db")
+def _create_engine():
+    """Create the configured database engine without silently changing production data."""
+    database_url = settings.DATABASE_URL
+    connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+
+    try:
+        engine = create_engine(database_url, pool_pre_ping=not database_url.startswith("sqlite"), connect_args=connect_args)
+        if database_url.startswith("postgresql"):
+            with engine.connect():
+                pass
+        logger.info("Ma'lumotlar bazasiga ulandi: %s", database_url.split("@")[-1])
+        return engine
+    except Exception as exc:
+        if settings.ENVIRONMENT.lower() == "production":
+            raise RuntimeError("Production ma'lumotlar bazasiga ulanib bo'lmadi.") from exc
+        logger.warning("Ma'lumotlar bazasiga ulanib bo'lmadi (%s).", exc)
+        raise
+
+
+engine = _create_engine()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

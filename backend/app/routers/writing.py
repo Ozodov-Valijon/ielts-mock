@@ -6,6 +6,7 @@ from app.models.test import Test
 from app.schemas.answer import WritingSubmit
 from app.services.auth import get_current_user
 from app.models.user import User
+from app.models.question import TestQuestion
 from app.services.ai_writing import analyze_writing
 
 router = APIRouter(prefix="/tests/{test_id}/writing", tags=["writing"])
@@ -51,3 +52,11 @@ def get_writing_results(test_id: int, current_user: User = Depends(get_current_u
         raise HTTPException(status_code=404, detail="Test topilmadi")
     results = db.query(WritingAnswer).filter(WritingAnswer.test_id == test_id).order_by(WritingAnswer.task_number).all()
     return results
+
+@router.get("/topics")
+def get_writing_topics(test_id: int, set_number: int = 1, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
+    if not test:
+        raise HTTPException(status_code=404, detail="Test topilmadi")
+    questions = db.query(TestQuestion).filter(TestQuestion.section == "writing", TestQuestion.set_number == set_number).order_by(TestQuestion.order_num).all()
+    return questions

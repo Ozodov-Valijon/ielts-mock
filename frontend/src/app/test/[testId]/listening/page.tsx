@@ -8,13 +8,15 @@ import QuestionCard from '@/components/QuestionCard';
 import AudioPlayer from '@/components/AudioPlayer';
 import { api } from '@/lib/api';
 import { Question } from '@/lib/types';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function ListeningTestPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const testId = String(params.testId);
+  const setNumber = Number(searchParams?.get('set')) || 1;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -27,7 +29,7 @@ export default function ListeningTestPage() {
     async function loadQuestions() {
       try {
         setLoading(true);
-        const data = await api.getListeningQuestions(testId);
+        const data = await api.getListeningQuestions(testId, setNumber);
         setQuestions(data);
         if (data && data.length > 0 && data[0].audio_url) {
           setAudioUrl(data[0].audio_url);
@@ -41,7 +43,7 @@ export default function ListeningTestPage() {
       }
     }
     loadQuestions();
-  }, [testId]);
+  }, [testId, setNumber]);
 
   const handleAnswerChange = (questionId: number, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -66,7 +68,7 @@ export default function ListeningTestPage() {
   };
 
   const handleProceed = () => {
-    router.push(`/test/${testId}/writing`);
+    router.push(`/test/${testId}/writing?set=${setNumber}`);
   };
 
   if (loading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
@@ -79,7 +81,7 @@ export default function ListeningTestPage() {
           <div className="flex-1 w-full">
             <div className="flex items-center space-x-2 mb-2">
               <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Listening Section 1
+                Listening Test (Set #{setNumber})
               </span>
               <span className="text-xs text-gray-500">Audio 1 marta ijro etiladi</span>
             </div>

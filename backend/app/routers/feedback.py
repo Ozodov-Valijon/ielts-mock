@@ -22,9 +22,20 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
     if not test:
         raise HTTPException(status_code=404, detail="Test topilmadi")
 
-    # Savollar sonini aniqlash
-    total_r_questions = db.query(TestQuestion).filter(TestQuestion.section == "reading", TestQuestion.set_number == 1).count() or 5
-    total_l_questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == 1).count() or 5
+    # Savollar sonini to'plam (set) bo'yicha dinamik aniqlash
+    first_ra = db.query(ReadingAnswer).filter(ReadingAnswer.test_id == test_id).first()
+    set_r = 1
+    if first_ra:
+        q_r = db.query(TestQuestion).filter(TestQuestion.id == first_ra.question_id).first()
+        if q_r: set_r = q_r.set_number
+    total_r_questions = db.query(TestQuestion).filter(TestQuestion.section == "reading", TestQuestion.set_number == set_r).count() or 5
+
+    first_la = db.query(ListeningAnswer).filter(ListeningAnswer.test_id == test_id).first()
+    set_l = 1
+    if first_la:
+        q_l = db.query(TestQuestion).filter(TestQuestion.id == first_la.question_id).first()
+        if q_l: set_l = q_l.set_number
+    total_l_questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == set_l).count() or 5
 
     r_correct_count = db.query(ReadingAnswer).filter(ReadingAnswer.test_id == test_id, ReadingAnswer.is_correct == True).count()
     l_correct_count = db.query(ListeningAnswer).filter(ListeningAnswer.test_id == test_id, ListeningAnswer.is_correct == True).count()

@@ -38,7 +38,7 @@ def log_anticheat_event(
     if not test:
         raise HTTPException(status_code=404, detail="Test topilmadi")
 
-    if event.event_type == "tab_switch":
+    if event.event_type in ["tab_switch", "fullscreen_exit", "window_blur"]:
         test.tab_switches = (test.tab_switches or 0) + 1
     elif event.event_type == "paste_attempt":
         test.paste_attempts = (test.paste_attempts or 0) + 1

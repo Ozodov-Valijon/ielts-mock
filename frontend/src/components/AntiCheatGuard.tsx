@@ -1,30 +1,41 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
 
 interface AntiCheatGuardProps {
   testId: string | number;
   children: React.ReactNode;
   allowPaste?: boolean;
+  requireFullscreen?: boolean;
 }
 
-export default function AntiCheatGuard({ testId, children, allowPaste = false }: AntiCheatGuardProps) {
+export default function AntiCheatGuard({ 
+  testId, 
+  children, 
+  allowPaste = false,
+  requireFullscreen = true 
+}: AntiCheatGuardProps) {
   const [warnings, setWarnings] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [isFlagged, setIsFlagged] = useState(false);
-  const lastEventTimeRef = React.useRef<number>(0);
+  
+  // Fullscreen nazorati
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasEnteredOnce, setHasEnteredOnce] = useState(false);
+  const hasEnteredOnceRef = useRef(false);
+  const lastEventTimeRef = useRef<number>(0);
 
-  const reportEvent = useCallback(async (eventType: 'tab_switch' | 'paste_attempt', message: string) => {
+  const reportEvent = useCallback(async (eventType: 'tab_switch' | 'paste_attempt' | 'fullscreen_exit', message: string) => {
     const now = Date.now();
-    if (eventType === 'tab_switch' && now - lastEventTimeRef.current < 1500) {
+    if ((eventType === 'tab_switch' || eventType === 'fullscreen_exit') && now - lastEventTimeRef.current < 1500) {
       return;
     }
     lastEventTimeRef.current = now;
 
     try {
-      const res = await api.logAntiCheatEvent(testId, eventType);
+      const res = await api.logAntiCheatEvent(testId, eventType, message);
       const newWarnings = (res.tab_switches || 0) + (res.paste_attempts || 0);
       setWarnings(newWarnings);
       if (res.is_flagged_cheating) {
@@ -37,21 +48,105 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
     }
   }, [testId]);
 
-  // 1. Tab switch va Window blur nazorati
+  // To'liq ekranga o'tish funksiyasi
+  const enterFullscreen = async () => {
+    try {
+      const docEl = document.documentElement as any;
+      if (docEl.requestFullscreen) {
+        await docEl.requestFullscreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        await docEl.webkitRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        await docEl.mozRequestFullScreen();
+      } else if (docEl.msRequestFullscreen) {
+        await docEl.msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+      setHasEnteredOnce(true);
+      hasEnteredOnceRef.current = true;
+    } catch (err) {
+      console.warn("Fullscreen ochishda brauzer cheklovi:", err);
+      // Brauzer to'liq ruxsat bermasa ham interfeysni ochish
+      setIsFullscreen(true);
+      setHasEnteredOnce(true);
+      hasEnteredOnceRef.current = true;
+    }
+  };
+
+  // 1. Fullscreen o'zgarishlarini kuzatish
+  useEffect(() => {
+    if (!requireFullscreen) {
+      setIsFullscreen(true);
+      return;
+    }
+
+    const checkFullscreenStatus = () => {
+      const isFull = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+
+      setIsFullscreen(isFull);
+
+      // Agar oldin to'liq ekranda bo'lib, keyin chiqib ketgan bo'lsa -> Qoidabuzarlik!
+      if (!isFull && hasEnteredOnceRef.current) {
+        reportEvent(
+          'fullscreen_exit', 
+          "Siz to'liq ekran (Fullscreen) rejimidan chiqdingiz! IELTS Mock imtihonida boshqa oynalarga o'tmaslik uchun faqat to'liq ekran ruxsat etiladi."
+        );
+      }
+    };
+
+    // Boshlang'ich tekshirish
+    checkFullscreenStatus();
+
+    document.addEventListener('fullscreenchange', checkFullscreenStatus);
+    document.addEventListener('webkitfullscreenchange', checkFullscreenStatus);
+    document.addEventListener('mozfullscreenchange', checkFullscreenStatus);
+    document.addEventListener('MSFullscreenChange', checkFullscreenStatus);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', checkFullscreenStatus);
+      document.removeEventListener('webkitfullscreenchange', checkFullscreenStatus);
+      document.removeEventListener('mozfullscreenchange', checkFullscreenStatus);
+      document.removeEventListener('MSFullscreenChange', checkFullscreenStatus);
+    };
+  }, [requireFullscreen, reportEvent]);
+
+  // 2. Sahifani tasodifan yopish yoki yangilashni to'xtatish (beforeunload)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "Imtihon davom etmoqda. Sahifadan chiqib ketish natijangiz bekor bo'lishiga olib kelishi mumkin!";
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // 3. Tab switch va Window blur nazorati
   useEffect(() => {
     let timeoutId: any = null;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        reportEvent('tab_switch', "Siz test sahifasidan chiqib boshqa tab yoki ilovaga o'tdingiz. IELTS Mock testida tashqi manbalardan foydalanish qat'iyan taqiqlanadi!");
+        reportEvent(
+          'tab_switch', 
+          "Siz test sahifasidan chiqib boshqa vkladka yoki dasturga o'tdingiz. IELTS Mock testida tashqi manbalardan foydalanish qat'iyan taqiqlanadi!"
+        );
       }
     };
 
     const handleBlur = () => {
-      // 500ms kutib tekshiramiz (kichik fokus almashishlarini filtrlash uchun)
       timeoutId = setTimeout(() => {
         if (!document.hasFocus()) {
-          reportEvent('tab_switch', "Brauzer oynasidan tashqariga chiqildi. Test paytida boshqa dasturlarni ochish taqiqlanadi!");
+          reportEvent(
+            'tab_switch', 
+            "Brauzer oynasidan tashqariga chiqildi. Test paytida boshqa dasturlarni ochish taqiqlanadi!"
+          );
         }
       }, 500);
     };
@@ -66,7 +161,7 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
     };
   }, [reportEvent]);
 
-  // 2. Klaviatura va sichqoncha xavfsizligi
+  // 4. Klaviatura va sichqoncha xavfsizligi (DevTools, Paste, Copy bloklash)
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
@@ -79,7 +174,7 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
         return;
       }
 
-      // Ctrl + Shift + I (DevTools) yoki Ctrl + Shift + J
+      // Ctrl + Shift + I/J/C
       if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
         e.preventDefault();
         return;
@@ -91,9 +186,8 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
         return;
       }
 
-      // Ctrl + C (Nusxa ko'chirish)
+      // Ctrl + C (Nusxa ko'chirish - faqat input/textarea bo'lmasa bloklanadi)
       if ((e.ctrlKey || e.metaKey) && (e.key === 'C' || e.key === 'c')) {
-        // Agar forma maydoni ichida bo'lmasa, nusxalashni cheklash
         const target = e.target as HTMLElement;
         const isInputField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
         if (!isInputField) {
@@ -107,7 +201,7 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
       // Ctrl + V (Paste)
       if (!allowPaste && (e.ctrlKey || e.metaKey) && (e.key === 'V' || e.key === 'v')) {
         e.preventDefault();
-        reportEvent('paste_attempt', "Tashqaridan matn nusxasini tashlash (Paste) taqiqlanadi! Inshoni o'zingiz yozing.");
+        reportEvent('paste_attempt', "Tashqaridan matn nusxasini tashlash (Paste) taqiqlanadi! Inshoni klaviaturada o'zingiz yozing.");
         return;
       }
     };
@@ -125,7 +219,7 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
     const handlePaste = (e: ClipboardEvent) => {
       if (!allowPaste) {
         e.preventDefault();
-        reportEvent('paste_attempt', "Tashqaridan matn nusxasini tashlash (Paste) taqiqlanadi! Inshoni o'zingiz yozing.");
+        reportEvent('paste_attempt', "Tashqaridan matn nusxasini tashlash (Paste) taqiqlanadi! Inshoni klaviaturada o'zingiz yozing.");
       }
     };
 
@@ -144,6 +238,57 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
 
   return (
     <div className="relative select-none">
+      {/* 🔒 Majburiy To'liq Ekran (Fullscreen) Bloklash Pardasi */}
+      {requireFullscreen && !isFullscreen && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-white text-center select-none backdrop-blur-xl">
+          <div className="max-w-lg w-full bg-slate-900 border-2 border-blue-500/80 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
+            <div className="w-24 h-24 bg-blue-500/10 text-blue-400 rounded-3xl flex items-center justify-center text-5xl mx-auto mb-6 border border-blue-500/20 shadow-inner">
+              🖥️
+            </div>
+            
+            <span className="bg-blue-500/20 text-blue-300 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider mb-3 inline-block border border-blue-500/30">
+              Anti-Cheat Himoyalangan Muhit
+            </span>
+            
+            <h2 className="text-3xl font-black text-white mb-3 tracking-tight">
+              {hasEnteredOnce 
+                ? "Diqqat: To'liq Ekrandan Chiqildi!" 
+                : "To'liq Ekran (Fullscreen) Rejimi"}
+            </h2>
+            
+            <p className="text-slate-300 text-sm sm:text-base mb-8 leading-relaxed">
+              {hasEnteredOnce ? (
+                <>
+                  Siz to&apos;liq ekran rejimidan chiqdingiz. Rasmiy IELTS Mock talabiga ko&apos;ra, boshqa dasturlar yoki oynalarga o&apos;tmaslik uchun test faqat <strong>to&apos;liq ekranda</strong> davom ettiriladi.
+                </>
+              ) : (
+                <>
+                  Rasmiy IELTS Mock qoidalariga ko&apos;ra, imtihon paytida xavfsizlikni ta&apos;minlash va chalg&apos;imaslik uchun test <strong>to&apos;liq ekran</strong> rejimida o&apos;tkaziladi. Oynadan chiqib ketish taqiqlanadi.
+                </>
+              )}
+            </p>
+
+            {warnings > 0 && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold rounded-xl p-3 mb-6">
+                Qayd etilgan qoidabuzarliklar: <span className="text-sm font-black">{warnings} / 3</span>
+              </div>
+            )}
+
+            <button
+              onClick={enterFullscreen}
+              className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold py-4 px-6 rounded-2xl transition transform hover:scale-[1.02] shadow-2xl text-lg flex items-center justify-center gap-3 cursor-pointer"
+            >
+              <span className="text-2xl">{hasEnteredOnce ? "🔄" : "🚀"}</span>
+              <span>{hasEnteredOnce ? "To'liq Ekranga Qaytish va Davom Etish" : "To'liq Ekranga O'tish va Boshlash"}</span>
+            </button>
+
+            <p className="text-slate-400 text-xs mt-5">
+              Esc yoki boshqa vkladkaga o&apos;tish avtomatik qoidabuzarlik deb hisoblanadi.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Yuqori o'ng burchakdagi Anti-Cheat status nishoni */}
       <div className="fixed top-20 right-4 z-40 bg-white/95 backdrop-blur border border-gray-200 shadow-md rounded-full px-4 py-1.5 flex items-center space-x-2 text-xs font-bold">
         <span className={`w-2.5 h-2.5 rounded-full animate-ping ${isFlagged ? 'bg-red-600' : warnings > 0 ? 'bg-orange-500' : 'bg-green-500'}`}></span>
@@ -190,7 +335,12 @@ export default function AntiCheatGuard({ testId, children, allowPaste = false }:
             </div>
 
             <button
-              onClick={() => setShowModal(false)}
+              onClick={() => {
+                setShowModal(false);
+                if (requireFullscreen && !isFullscreen) {
+                  enterFullscreen();
+                }
+              }}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg"
             >
               Qoidalarni Tushundim, Testga Qaytish

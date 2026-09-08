@@ -31,7 +31,14 @@ def submit_answers(test_id: int, batch: AnswerBatchSubmit, current_user: User = 
         
     results = []
     correct_count = 0
-    total_listening_questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == 1).count()
+
+    set_num = 1
+    if batch.answers:
+        first_q = db.query(TestQuestion).filter(TestQuestion.id == batch.answers[0].question_id).first()
+        if first_q:
+            set_num = first_q.set_number
+
+    total_listening_questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == set_num).count()
     if total_listening_questions == 0:
         total_listening_questions = max(len(batch.answers), 1)
 
