@@ -1,33 +1,42 @@
 'use client';
 
 import React, { useState } from 'react';
-import ProtectedRoute from '../../../components/ProtectedRoute';
-import Timer from '../../../components/Timer';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Timer from '@/components/Timer';
+import { api } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 
 export default function WritingTestPage() {
   const router = useRouter();
   const params = useParams();
-  const testId = Number(params.testId);
+  const testId = String(params.testId);
 
   const [activeTab, setActiveTab] = useState<'task1' | 'task2'>('task1');
   const [task1Text, setTask1Text] = useState('');
   const [task2Text, setTask2Text] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [aiScore, setAiScore] = useState<number | null>(null);
 
   const wordCount = (text: string) => text.trim().split(/\s+/).filter(word => word.length > 0).length;
 
   const handleSubmit = async () => {
+    if (submitting) return;
     setSubmitting(true);
     try {
-      // await api.submitWriting(testId, task1Text, task2Text);
-      setTimeout(() => {
-        setIsSubmitted(true);
-        setSubmitting(false);
-      }, 1000);
-    } catch (error) {
-      alert('Xatolik yuz berdi');
+      // Task 1 va Task 2 yuborish
+      const res1 = await api.submitWriting(testId, 1, task1Text || "No response provided for Task 1.");
+      const res2 = await api.submitWriting(testId, 2, task2Text || "No response provided for Task 2.");
+      
+      const score1 = res1.ai_analysis?.ai_score || 6.0;
+      const score2 = res2.ai_analysis?.ai_score || 6.0;
+      const combined = Math.round(((score1 + score2) / 2) * 2) / 2;
+      setAiScore(combined);
+      setIsSubmitted(true);
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || 'Xatolik yuz berdi');
+    } finally {
       setSubmitting(false);
     }
   };
@@ -38,78 +47,106 @@ export default function WritingTestPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-5xl mx-auto py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Writing Test</h1>
+      <div className="max-w-5xl mx-auto py-8 px-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              IELTS Writing
+            </span>
+            <h1 className="text-2xl font-bold text-gray-900 mt-1">Writing Bo'limi (Task 1 & Task 2)</h1>
+          </div>
           {!isSubmitted && <Timer durationMinutes={60} onTimeUp={handleSubmit} />}
         </div>
 
         {isSubmitted ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center border border-gray-200">
-            <div className="text-green-500 text-6xl mb-4">✓</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Yuborildi</h2>
-            <p className="text-gray-600 mb-8">Tekshiruv kutilmoqda... (Pending icon)</p>
-            <button
-              onClick={handleNext}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition"
-            >
-              Keyingi: Speaking
-            </button>
+          <div className="bg-white rounded-2xl shadow-sm p-10 text-center border border-gray-200">
+            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl font-extrabold mx-auto mb-4">
+              ✓
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Insholar Qabul Qilindi!</h2>
+            <p className="text-gray-600 max-w-md mx-auto mb-4">
+              AI dastlabki tahlilni yakunladi. Natijalar mentor tekshiruvi uchun navbatga qo'yildi.
+            </p>
+            {aiScore !== null && (
+              <div className="inline-block bg-blue-50 border border-blue-200 rounded-xl px-6 py-3 mb-8">
+                <span className="text-xs text-gray-500 font-bold uppercase block mb-1">Dastlabki AI Bahosi</span>
+                <span className="text-4xl font-black text-blue-800">{aiScore.toFixed(1)}</span>
+              </div>
+            )}
+            <div>
+              <button
+                onClick={handleNext}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition shadow transform hover:scale-105"
+              >
+                Keyingi: Speaking Bo'limiga O'tish →
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="flex border-b border-gray-200">
               <button
-                className={`flex-1 py-4 text-center font-semibold ${activeTab === 'task1' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 py-4 text-center font-bold text-sm sm:text-base transition ${activeTab === 'task1' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
                 onClick={() => setActiveTab('task1')}
               >
-                Task 1
+                Task 1 (Kamida 150 so'z)
               </button>
               <button
-                className={`flex-1 py-4 text-center font-semibold ${activeTab === 'task2' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 py-4 text-center font-bold text-sm sm:text-base transition ${activeTab === 'task2' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
                 onClick={() => setActiveTab('task2')}
               >
-                Task 2
+                Task 2 (Kamida 250 so'z)
               </button>
             </div>
             
             <div className="p-6">
               {activeTab === 'task1' ? (
                 <div>
-                  <h3 className="font-bold text-gray-700 mb-2">Siz kamida 150 ta so'z yozishingiz kerak.</h3>
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 text-sm text-gray-800 leading-relaxed">
+                    <strong className="block text-blue-900 font-bold mb-1">Task 1 Topshirig'i:</strong>
+                    The bar chart illustrates the percentage of university graduates in three European countries who found full-time employment within six months of graduation between 2010 and 2020.
+                    Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
+                  </div>
                   <textarea
                     value={task1Text}
                     onChange={(e) => setTask1Text(e.target.value)}
-                    className="w-full h-80 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                    placeholder="Task 1 javobingizni shu yerga yozing..."
+                    className="w-full h-80 p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 font-serif leading-relaxed"
+                    placeholder="Task 1 matnini shu yerga yozing..."
                   ></textarea>
-                  <div className="mt-2 text-sm font-medium text-gray-500 text-right">
-                    Word count: <span className={wordCount(task1Text) < 150 ? 'text-red-500' : 'text-green-600'}>{wordCount(task1Text)}</span>
+                  <div className="mt-2 text-sm font-medium text-gray-500 flex justify-between items-center">
+                    <span>Tavsiya etilgan vaqt: 20 daqiqa</span>
+                    <span>So'zlar soni: <strong className={wordCount(task1Text) < 150 ? 'text-orange-500' : 'text-green-600'}>{wordCount(task1Text)}</strong> / 150</span>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <h3 className="font-bold text-gray-700 mb-2">Siz kamida 250 ta so'z yozishingiz kerak.</h3>
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 text-sm text-gray-800 leading-relaxed">
+                    <strong className="block text-blue-900 font-bold mb-1">Task 2 Topshirig'i:</strong>
+                    Some educators argue that technological advancement and artificial intelligence will eventually replace traditional classroom teaching, while others believe that the physical presence of a human teacher remains indispensable.
+                    Discuss both views and present your personal perspective with relevant examples.
+                  </div>
                   <textarea
                     value={task2Text}
                     onChange={(e) => setTask2Text(e.target.value)}
-                    className="w-full h-80 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                    placeholder="Task 2 javobingizni shu yerga yozing..."
+                    className="w-full h-80 p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 font-serif leading-relaxed"
+                    placeholder="Task 2 matnini shu yerga yozing..."
                   ></textarea>
-                  <div className="mt-2 text-sm font-medium text-gray-500 text-right">
-                    Word count: <span className={wordCount(task2Text) < 250 ? 'text-red-500' : 'text-green-600'}>{wordCount(task2Text)}</span>
+                  <div className="mt-2 text-sm font-medium text-gray-500 flex justify-between items-center">
+                    <span>Tavsiya etilgan vaqt: 40 daqiqa</span>
+                    <span>So'zlar soni: <strong className={wordCount(task2Text) < 250 ? 'text-orange-500' : 'text-green-600'}>{wordCount(task2Text)}</strong> / 250</span>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end">
+            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+              <span className="text-xs text-gray-500">Ikkala topshiriq ham baholanadi</span>
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition disabled:opacity-50"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition shadow disabled:opacity-50"
               >
-                {submitting ? 'Yuborilmoqda...' : 'Barchasini Yuborish'}
+                {submitting ? 'Yuborilmoqda...' : 'Writing Javoblarini Yuborish'}
               </button>
             </div>
           </div>

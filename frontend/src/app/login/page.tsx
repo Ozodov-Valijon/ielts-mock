@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '../../lib/auth';
-import { api } from '../../lib/api';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -12,7 +10,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,65 +17,75 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Mock API call
-      // const res = await api.post('/auth/login', { email, password });
-      // login(res.token, res.user);
-      
-      // Temporary mock logic for demonstration
-      if (email && password) {
-        login('dummy-token', {
-          id: '1',
-          full_name: 'Test User',
-          email,
-          role: email.includes('admin') ? 'admin' : 'student',
-        });
-        router.push('/dashboard');
-      } else {
-        setError('Iltimos, barcha maydonlarni toldiring.');
-      }
+      await login({ email, password });
     } catch (err: any) {
-      setError(err.message || 'Xatolik yuz berdi');
+      setError(err.message || 'Email yoki parol xato kiritildi');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10">
-      <div className="bg-white p-8 rounded-lg shadow-md border border-gray-100">
-        <h1 className="text-2xl font-bold text-center mb-6 text-blue-800">Tizimga Kirish</h1>
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
+    <div className="max-w-md mx-auto my-12 px-4">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+        <div className="text-center mb-8">
+          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+            IELTS Mock Portal
+          </span>
+          <h1 className="text-2xl font-extrabold text-gray-900 mt-2">Tizimga Kirish</h1>
+          <p className="text-gray-500 text-xs mt-1">Hisobingizga kiring va test topshirishni davom eting</p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-6 text-sm font-medium">
+            ⚠️ {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email Manzil</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+              placeholder="talaba@ielts.uz"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Parol (Password)</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Parol (Password)</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+              placeholder="••••••••"
               required
             />
           </div>
+
+          <div className="bg-blue-50 p-3 rounded-xl text-xs text-blue-900 leading-relaxed border border-blue-100">
+            <strong>Sinov hisoblari:</strong><br />
+            • Talaba: <code>student@ielts.uz</code> / <code>student123</code><br />
+            • Admin: <code>admin@ielts.uz</code> / <code>admin123</code>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-800 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow disabled:opacity-50"
           >
-            {loading ? 'Kutilmoqda...' : 'Kirish'}
+            {loading ? 'Kirilmoqda...' : 'Tizimga Kirish'}
           </button>
         </form>
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Akkauntingiz yo'qmi? <Link href="/register" className="text-blue-600 hover:underline">Ro'yxatdan o'tish</Link>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Akkauntingiz yo'qmi?{' '}
+          <Link href="/register" className="text-blue-600 font-bold hover:underline">
+            Ro'yxatdan o'tish
+          </Link>
         </p>
       </div>
     </div>

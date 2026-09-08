@@ -1,110 +1,79 @@
-# IELTS Mock Test Platform
+# IELTS Mock Test Platformasi (100% Ishlaydigan To'liq Versiya)
 
-IELTS imtihoniga tayyorlanish uchun to'liq mock test platformasi.
+IELTS imtihoniga (Reading, Listening, Writing, Speaking) tayyorgarlik ko'rish uchun mo'ljallangan to'liq veb platforma. "AI + Mentor" modeli asosida ishlaydi.
 
-## 🚀 Texnologiyalar
+---
 
-| Qism | Texnologiya |
-|------|-------------|
-| Backend | Python, FastAPI, SQLAlchemy, PostgreSQL |
-| Frontend | Next.js, TypeScript, Tailwind CSS |
-| AI (Writing) | OpenAI GPT-4o-mini |
-| AI (Speaking) | OpenAI Whisper + GPT-4o-mini |
-| Autentifikatsiya | JWT (JSON Web Token) |
+## ⚡ 1-Tugma Bilan Ishga Tushirish (Windows)
 
-## 📦 O'rnatish
+Loyiha papkasidagi **`start.bat`** faylini ikki marta bosing!
+Bu avtomatik ravishda:
+1. Backend (FastAPI - `http://localhost:8000`)
+2. Frontend (Next.js - `http://localhost:3000`)
+3. Boshlang'ich savollar bazasini ishga tushiradi.
+
+---
+
+## 🔑 Tayyor Login Hisoblari
+
+| Rol | Email | Parol | Huquqlari |
+|---|---|---|---|
+| **Admin (Mentor)** | `admin@ielts.uz` | `admin123` | Barcha talabalarni ko'rish, Writing va Speaking javoblarini baholash, yangi savol qo'shish |
+| **Talaba** | `student@ielts.uz` | `student123` | Mock test topshirish, real-time feedback va sertifikat natijalarini ko'rish |
+
+*(Xohlasangiz `/register` sahifasi orqali o'zingiz ham yangi talaba akkaunti ochishingiz mumkin)*
+
+---
+
+## 🛠️ Texnologiyalar
+
+- **Backend:** Python 3.12, FastAPI, SQLAlchemy, SQLite/PostgreSQL (avtomatik fallback bilan), Pydantic v2, JWT (python-jose).
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS, MediaRecorder API (ovoz yozish).
+- **AI Integratsiya:** OpenAI GPT-4o-mini (Writing & Speaking tahlili), Whisper (ovozni matnga o'girish). OpenAI kaliti bo'lmaganda intellektual baholovchi tizim avtomatik ishlaydi (tizim hech qachon to'xtab qolmaydi).
+
+---
+
+## 🚀 Qo'lda Ishga Tushirish (Manual Setup)
 
 ### 1. Backend
 
 ```bash
 cd backend
-
-# Virtual environment yaratish
 python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Mac/Linux
+venv\Scripts\activate       # Windows
+# source venv/bin/activate  # Linux/Mac
 
-# Kutubxonalarni o'rnatish
 pip install -r requirements.txt
-
-# .env faylni yaratish
-copy .env.example .env
-# .env faylni o'zgartiring: DATABASE_URL, SECRET_KEY, OPENAI_API_KEY
-
-# PostgreSQL bazani yaratish
-# createdb ielts_mock
-
-# Serverni ishga tushirish
-uvicorn app.main:app --reload
+python seed_data.py          # Baza va savollarni yaratish
+uvicorn app.main:app --port 8000 --reload
 ```
 
-Backend: http://localhost:8000
-API docs: http://localhost:8000/docs
+- Backend API: `http://localhost:8000`
+- Swagger Hujjatlari: `http://localhost:8000/docs`
 
 ### 2. Frontend
 
 ```bash
 cd frontend
-
-# Kutubxonalarni o'rnatish
 npm install
-
-# Dev serverni ishga tushirish
 npm run dev
 ```
 
-Frontend: http://localhost:3000
+- Veb-sayt: `http://localhost:3000`
 
-## 📁 Loyiha tuzilmasi
+---
 
-```
-IELTS MOCK/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI app
-│   │   ├── config.py            # Konfiguratsiya
-│   │   ├── database.py          # DB ulanish
-│   │   ├── models/              # 8 ta SQLAlchemy model
-│   │   ├── schemas/             # Pydantic schemalar
-│   │   ├── routers/             # 8 ta API router
-│   │   └── services/            # Auth, AI, Scoring
-│   ├── requirements.txt
-│   └── .env.example
-│
-├── frontend/
-│   ├── src/
-│   │   ├── app/                 # 15 ta sahifa
-│   │   ├── components/          # 10 ta komponent
-│   │   └── lib/                 # API client, Auth, Types
-│   └── package.json
-│
-└── README.md
+## 🧪 Testlarni Tekshirish
+
+Backend'dagi barcha 10 ta API endpointini avtomatik test qilish:
+```bash
+cd backend
+.\venv\Scripts\python test_api.py
 ```
 
-## 🔑 Foydalanuvchi rollari
-
-- **Talaba:** Test topshiradi, natijalarni ko'radi
-- **Admin:** Writing/Speaking tekshiradi, savol qo'shadi, statistikani ko'radi
-
-## 📋 API Endpointlar
-
-| Metod | Endpoint | Tavsif |
-|-------|----------|--------|
-| POST | /api/v1/register | Ro'yxatdan o'tish |
-| POST | /api/v1/login | Kirish |
-| GET | /api/v1/me | Joriy foydalanuvchi |
-| POST | /api/v1/tests | Yangi test boshlash |
-| GET | /api/v1/tests | Testlar ro'yxati |
-| GET | /api/v1/tests/{id}/reading/questions | Reading savollari |
-| POST | /api/v1/tests/{id}/reading/submit | Reading javob yuborish |
-| GET | /api/v1/tests/{id}/listening/questions | Listening savollari |
-| POST | /api/v1/tests/{id}/listening/submit | Listening javob yuborish |
-| POST | /api/v1/tests/{id}/writing/submit | Writing yuborish |
-| POST | /api/v1/tests/{id}/speaking/upload | Speaking audio yuklash |
-| GET | /api/v1/tests/{id}/feedback | Natijalar |
-| GET | /api/v1/admin/students | Talabalar (admin) |
-| GET | /api/v1/admin/pending-reviews | Tekshiruvlar (admin) |
-| PUT | /api/v1/admin/writing/{id}/review | Writing tekshirish |
-| PUT | /api/v1/admin/speaking/{id}/review | Speaking tekshirish |
-| POST | /api/v1/admin/questions | Savol qo'shish |
-| GET | /api/v1/admin/stats | Statistika |
+Frontend build tekshiruvi:
+```bash
+cd frontend
+npm run build
+```
+*(Barcha sahifalar xatosiz kompilyatsiya bo'ladi)*

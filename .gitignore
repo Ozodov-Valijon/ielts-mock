@@ -23,6 +23,9 @@ wheels/
 venv/
 .venv/
 ENV/
+*.db
+*.sqlite3
+*.sqlite
 backend/uploads/
 uploads/
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '../../lib/auth';
+import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -27,7 +27,7 @@ export default function RegisterPage() {
     setError('');
     
     if (formData.password !== formData.confirm_password) {
-      setError('Parollar mos emas');
+      setError('Kiritilgan parollar bir-biriga mos kelmadi');
       return;
     }
 
@@ -36,76 +36,93 @@ export default function RegisterPage() {
       await register({
         full_name: formData.full_name,
         email: formData.email,
-        phone: formData.phone,
+        phone: formData.phone || undefined,
         password: formData.password
       });
-      // Mock redirect for now
+      alert("Akkaunt muvaffaqiyatli yaratildi! Endi tizimga kiring.");
       router.push('/login');
     } catch (err: any) {
-      setError(err.message || 'Xatolik yuz berdi');
+      setError(err.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10">
-      <div className="bg-white p-8 rounded-lg shadow-md border border-gray-100">
-        <h1 className="text-2xl font-bold text-center mb-6 text-blue-800">Ro'yxatdan O'tish</h1>
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
+    <div className="max-w-md mx-auto my-10 px-4">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+        <div className="text-center mb-6">
+          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+            Yangi Hisob
+          </span>
+          <h1 className="text-2xl font-extrabold text-gray-900 mt-2">Ro'yxatdan O'tish</h1>
+          <p className="text-gray-500 text-xs mt-1">Platformadan bepul foydalanish uchun ma'lumotlaringizni kiriting</p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-4 text-sm font-medium">
+            ⚠️ {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">To'liq ism (Full Name)</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To'liq Ism (Full Name)</label>
             <input
               type="text"
               name="full_name"
               value={formData.full_name}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
+              placeholder="Masalan: Valijon Ozodov"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email Manzil</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
+              placeholder="talaba@ielts.uz"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Telefon raqam (ixtiyoriy)</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Telefon Raqam (ixtiyoriy)</label>
             <input
               type="text"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
+              placeholder="+998 90 123 45 67"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Parol (Password)</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Parol</label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
+              placeholder="Kamida 6 ta belgi"
               required
               minLength={6}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Parolni tasdiqlash</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Parolni Tasdiqlang</label>
             <input
               type="password"
               name="confirm_password"
               value={formData.confirm_password}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
+              placeholder="Parolni qayta kiriting"
               required
               minLength={6}
             />
@@ -113,13 +130,16 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-800 text-white py-3 mt-4 rounded-md font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-blue-600 text-white font-bold py-3.5 mt-4 rounded-xl hover:bg-blue-700 transition shadow disabled:opacity-50"
           >
-            {loading ? 'Kutilmoqda...' : 'Ro\'yxatdan o\'tish'}
+            {loading ? 'Yaratilmoqda...' : 'Ro\'yxatdan O\'tish'}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-gray-600">
-          Akkauntingiz bormi? <Link href="/login" className="text-blue-600 hover:underline font-medium">Kirish</Link>
+          Akkauntingiz bormi?{' '}
+          <Link href="/login" className="text-blue-600 font-bold hover:underline">
+            Kirish
+          </Link>
         </p>
       </div>
     </div>

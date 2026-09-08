@@ -1,65 +1,165 @@
 'use client';
 
-import React, { useState } from 'react';
-import ProtectedRoute from '../../../../components/ProtectedRoute';
-import AudioPlayer from '../../../../components/AudioPlayer';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import AudioPlayer from '@/components/AudioPlayer';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { api } from '@/lib/api';
+import { useRouter, useParams } from 'next/navigation';
 
 export default function AdminReviewSpeakingDetail() {
   const router = useRouter();
+  const params = useParams();
+  const id = Number(params.id);
+
+  const [speaking, setSpeaking] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [score, setScore] = useState<number | ''>('');
   const [feedback, setFeedback] = useState('');
 
-  const handleApprove = () => {
-    alert('Muvaffaqiyatli saqlandi!');
-    router.push('/admin/review');
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const data = await api.adminGetSpeakingDetail(id);
+        setSpeaking(data);
+        if (data.admin_score) setScore(data.admin_score);
+        else if (data.ai_score) setScore(data.ai_score);
+        if (data.admin_feedback) setFeedback(data.admin_feedback);
+      } catch (err: any) {
+        console.error(err);
+        alert(err.message || "Speaking javobini yuklashda xatolik");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [id]);
+
+  const handleApprove = async () => {
+    if (!score) {
+      alert("Iltimos, bahoni kiriting");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.adminReviewSpeaking(id, {
+        admin_score: Number(score),
+        admin_feedback: feedback || "Mentor tomonidan tasdiqlandi."
+      });
+      alert('Speaking muvaffaqiyatli baholandi va tasdiqlandi!');
+      router.push('/admin/review');
+    } catch (err: any) {
+      alert(err.message || "Saqlashda xatolik yuz berdi");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <ProtectedRoute requireAdmin={true}>
+        <div className="py-20 flex justify-center"><LoadingSpinner /></div>
+      </ProtectedRoute>
+    );
+  }
+
+  let parsedAi: any = null;
+  if (speaking?.ai_analysis) {
+    try {
+      parsedAi = JSON.parse(speaking.ai_analysis);
+    } catch {
+      parsedAi = null;
+    }
+  }
 
   return (
     <ProtectedRoute requireAdmin={true}>
-      <div className="max-w-4xl mx-auto py-8">
+      <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Speaking Tekshiruvi</h1>
-          <button onClick={() => router.push('/admin/review')} className="text-gray-500 hover:text-gray-800 font-medium">Orqaga qaytish</button>
+          <div>
+            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              Part {speaking?.part_number || 1} Baholash
+            </span>
+            <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Speaking Javobini Tekshirish</h1>
+          </div>
+          <button 
+            onClick={() => router.push('/admin/review')} 
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg transition"
+          >
+            ← Navbatga qaytish
+          </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4">Talaba Audiosi</h2>
-          <AudioPlayer src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" allowReplay={true} />
+        {/* Audio pleer va transkript */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-3">Talabaning Audio Yozuvi</h2>
+          {speaking?.audio_url ? (
+            <AudioPlayer src={speaking.audio_url} allowReplay={true} />
+          ) : (
+            <p className="text-sm text-gray-500 italic">Audio fayl yuklanmagan</p>
+          )}
           
           <div className="mt-6">
-            <h3 className="font-bold text-gray-700 mb-2">Avtomatik Transkript (AI)</h3>
-            <div className="bg-gray-50 p-4 rounded border border-gray-100 text-gray-600 italic">
-              "Yes, my hometown is quite small and quiet. I like the peaceful atmosphere and the friendly people..."
+            <h3 className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Avtomatik Transkript (AI Whisper)</h3>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-gray-800 font-serif leading-relaxed text-sm">
+              {speaking?.transcript || "Nutq matnga o'girilmagan"}
             </div>
           </div>
         </div>
 
-        <div className="bg-blue-50 rounded-lg shadow-sm border border-blue-100 p-6 mb-6">
-          <h2 className="text-xl font-bold mb-2 text-blue-900">AI Tahlili (Tahminiy)</h2>
-          <div className="flex items-center space-x-4">
-            <div className="text-4xl font-extrabold text-blue-600">6.5</div>
-            <p className="text-blue-800 text-sm">
-              Fluency: 6.0 | Pronunciation: 7.0 | Lexical Resource: 6.5 | Grammar: 6.5
-            </p>
+        {/* AI tahlili */}
+        {parsedAi && (
+          <div className="bg-blue-50 rounded-2xl shadow-sm border border-blue-200 p-6 mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-bold text-blue-950">AI Dastlabki Tahlili</h2>
+              <span className="text-3xl font-black text-blue-700">
+                {parsedAi.overall_band?.toFixed(1) || speaking?.ai_score?.toFixed(1) || '6.0'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
+              <div className="bg-white p-3 rounded-lg border border-blue-100">
+                <span className="text-gray-500 font-bold block uppercase">Fluency</span>
+                <strong className="text-base text-blue-900">{parsedAi.fluency_coherence?.score || '-'}</strong>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-blue-100">
+                <span className="text-gray-500 font-bold block uppercase">Lexical</span>
+                <strong className="text-base text-blue-900">{parsedAi.lexical_resource?.score || '-'}</strong>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-blue-100">
+                <span className="text-gray-500 font-bold block uppercase">Grammar</span>
+                <strong className="text-base text-blue-900">{parsedAi.grammatical_range?.score || '-'}</strong>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-blue-100">
+                <span className="text-gray-500 font-bold block uppercase">Pronunciation</span>
+                <strong className="text-base text-blue-900">{parsedAi.pronunciation?.score || '-'}</strong>
+              </div>
+            </div>
+            {parsedAi.summary && (
+              <p className="text-xs text-blue-900 italic bg-white/70 p-3 rounded-lg">
+                "{parsedAi.summary}"
+              </p>
+            )}
           </div>
-        </div>
+        )}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold mb-4 text-green-800">O'qituvchi Bahosi</h2>
+        {/* Admin shakli */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-3">Mentor Yakuniy Bahosi</h2>
           
           <div className="mb-4">
-            <label className="block text-sm font-bold text-gray-700 mb-1">Feedback</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Feedback va Tavsiyalar</label>
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              className="w-full h-32 p-3 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:outline-none"
-              placeholder="Talabaga maslahatlaringizni yozing..."
+              className="w-full h-32 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm text-gray-800"
+              placeholder="Talabaning talaffuzi, nutq ravonligi va lug'at boyligi bo'yicha tavsiyalaringiz..."
             ></textarea>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-bold text-gray-700 mb-1">Yakuniy Ball (Band Score)</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Yakuniy Ball (Band Score 1 - 9)</label>
             <input
               type="number"
               step="0.5"
@@ -67,16 +167,16 @@ export default function AdminReviewSpeakingDetail() {
               max="9"
               value={score}
               onChange={(e) => setScore(Number(e.target.value) || '')}
-              className="w-32 text-2xl font-bold p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:outline-none text-center"
+              className="w-32 text-2xl font-black p-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-center text-blue-800"
             />
           </div>
 
           <button
             onClick={handleApprove}
-            disabled={!score}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50"
+            disabled={submitting || !score}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition shadow disabled:opacity-50"
           >
-            Tasdiqlash
+            {submitting ? 'Saqlanmoqda...' : 'Bahoni Tasdiqlash'}
           </button>
         </div>
       </div>
