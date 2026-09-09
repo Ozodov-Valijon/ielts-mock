@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60 * 24 * 7, ge=1, le=60 * 24 * 30)
     OPENAI_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
     UPLOAD_DIR: Path = BACKEND_DIR / "uploads"
     FRONTEND_ORIGINS: list[str] = ["http://localhost:3000"]
     MAX_UPLOAD_SIZE_BYTES: int = Field(default=25 * 1024 * 1024, ge=1)

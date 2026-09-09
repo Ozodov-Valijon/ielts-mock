@@ -146,7 +146,61 @@ def _heuristic_writing_analysis(text: str, task_number: int) -> dict:
     }
     return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
 
+async def _analyze_writing_with_gemini(text: str, task_number: int) -> dict | None:
+    if not settings.GEMINI_API_KEY:
+        return None
+    try:
+        import httpx
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
+        prompt = f"""You are an official senior IELTS Writing examiner. Analyze this Task {task_number} essay rigorously according to official Cambridge IELTS band descriptors (Task Achievement, Coherence & Cohesion, Lexical Resource, Grammatical Range and Accuracy).
+        
+        Student's essay:
+        \"\"\"{text}\"\"\"
+        
+        Provide strict, accurate, and comprehensive feedback in the following exact JSON format:
+        {{
+            "task_achievement": {{"score": 6.5, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "coherence_cohesion": {{"score": 6.0, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "lexical_resource": {{"score": 6.5, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "grammatical_range": {{"score": 6.0, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "overall_band": 6.5,
+            "summary": "Inshoning umumiy qisqacha xulosasi va tavsiyasi o'zbek tilida."
+        }}
+        """
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "response_mime_type": "application/json"
+            }
+        }
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            res = await client.post(url, json=payload)
+            if res.status_code == 200:
+                data = res.json()
+                content = data["candidates"][0]["content"]["parts"][0]["text"]
+                analysis = json.loads(content)
+                overall = analysis.get("overall_band", 6.0)
+                return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
+    except Exception as e:
+        print(f"Gemini Writing tahlilida xatolik: {e}")
+    return None
+
 async def analyze_writing(text: str, task_number: int) -> dict:
+    cleaned_text = text.strip()
+    words = re.findall(r'\b[a-zA-Z]+\b', cleaned_text)
+    word_count = len(words)
+    
+    # 1. Cheklov: 15 tadan kam so'z bo'lsa darhol 0.0 ball qaytarish
+    if word_count < 15:
+        return _heuristic_writing_analysis(text, task_number)
+
+    # 2. Google Gemini API orqali tahlil
+    if settings.GEMINI_API_KEY:
+        gemini_result = await _analyze_writing_with_gemini(text, task_number)
+        if gemini_result:
+            return gemini_result
+
+    # 3. OpenAI API orqali tahlil
     if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.startswith("sk-"):
         try:
             from openai import OpenAI
@@ -177,4 +231,5 @@ async def analyze_writing(text: str, task_number: int) -> dict:
         except Exception:
             pass
 
+    # 4. Fallback evristik baholash
     return _heuristic_writing_analysis(text, task_number)

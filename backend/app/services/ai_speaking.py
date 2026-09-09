@@ -76,7 +76,60 @@ def _heuristic_speaking_analysis(transcript: str, part_number: int) -> dict:
     }
     return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
 
+async def _analyze_speaking_with_gemini(transcript: str, part_number: int) -> dict | None:
+    if not settings.GEMINI_API_KEY:
+        return None
+    try:
+        import httpx
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
+        prompt = f"""You are an official senior IELTS Speaking examiner. Analyze this candidate's Part {part_number} spoken response transcript according to official Cambridge IELTS speaking criteria (Fluency and Coherence, Lexical Resource, Grammatical Range and Accuracy, Pronunciation).
+        
+        Candidate's spoken transcript:
+        \"\"\"{transcript}\"\"\"
+        
+        Provide strict, accurate, and comprehensive feedback in the following exact JSON format:
+        {{
+            "fluency_coherence": {{"score": 6.5, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "lexical_resource": {{"score": 6.0, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "grammatical_range": {{"score": 6.0, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "pronunciation": {{"score": 6.5, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "overall_band": 6.5,
+            "summary": "Nutqning umumiy qisqacha xulosasi va tavsiyasi o'zbek tilida."
+        }}
+        """
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "response_mime_type": "application/json"
+            }
+        }
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            res = await client.post(url, json=payload)
+            if res.status_code == 200:
+                data = res.json()
+                content = data["candidates"][0]["content"]["parts"][0]["text"]
+                analysis = json.loads(content)
+                overall = analysis.get("overall_band", 6.0)
+                return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
+    except Exception as e:
+        print(f"Gemini Speaking tahlilida xatolik: {e}")
+    return None
+
 async def analyze_speaking(transcript: str, part_number: int) -> dict:
+    cleaned = transcript.strip()
+    words = [w for w in cleaned.split() if len(w) > 1]
+    
+    # 1. Agar ovoz yozilmagan yoki 5 tadan kam so'z bo'lsa -> 0.0
+    if len(words) < 5 or not cleaned:
+        return _heuristic_speaking_analysis(transcript, part_number)
+
+    # 2. Google Gemini API
+    if settings.GEMINI_API_KEY:
+        gemini_result = await _analyze_speaking_with_gemini(transcript, part_number)
+        if gemini_result:
+            return gemini_result
+
+    # 3. OpenAI API
     if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.startswith("sk-") and not transcript.startswith("["):
         try:
             from openai import OpenAI
@@ -107,4 +160,5 @@ async def analyze_speaking(transcript: str, part_number: int) -> dict:
         except Exception:
             pass
 
+    # 4. Fallback evristik baholash
     return _heuristic_speaking_analysis(transcript, part_number)
