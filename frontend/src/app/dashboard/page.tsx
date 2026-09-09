@@ -92,13 +92,13 @@ export default function Dashboard() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
               <span className="text-xs font-black uppercase tracking-widest text-blue-300 bg-white/10 px-3 py-1 rounded-full">
-                IELTS Target Goal &bull; Shaxsiy Maqsad
+                IELTS Maqsadingiz
               </span>
               <h2 className="text-2xl sm:text-3xl font-black">
                 Mening Maqsadim: <span className="text-yellow-400">Band 7.5+</span>
               </h2>
               <p className="text-xs sm:text-sm text-gray-300 max-w-lg leading-relaxed">
-                Google Gemini 3.8 Flash AI tahlillariga ko&apos;ra, muntazam mock testlar orqali 2 hafta ichida natijangizni kamida +0.5 &ndash; 1.0 bandga oshirishingiz mumkin.
+                Muntazam mock testlar topshirish va natijalarni tahlil qilish orqali o&apos;z ko&apos;nikmalaringizni oshiring.
               </p>
             </div>
 
@@ -436,11 +436,11 @@ export default function Dashboard() {
               </div>
 
               {/* 3. Xavfsizlik shartlari eslatmasi */}
-              <div className="bg-slate-900 text-white p-4 rounded-2xl mb-6 text-xs flex items-center space-x-3">
+              <div className="bg-blue-50 text-blue-900 border border-blue-200 p-4 rounded-2xl mb-6 text-xs flex items-center space-x-3">
                 <span className="text-2xl">🖥️</span>
                 <div>
-                  <strong className="block text-blue-400 font-bold">Majburiy To&apos;liq Ekran Rejimi</strong>
-                  Test boshlangan zahoti ekran to&apos;liq rejimga (Fullscreen) o&apos;tadi va oynadan chiqib ketish cheklanadi.
+                  <strong className="block font-bold">Imtihon rejimi</strong>
+                  Test haqiqiy IELTS formati kabi to&apos;liq ekranda (Fullscreen) o&apos;tkaziladi.
                 </div>
               </div>
 

@@ -380,11 +380,11 @@ export default function AntiCheatGuard({
               className="w-full bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-black py-4 px-8 rounded-2xl transition transform hover:scale-[1.03] shadow-[0_10px_30px_rgba(239,68,68,0.5)] text-lg sm:text-xl flex items-center justify-center gap-3 cursor-pointer"
             >
               <span className="text-2xl">🖥️</span>
-              <span>TO&apos;LIQ EKRANGA QAYTISH &amp; OVOZNI O&apos;CHIRISH</span>
+              <span>TO&apos;LIQ EKRANGA QAYTISH</span>
             </button>
 
             <p className="text-gray-400 text-xs mt-4">
-              IELTS Mock platformasida barcha harakatlar mentor auditida yozib boriladi.
+              Imtihon shartlariga rioya qiling.
             </p>
           </div>
         </div>
@@ -399,7 +399,7 @@ export default function AntiCheatGuard({
             </div>
             
             <span className="bg-blue-500/20 text-blue-300 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider mb-3 inline-block border border-blue-500/30">
-              Majburiy To&apos;liq Ekran Rejimi
+              Imtihon Rejimi
             </span>
             
             <h2 className="text-3xl font-black text-white mb-3 tracking-tight">
@@ -407,7 +407,7 @@ export default function AntiCheatGuard({
             </h2>
             
             <p className="text-slate-300 text-sm sm:text-base mb-8 leading-relaxed">
-              Rasmiy IELTS Mock qoidalariga ko&apos;ra, imtihon paytida xavfsizlikni ta&apos;minlash uchun test faqat <strong>to&apos;liq ekran (Fullscreen)</strong> rejimida o&apos;tkaziladi. Oynadan chiqib ketish taqiqlanadi.
+              Haqiqiy IELTS formati bo&apos;yicha ishlash uchun test to&apos;liq ekranda (Fullscreen) o&apos;tkaziladi.
             </p>
 
             <button
@@ -415,7 +415,7 @@ export default function AntiCheatGuard({
               className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold py-4 px-6 rounded-2xl transition transform hover:scale-[1.02] shadow-2xl text-lg flex items-center justify-center gap-3 cursor-pointer"
             >
               <span className="text-2xl">🚀</span>
-              <span>To&apos;liq Ekranga O&apos;tish va Savollarni Ochish</span>
+              <span>Testni Boshlash</span>
             </button>
           </div>
         </div>

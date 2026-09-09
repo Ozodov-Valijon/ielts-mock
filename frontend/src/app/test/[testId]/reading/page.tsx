@@ -119,16 +119,11 @@ export default function ReadingTestPage() {
               contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200'
             }`}>
               <div className="flex items-center justify-between mb-4 border-b pb-3 border-gray-200">
-                <div className="flex items-center space-x-2">
-                  <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                    Reading Passage
-                  </span>
-                  <span className="text-xs text-gray-500 font-medium">
-                    ({questions.length} ta savol)
-                  </span>
-                </div>
-                <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
-                  Matnni belgilab eslatma qoldirishingiz mumkin (Highlight)
+                <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                  Reading Passage
+                </span>
+                <span className="text-xs text-gray-500 font-medium">
+                  {questions.length} ta savol
                 </span>
               </div>
 

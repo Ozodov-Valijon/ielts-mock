@@ -12,7 +12,7 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto">
           <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-blue-200 mb-6 border border-white/15">
             <span>✨</span>
-            <span>Rasmiy Cambridge IELTS Standarti &bull; Google Gemini 3.8 Flash AI</span>
+            <span>Rasmiy Cambridge IELTS Standarti</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight leading-tight">
@@ -23,7 +23,7 @@ export default function Home() {
           </h1>
 
           <p className="text-base sm:text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed font-normal">
-            Haqiqiy <strong>Computer-Delivered IELTS</strong> imtihon muhiti, to&apos;liq fullscreen nazorati, sun&apos;iy intellekt tahlili va rasmiy TRF sertifikati.
+            Haqiqiy <strong>Computer-Delivered IELTS</strong> formati, to&apos;liq mock testlar va rasmiy natijalar tahlili.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -57,7 +57,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-black mb-2 text-gray-900">Reading</h3>
             <p className="text-gray-600 text-xs leading-relaxed">
-              Matnni sariq bilan belgilash (Highlight), eslatmalar qoldirish va 40 talik savol palitrasi.
+              Akademik matnlar, matnni belgilash (Highlight) va qulay savollar palitrasi.
             </p>
           </div>
 
@@ -67,7 +67,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-black mb-2 text-gray-900">Listening</h3>
             <p className="text-gray-600 text-xs leading-relaxed">
-              Original audio treklar, Cambridge IELTS rasmiy shkalasi va sinonimlar qabul qilish filtri.
+              Original audio materiallar, turli aksentlar va rasmiy baholash mezoni.
             </p>
           </div>
 
@@ -77,7 +77,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-black mb-2 text-gray-900">Writing</h3>
             <p className="text-gray-600 text-xs leading-relaxed">
-              Task 1 va Task 2 insholarini Google Gemini 3.8 Flash AI orqali 4 ta mezon bo&apos;yicha tahlil qilish.
+              Task 1 va Task 2 insholarini rasmiy mezonlar (TR, CC, LR, GRA) bo&apos;yicha tahlil qilish.
             </p>
           </div>
 
@@ -87,7 +87,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-black mb-2 text-gray-900">Speaking</h3>
             <p className="text-gray-600 text-xs leading-relaxed">
-              Jonli audio to&apos;lqin visualizatori, Part 2 Cue-card 1 daqiqa tayyorgarlik va qoralama bloknot.
+              Part 1, Part 2 Cue Card va Part 3 savollari bo&apos;yicha to&apos;liq nutq sinovi.
             </p>
           </div>
         </div>
@@ -97,13 +97,13 @@ export default function Home() {
       <section className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <div className="bg-slate-900 text-white p-8 sm:p-10 rounded-3xl relative overflow-hidden shadow-xl">
           <div className="text-4xl mb-4">🛡️</div>
-          <h3 className="text-2xl font-black mb-3 text-red-400">Murosasiz Anti-Cheat Nazorati</h3>
+          <h3 className="text-2xl font-black mb-3 text-blue-300">Xavfsiz Imtihon Muhiti</h3>
           <p className="text-slate-300 text-sm leading-relaxed mb-6">
-            Test boshlangan zahoti to&apos;liq ekran (Fullscreen) majburiy qilinadi. Boshqa oynaga o&apos;tilsa, baland sirena va ovozli <strong>&quot;CHITER!&quot;</strong> ogohlantirishi yangraydi va test bayroq bilan belgilanadi.
+            Haqiqiy imtihon sharoiti, to&apos;liq ekran rejimi va zamonaviy xavfsizlik choralari orqali xolis va aniq natijalar ta&apos;minlanadi.
           </p>
-          <div className="inline-flex items-center space-x-2 bg-red-600/20 text-red-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-red-500/30">
-            <span>🚨</span>
-            <span>Tab Switch &bull; Fullscreen Exit &bull; Copy/Paste Bloklangan</span>
+          <div className="inline-flex items-center space-x-2 bg-blue-600/20 text-blue-300 text-xs font-bold px-3.5 py-1.5 rounded-xl border border-blue-500/30">
+            <span>🛡️</span>
+            <span>To&apos;liq Ekran Rejimi &bull; Rasmiy Format</span>
           </div>
         </div>
 
@@ -111,11 +111,11 @@ export default function Home() {
           <div className="text-4xl mb-4">📜</div>
           <h3 className="text-2xl font-black mb-3 text-yellow-400">Rasmiy IELTS TRF Sertifikati</h3>
           <p className="text-blue-100 text-sm leading-relaxed mb-6">
-            Imtihon yakunlangach, rasmiy Cambridge va IDP formatidagi A4 sertifikat shakllanadi. Natijalarni QR-kod va muhr bilan bir tugmada PDF formatda yuklab olishingiz mumkin.
+            Imtihon yakunlangach, rasmiy ko&apos;rinishdagi A4 TRF sertifikati shakllanadi va uni PDF formatida saqlab olishingiz mumkin.
           </p>
-          <div className="inline-flex items-center space-x-2 bg-blue-500/20 text-blue-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-blue-400/30">
+          <div className="inline-flex items-center space-x-2 bg-blue-500/20 text-blue-200 text-xs font-bold px-3.5 py-1.5 rounded-xl border border-blue-400/30">
             <span>🖨️</span>
-            <span>A4 Print &bull; PDF Download &bull; Savolma-savol Tahlil</span>
+            <span>A4 Print &bull; PDF Saqlash &bull; Savolma-savol Tahlil</span>
           </div>
         </div>
       </section>

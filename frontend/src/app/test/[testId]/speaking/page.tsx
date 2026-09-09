@@ -108,11 +108,11 @@ export default function SpeakingTestPage() {
           <main className="flex-1 max-w-4xl w-full mx-auto py-8 px-4">
             <div className="text-center mb-8">
               <span className="bg-blue-100 text-blue-800 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                IELTS Speaking Exam Simulator
+                IELTS Speaking
               </span>
               <h1 className="text-3xl font-black text-gray-900 mt-2">Speaking Bo&apos;limi (Part 1, 2, 3)</h1>
-              <p className="text-gray-600 text-sm mt-1">
-                Google Gemini 3.8 Flash AI nutqingizning ravonligi (Fluency), so&apos;z boyligi (Lexical Resource) va grammatikasini tahlil qiladi.
+              <p className="text-gray-500 text-sm mt-1">
+                Nutq ravonligi, so&apos;z boyligi, grammatika va talaffuz bo&apos;yicha topshiriqlar.
               </p>
             </div>
 
@@ -136,7 +136,7 @@ export default function SpeakingTestPage() {
               {partStatus[1] === 'uploading' && (
                 <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
                   <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Audio Gemini 3.8 Flash orqali tahlil qilinmoqda...</span>
+                  <span>Audio qabul qilinmoqda va tahlil qilinmoqda...</span>
                 </div>
               )}
               {partStatus[1] === 'completed' && (
@@ -201,7 +201,7 @@ export default function SpeakingTestPage() {
                   <textarea
                     value={prepNotes}
                     onChange={(e) => setPrepNotes(e.target.value)}
-                    placeholder="Qoralama yozuvlar (Bullet points for speaking)... Masalan: 1. Goal: Learning English; 2. Duration: 6 months..."
+                    placeholder="Qoralama eslatmalar (Notes)..."
                     rows={2}
                     className="w-full text-xs p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                   />
@@ -214,7 +214,7 @@ export default function SpeakingTestPage() {
               {partStatus[2] === 'uploading' && (
                 <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
                   <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Audio Gemini 3.8 Flash orqali tahlil qilinmoqda...</span>
+                  <span>Audio qabul qilinmoqda va tahlil qilinmoqda...</span>
                 </div>
               )}
               {partStatus[2] === 'completed' && (
@@ -253,7 +253,7 @@ export default function SpeakingTestPage() {
               {partStatus[3] === 'uploading' && (
                 <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
                   <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Audio Gemini 3.8 Flash orqali tahlil qilinmoqda...</span>
+                  <span>Audio qabul qilinmoqda va tahlil qilinmoqda...</span>
                 </div>
               )}
               {partStatus[3] === 'completed' && (

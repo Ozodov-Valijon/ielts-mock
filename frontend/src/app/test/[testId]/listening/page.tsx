@@ -125,9 +125,8 @@ export default function ListeningTestPage() {
                 <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
                   Listening Audio Track
                 </span>
-                <span className="text-xs text-red-600 font-bold flex items-center space-x-1">
-                  <span>⚠️</span>
-                  <span>Audio faqat 1 marta ijro etiladi</span>
+                <span className="text-xs text-slate-500 font-medium">
+                  Audio faqat 1 marta ijro etiladi
                 </span>
               </div>
               {audioUrl && <AudioPlayer src={audioUrl} allowReplay={false} />}

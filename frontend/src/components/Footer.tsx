@@ -13,7 +13,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-100 py-6 mt-auto border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-xs">
-        <p>&copy; {new Date().getFullYear()} IELTS Mock Test Platform &bull; Rasmiy Cambridge IELTS Mezonlari &bull; Barcha huquqlar himoyalangan.</p>
+        <p>&copy; {new Date().getFullYear()} IELTS Mock Test Platform &bull; Barcha huquqlar himoyalangan.</p>
       </div>
     </footer>
   );

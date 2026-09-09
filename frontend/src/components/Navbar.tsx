@@ -35,21 +35,21 @@ export default function Navbar() {
                 )}
                 <button
                   onClick={logout}
-                  className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-md transition"
+                  className="bg-red-600 hover:bg-red-700 px-3.5 py-2 rounded-lg text-sm font-semibold transition cursor-pointer"
                 >
-                  Chiqish (Logout)
+                  Chiqish
                 </button>
               </>
             ) : (
               <>
-                <Link href="/login" className="hover:bg-blue-700 px-3 py-2 rounded-md">
-                  Kirish (Login)
+                <Link href="/login" className="hover:bg-blue-700 px-3.5 py-2 rounded-lg text-sm font-semibold">
+                  Kirish
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-white text-blue-800 hover:bg-gray-100 px-4 py-2 rounded-md font-medium transition"
+                  className="bg-white text-blue-800 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-bold transition"
                 >
-                  Ro'yxatdan O'tish
+                  Ro&apos;yxatdan o&apos;tish
                 </Link>
               </>
             )}

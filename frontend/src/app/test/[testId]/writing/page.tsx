@@ -161,11 +161,11 @@ export default function WritingTestPage() {
                 </div>
                 <h2 className="text-2xl font-black text-gray-900 mb-2">Insholar Muvaffaqiyatli Qabul Qilindi!</h2>
                 <p className="text-gray-600 mb-6">
-                  Google Gemini 3.8 Flash AI inshoingizni rasmiy Cambridge 4 ta mezon bo&apos;yicha tahlil qildi. Mentor yakuniy tasdiqlovidan so&apos;ng yakuniy sertifikatda aks etadi.
+                  Inshoingiz muvaffaqiyatli qabul qilindi va mezonlar bo&apos;yicha baholandi.
                 </p>
                 {aiScore !== null && (
                   <div className="inline-block bg-blue-50 border border-blue-200 rounded-2xl px-8 py-4 mb-8">
-                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Dastlabki AI Band Bali</span>
+                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Insho Bali</span>
                     <span className="text-5xl font-black text-blue-700">{aiScore.toFixed(1)}</span>
                   </div>
                 )}
@@ -244,11 +244,9 @@ export default function WritingTestPage() {
                       {activeTab === 'task1' ? task1Prompt : task2Prompt}
                     </div>
 
-                    <div className="mt-6 p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-950 space-y-1.5">
-                      <p className="font-bold">Cambridge IELTS Qoidalari:</p>
-                      <p>&bull; Qizil orfografik to&apos;lqinlar imtihonda ko&apos;rsatilmaydi (spellCheck o&apos;chirilgan).</p>
-                      <p>&bull; Task 1 ga 150 ta, Task 2 ga 250 ta so&apos;z minimal talab hisoblanadi.</p>
-                      <p>&bull; 15 tadan kam so&apos;z kiritilgan insholarga rasmiy qoidaga ko&apos;ra 0.0 Band beriladi.</p>
+                    <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                      <p className="font-semibold text-slate-800 mb-1">Ko&apos;rsatma:</p>
+                      <p>Task 1 uchun kamida 150 so&apos;z, Task 2 uchun kamida 250 so&apos;z yozish talab etiladi.</p>
                     </div>
                   </div>
 
@@ -300,7 +298,7 @@ export default function WritingTestPage() {
                         className="w-full sm:w-auto bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold px-7 py-2.5 rounded-xl shadow-md transition flex items-center justify-center space-x-2"
                       >
                         {submitting ? (
-                          <span>Gemini 3.8 Flash Tekshirmoqda...</span>
+                          <span>Insholar tekshirilmoqda...</span>
                         ) : (
                           <>
                             <span>Insholarni Yakunlash &amp; Topshirish</span>

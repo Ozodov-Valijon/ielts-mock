@@ -322,7 +322,7 @@ export default function ResultsPage() {
             {feedback.recommendations && (
               <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200 mb-10 shadow-xs">
                 <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center">
-                  <span className="text-2xl mr-2">💡</span> Google Gemini 3.8 Flash &amp; Mentor Tavsiyalari
+                  <span className="text-2xl mr-2">💡</span> Tavsiyalar va Yo&apos;nalishlar
                 </h3>
                 <div className="text-blue-950 text-sm leading-relaxed whitespace-pre-line font-medium">
                   {feedback.recommendations}
