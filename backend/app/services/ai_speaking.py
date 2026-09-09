@@ -106,7 +106,7 @@ async def _analyze_speaking_with_gemini(transcript: str, part_number: int) -> di
         
         # Primary model is settings.GEMINI_MODEL (default: gemini-3.8-flash)
         models_to_try = [settings.GEMINI_MODEL]
-        for fallback_model in ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash"]:
+        for fallback_model in ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-flash-latest"]:
             if fallback_model not in models_to_try:
                 models_to_try.append(fallback_model)
 
@@ -127,8 +127,9 @@ async def _analyze_speaking_with_gemini(transcript: str, part_number: int) -> di
                     analysis = json.loads(cleaned_json)
                     overall = analysis.get("overall_band", 6.0)
                     return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
-                elif res.status_code == 404:
-                    continue  # Try next model if 3.8-flash is not available for this key
+                elif res.status_code in (404, 429, 500, 503):
+                    # Vaqtinchalik yuklama yoki model nomidagi farq bo'lsa, keyingi modelga o'tish
+                    continue
                 else:
                     print(f"Gemini Speaking API javobi ({res.status_code}): {res.text[:200]}")
                     break
