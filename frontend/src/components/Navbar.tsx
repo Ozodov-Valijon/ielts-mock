@@ -1,10 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '../lib/auth';
 
 export default function Navbar() {
   const { isAuthenticated, isAdmin, logout } = useAuth();
+  const pathname = usePathname();
+
+  // Imtihon davom etayotgan bo'lsa (faqat results bo'lmaganda), yuqori Navbar yashiriladi
+  if (pathname?.startsWith('/test/') && !pathname?.includes('/results')) {
+    return null;
+  }
 
   return (
     <nav className="bg-blue-800 text-white shadow-md">

@@ -72,7 +72,18 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
     else:
         s_score = 0.0
     
-    overall = calculate_overall_band([r_score, l_score, w_score, s_score])
+    has_r = db.query(ReadingAnswer).filter(ReadingAnswer.test_id == test_id).count() > 0
+    has_l = db.query(ListeningAnswer).filter(ListeningAnswer.test_id == test_id).count() > 0
+    has_w = len(w_ans) > 0
+    has_s = len(s_ans) > 0
+
+    attempted_sections = [s for s, has in [(r_score, has_r), (l_score, has_l), (w_score, has_w), (s_score, has_s)] if has]
+
+    if len(attempted_sections) == 1:
+        # Faqat bitta bo'lim amaliyoti topshirilganda, overall band o'sha bo'lim bahosiga teng bo'ladi
+        overall = attempted_sections[0]
+    else:
+        overall = calculate_overall_band([r_score, l_score, w_score, s_score])
     
     # Tavsiyalar va tahlillar
     strengths = []
