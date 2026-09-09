@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AntiCheatGuard from '@/components/AntiCheatGuard';
-import Timer from '@/components/Timer';
+import ExamHeader from '@/components/ExamHeader';
 import { api } from '@/lib/api';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
@@ -23,6 +23,13 @@ export default function WritingTestPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [aiScore, setAiScore] = useState<number | null>(null);
 
+  // Sozlamalar va Avto-saqlash
+  const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
+  const [contrast, setContrast] = useState<'standard' | 'high-contrast'>('standard');
+  const [lastSavedTime, setLastSavedTime] = useState<string>('');
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Dastlabki ma'lumotlarni va LocalStorage qoralamasini yuklash
   useEffect(() => {
     async function loadData() {
       try {
@@ -34,11 +41,14 @@ export default function WritingTestPage() {
           if (t2?.question_text) setTask2Prompt(t2.question_text);
         }
 
+        // 1. Agar backendda avval saqlangan bo'lsa
         const results = await api.getWritingResults(testId);
+        let loadedT1 = '';
+        let loadedT2 = '';
         if (results && results.length > 0) {
           results.forEach((r: any) => {
-            if (r.task_number === 1 && r.user_text) setTask1Text(r.user_text);
-            if (r.task_number === 2 && r.user_text) setTask2Text(r.user_text);
+            if (r.task_number === 1 && r.user_text) loadedT1 = r.user_text;
+            if (r.task_number === 2 && r.user_text) loadedT2 = r.user_text;
           });
           const hasTask1 = results.some((r: any) => r.task_number === 1);
           const hasTask2 = results.some((r: any) => r.task_number === 2);
@@ -48,29 +58,72 @@ export default function WritingTestPage() {
             setAiScore(Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 2) / 2);
           }
         }
+
+        // 2. LocalStorage zaxira qoralamasini tekshirish
+        const draftT1 = localStorage.getItem(`ielts_draft_${testId}_t1`);
+        const draftT2 = localStorage.getItem(`ielts_draft_${testId}_t2`);
+
+        setTask1Text(loadedT1 || draftT1 || '');
+        setTask2Text(loadedT2 || draftT2 || '');
       } catch (e) {
-        console.error("Mavjud writing ma'lumotlarini yuklashda xatolik:", e);
+        console.error("Writing ma'lumotlarini yuklashda xatolik:", e);
       }
     }
     loadData();
   }, [testId, setNumber]);
 
-  const wordCount = (text: string) => text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  // Avtomatik saqlash (Har 3 soniyada LocalStorage ga saqlaydi)
+  useEffect(() => {
+    if (isSubmitted) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      localStorage.setItem(`ielts_draft_${testId}_t1`, task1Text);
+      localStorage.setItem(`ielts_draft_${testId}_t2`, task2Text);
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastSavedTime(timeStr);
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [task1Text, task2Text, testId, isSubmitted]);
+
+  const wordCount = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return 0;
+    return trimmed.split(/\s+/).filter(w => w.length > 0).length;
+  };
+
+  const count1 = wordCount(task1Text);
+  const count2 = wordCount(task2Text);
 
   const handleSubmit = async () => {
     if (submitting) return;
+
+    if (count1 < 100 || count2 < 150) {
+      const confirmLow = window.confirm(
+        `Diqqat: So'zlar soni talabdan kamroq:\nTask 1: ${count1} so'z (kamida 150)\nTask 2: ${count2} so'z (kamida 250)\n\nShunda ham yuborishni xohlaysizmi?`
+      );
+      if (!confirmLow) return;
+    }
+
     setSubmitting(true);
     try {
-      // Task 1 va Task 2 yuborish
       const res1 = await api.submitWriting(testId, 1, task1Text || "No response provided for Task 1.");
       const res2 = await api.submitWriting(testId, 2, task2Text || "No response provided for Task 2.");
       
       const score1 = res1.ai_analysis?.ai_score !== undefined && res1.ai_analysis?.ai_score !== null ? res1.ai_analysis.ai_score : 0.0;
       const score2 = res2.ai_analysis?.ai_score !== undefined && res2.ai_analysis?.ai_score !== null ? res2.ai_analysis.ai_score : 0.0;
-      // IELTS Writing formula: Task 1 (1/3) + Task 2 (2/3)
+      
       const combined = Math.round(((score1 + 2 * score2) / 3) * 2) / 2;
       setAiScore(combined);
       setIsSubmitted(true);
+
+      // Muvaffaqiyatli topshirilgach qoralamani tozalash
+      localStorage.removeItem(`ielts_draft_${testId}_t1`);
+      localStorage.removeItem(`ielts_draft_${testId}_t2`);
     } catch (error: any) {
       console.error(error);
       alert(error.message || 'Xatolik yuz berdi');
@@ -83,123 +136,184 @@ export default function WritingTestPage() {
     router.push(`/test/${testId}/speaking?set=${setNumber}`);
   };
 
+  const fontClass = fontSize === 'xlarge' ? 'text-lg' : fontSize === 'large' ? 'text-base' : 'text-sm';
+
   return (
     <ProtectedRoute>
       <AntiCheatGuard testId={testId} allowPaste={false}>
-        <div className="max-w-5xl mx-auto py-8 px-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div>
-            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              IELTS Writing (Set #{setNumber})
-            </span>
-            <h1 className="text-2xl font-bold text-gray-900 mt-1">Writing Bo&apos;limi (Task 1 &amp; Task 2)</h1>
-          </div>
-          {!isSubmitted && <Timer durationMinutes={60} onTimeUp={handleSubmit} />}
-        </div>
+        <div className={`min-h-screen flex flex-col ${contrast === 'high-contrast' ? 'bg-black text-yellow-300' : 'bg-[#f8fafc] text-gray-900'}`}>
+          {/* Rasmiy Cambridge Imtihon Headeri */}
+          <ExamHeader
+            testTitle={`Academic Writing — Set #${setNumber}`}
+            durationMinutes={60}
+            onTimeUp={handleSubmit}
+            isCompleted={isSubmitted}
+            onFontChange={setFontSize}
+            onContrastChange={setContrast}
+          />
 
-        {isSubmitted ? (
-          <div className="bg-white rounded-2xl shadow-sm p-10 text-center border border-gray-200">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl font-extrabold mx-auto mb-4">
-              ✓
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Insholar Qabul Qilindi!</h2>
-            <p className="text-gray-600 max-w-md mx-auto mb-4">
-              AI dastlabki tahlilni yakunladi. Natijalar mentor tekshiruvi uchun navbatga qo'yildi.
-            </p>
-            {aiScore !== null && (
-              <div className="inline-block bg-blue-50 border border-blue-200 rounded-xl px-6 py-3 mb-8">
-                <span className="text-xs text-gray-500 font-bold uppercase block mb-1">Dastlabki AI Bahosi</span>
-                <span className="text-4xl font-black text-blue-800">{aiScore.toFixed(1)}</span>
+          {/* Asosiy Ish Maydoni */}
+          <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 flex flex-col overflow-hidden">
+            {isSubmitted ? (
+              <div className="max-w-xl mx-auto my-auto p-10 rounded-2xl border border-green-200 text-center bg-white shadow-sm">
+                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl font-extrabold mx-auto mb-4">
+                  ✓
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 mb-2">Insholar Muvaffaqiyatli Qabul Qilindi!</h2>
+                <p className="text-gray-600 mb-6">
+                  Google Gemini 3.8 Flash AI inshoingizni rasmiy Cambridge 4 ta mezon bo&apos;yicha tahlil qildi. Mentor yakuniy tasdiqlovidan so&apos;ng yakuniy sertifikatda aks etadi.
+                </p>
+                {aiScore !== null && (
+                  <div className="inline-block bg-blue-50 border border-blue-200 rounded-2xl px-8 py-4 mb-8">
+                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Dastlabki AI Band Bali</span>
+                    <span className="text-5xl font-black text-blue-700">{aiScore.toFixed(1)}</span>
+                  </div>
+                )}
+                <div>
+                  <button
+                    onClick={handleNext}
+                    className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3.5 rounded-xl font-bold transition shadow-lg transform hover:scale-102"
+                  >
+                    Keyingi: Speaking Bo&apos;limiga O&apos;tish &rarr;
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col rounded-2xl border overflow-hidden shadow-xs bg-white border-gray-200">
+                {/* Task 1 va Task 2 Tab Bar */}
+                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setActiveTab('task1')}
+                      className={`px-5 py-2.5 font-bold text-sm rounded-xl transition flex items-center space-x-2 ${
+                        activeTab === 'task1'
+                          ? 'bg-blue-700 text-white shadow-sm'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                      }`}
+                    >
+                      <span>Task 1</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        count1 >= 150 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                      }`}>
+                        {count1}/150
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('task2')}
+                      className={`px-5 py-2.5 font-bold text-sm rounded-xl transition flex items-center space-x-2 ${
+                        activeTab === 'task2'
+                          ? 'bg-blue-700 text-white shadow-sm'
+                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                      }`}
+                    >
+                      <span>Task 2 (Muhimroq, 2/3 ball)</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        count2 >= 250 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                      }`}>
+                        {count2}/250
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Avtomatik Saqlash Ko'rsatkichi */}
+                  {lastSavedTime && (
+                    <div className="hidden sm:flex items-center space-x-1.5 text-xs text-green-700 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                      <span>💾</span>
+                      <span>Avtosaqlandi: {lastSavedTime}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Split Screen: Chapda Topshiriq, O'ngda Matn Kiritish */}
+                <div className="flex-1 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-200 overflow-hidden">
+                  {/* Chap: Topshiriq ko'rsatmasi */}
+                  <div className="w-full md:w-5/12 p-5 sm:p-6 overflow-y-auto max-h-[calc(100vh-210px)] bg-gray-50/60">
+                    <div className="mb-4">
+                      <span className="text-xs font-black uppercase tracking-wider text-blue-800 bg-blue-100 px-3 py-1 rounded-full">
+                        {activeTab === 'task1' ? 'Task 1 Prompt (Kamida 150 so\'z)' : 'Task 2 Prompt (Kamida 250 so\'z)'}
+                      </span>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {activeTab === 'task1' 
+                          ? "Tavsiya etilgan vaqt: 20 daqiqa. Berilgan diagramma yoki jarayonni xolisona tahlil qiling." 
+                          : "Tavsiya etilgan vaqt: 40 daqiqa. Ikkala fikrni muhokama qiling va o'z shaxsiy nuqtai nazaringizni bildiring."}
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs font-serif leading-relaxed text-gray-800 text-sm whitespace-pre-wrap">
+                      {activeTab === 'task1' ? task1Prompt : task2Prompt}
+                    </div>
+
+                    <div className="mt-6 p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-950 space-y-1.5">
+                      <p className="font-bold">Cambridge IELTS Qoidalari:</p>
+                      <p>&bull; Qizil orfografik to&apos;lqinlar imtihonda ko&apos;rsatilmaydi (spellCheck o&apos;chirilgan).</p>
+                      <p>&bull; Task 1 ga 150 ta, Task 2 ga 250 ta so&apos;z minimal talab hisoblanadi.</p>
+                      <p>&bull; 15 tadan kam so&apos;z kiritilgan insholarga rasmiy qoidaga ko&apos;ra 0.0 Band beriladi.</p>
+                    </div>
+                  </div>
+
+                  {/* O'ng: Matn Kiritish Maydoni */}
+                  <div className="w-full md:w-7/12 p-4 sm:p-6 flex flex-col max-h-[calc(100vh-210px)]">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Sizning Inshoingiz ({activeTab.toUpperCase()})
+                      </span>
+                      <div className={`text-xs font-bold px-3 py-1 rounded-full flex items-center space-x-1.5 ${
+                        (activeTab === 'task1' ? count1 >= 150 : count2 >= 250)
+                          ? 'bg-green-100 text-green-800 border border-green-300'
+                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                      }`}>
+                        <span>📝 So&apos;zlar soni:</span>
+                        <span className="font-mono text-sm">{activeTab === 'task1' ? count1 : count2}</span>
+                        <span>/ {activeTab === 'task1' ? 150 : 250}</span>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={activeTab === 'task1' ? task1Text : task2Text}
+                      onChange={(e) => {
+                        if (activeTab === 'task1') setTask1Text(e.target.value);
+                        else setTask2Text(e.target.value);
+                      }}
+                      spellCheck={false}
+                      placeholder={
+                        activeTab === 'task1'
+                          ? "Write your Task 1 essay here (minimum 150 words)..."
+                          : "Write your Task 2 essay here (minimum 250 words)..."
+                      }
+                      className={`flex-1 w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-600 focus:outline-none resize-none leading-relaxed font-mono ${fontClass} ${
+                        contrast === 'high-contrast' ? 'bg-gray-900 text-yellow-300 border-yellow-500' : 'bg-white text-gray-900 border-gray-300'
+                      }`}
+                    />
+
+                    {/* Pastki Harakatlar Paneli */}
+                    <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <span>Task 1: <strong className={count1 >= 150 ? 'text-green-600' : 'text-amber-600'}>{count1}</strong> so&apos;z</span>
+                        <span>&bull;</span>
+                        <span>Task 2: <strong className={count2 >= 250 ? 'text-green-600' : 'text-amber-600'}>{count2}</strong> so&apos;z</span>
+                      </div>
+
+                      <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold px-7 py-2.5 rounded-xl shadow-md transition flex items-center justify-center space-x-2"
+                      >
+                        {submitting ? (
+                          <span>Gemini 3.8 Flash Tekshirmoqda...</span>
+                        ) : (
+                          <>
+                            <span>Insholarni Yakunlash &amp; Topshirish</span>
+                            <span>&rarr;</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-            <div>
-              <button
-                onClick={handleNext}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition shadow transform hover:scale-105"
-              >
-                Keyingi: Speaking Bo&apos;limiga O&apos;tish →
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="flex border-b border-gray-200">
-              <button
-                className={`flex-1 py-4 text-center font-bold text-sm sm:text-base transition ${activeTab === 'task1' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
-                onClick={() => setActiveTab('task1')}
-              >
-                Task 1 (Kamida 150 so&apos;z)
-              </button>
-              <button
-                className={`flex-1 py-4 text-center font-bold text-sm sm:text-base transition ${activeTab === 'task2' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
-                onClick={() => setActiveTab('task2')}
-              >
-                Task 2 (Kamida 250 so&apos;z)
-              </button>
-            </div>
-            
-            <div className="p-6">
-              {activeTab === 'task1' ? (
-                <div>
-                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 text-sm text-gray-800 leading-relaxed">
-                    <strong className="block text-blue-900 font-bold mb-1">Task 1 Topshirig&apos;i:</strong>
-                    {task1Prompt}
-                  </div>
-                  <textarea
-                    value={task1Text}
-                    onChange={(e) => setTask1Text(e.target.value)}
-                    onPaste={(e) => {
-                      e.preventDefault();
-                      alert("DIQQAT: Tashqaridan nusxa ko'chirish (Paste) qat'iyan taqiqlangan! Inshoni o'zingiz yozishingiz shart.");
-                    }}
-                    onCopy={(e) => e.preventDefault()}
-                    onCut={(e) => e.preventDefault()}
-                    className="w-full h-80 p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 font-serif leading-relaxed"
-                    placeholder="Task 1 matnini shu yerga klaviaturada yozing..."
-                  ></textarea>
-                  <div className="mt-2 text-sm font-medium text-gray-500 flex justify-between items-center">
-                    <span>Tavsiya etilgan vaqt: 20 daqiqa</span>
-                    <span>So&apos;zlar soni: <strong className={wordCount(task1Text) < 150 ? 'text-orange-500' : 'text-green-600'}>{wordCount(task1Text)}</strong> / 150</span>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 text-sm text-gray-800 leading-relaxed">
-                    <strong className="block text-blue-900 font-bold mb-1">Task 2 Topshirig&apos;i:</strong>
-                    {task2Prompt}
-                  </div>
-                  <textarea
-                    value={task2Text}
-                    onChange={(e) => setTask2Text(e.target.value)}
-                    onPaste={(e) => {
-                      e.preventDefault();
-                      alert("DIQQAT: Tashqaridan nusxa ko'chirish (Paste) qat'iyan taqiqlangan! Inshoni o'zingiz yozishingiz shart.");
-                    }}
-                    onCopy={(e) => e.preventDefault()}
-                    onCut={(e) => e.preventDefault()}
-                    className="w-full h-80 p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 font-serif leading-relaxed"
-                    placeholder="Task 2 matnini shu yerga klaviaturada yozing..."
-                  ></textarea>
-                  <div className="mt-2 text-sm font-medium text-gray-500 flex justify-between items-center">
-                    <span>Tavsiya etilgan vaqt: 40 daqiqa</span>
-                    <span>So&apos;zlar soni: <strong className={wordCount(task2Text) < 250 ? 'text-orange-500' : 'text-green-600'}>{wordCount(task2Text)}</strong> / 250</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-              <span className="text-xs text-gray-500">Ikkala topshiriq ham baholanadi</span>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition shadow disabled:opacity-50"
-              >
-                {submitting ? 'Yuborilmoqda...' : 'Writing Javoblarini Yuborish'}
-              </button>
-            </div>
-          </div>
-        )}
+          </main>
         </div>
       </AntiCheatGuard>
     </ProtectedRoute>

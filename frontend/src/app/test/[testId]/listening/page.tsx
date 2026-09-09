@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AntiCheatGuard from '@/components/AntiCheatGuard';
-import Timer from '@/components/Timer';
+import ExamHeader from '@/components/ExamHeader';
+import QuestionPalette from '@/components/QuestionPalette';
 import QuestionCard from '@/components/QuestionCard';
 import AudioPlayer from '@/components/AudioPlayer';
 import { api } from '@/lib/api';
@@ -24,6 +25,13 @@ export default function ListeningTestPage() {
   const [submitting, setSubmitting] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [resultScore, setResultScore] = useState<number | null>(null);
+
+  // Cambridge Navigatsiya & Sozlamalar
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [reviewIndices, setReviewIndices] = useState<Set<number>>(new Set());
+  const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
+  const [contrast, setContrast] = useState<'standard' | 'high-contrast'>('standard');
+  const questionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     async function loadQuestions() {
@@ -47,6 +55,22 @@ export default function ListeningTestPage() {
 
   const handleAnswerChange = (questionId: number, value: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
+  };
+
+  const handleToggleReview = (index: number) => {
+    setReviewIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const scrollToQuestion = (index: number) => {
+    setCurrentIndex(index);
+    if (questionRefs.current[index]) {
+      questionRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const handleSubmit = async () => {
@@ -73,74 +97,119 @@ export default function ListeningTestPage() {
 
   if (loading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
 
+  const answeredIndices = new Set(
+    questions.map((q, idx) => (answers[q.id] && answers[q.id].trim() !== '' ? idx : -1)).filter(idx => idx !== -1)
+  );
+
   return (
     <ProtectedRoute>
       <AntiCheatGuard testId={testId}>
-        <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex-1 w-full">
-            <div className="flex items-center space-x-2 mb-2">
-              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Listening Test (Set #{setNumber})
-              </span>
-              <span className="text-xs text-gray-500">Audio 1 marta ijro etiladi</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Listening Audio</h2>
-            {audioUrl && <AudioPlayer src={audioUrl} allowReplay={false} />}
-          </div>
-          {resultScore === null && (
-            <div className="w-full md:w-auto self-start md:self-center">
-              <Timer durationMinutes={30} onTimeUp={handleSubmit} />
-            </div>
-          )}
-        </div>
+        <div className={`min-h-screen flex flex-col ${contrast === 'high-contrast' ? 'bg-black text-yellow-300' : 'bg-[#f8fafc] text-gray-900'}`}>
+          {/* Rasmiy Cambridge Imtihon Headeri */}
+          <ExamHeader
+            testTitle={`Academic Listening — Set #${setNumber}`}
+            durationMinutes={30}
+            onTimeUp={handleSubmit}
+            isCompleted={resultScore !== null}
+            onFontChange={setFontSize}
+            onContrastChange={setContrast}
+          />
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          {resultScore !== null ? (
-            <div className="p-8 text-center my-6">
-              <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl font-extrabold mx-auto mb-4">
-                ✓
+          {/* Asosiy Ish Maydoni */}
+          <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
+            {/* Listening Audio Pleyer Paneli */}
+            <section aria-label="Listening Audio Pleyer" className={`p-5 rounded-2xl border shadow-xs ${
+              contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200'
+            }`}>
+              <div className="flex items-center justify-between mb-3 border-b pb-2 border-gray-200">
+                <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                  Listening Audio Track
+                </span>
+                <span className="text-xs text-red-600 font-bold flex items-center space-x-1">
+                  <span>⚠️</span>
+                  <span>Audio faqat 1 marta ijro etiladi</span>
+                </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Listening Yakunlandi!</h3>
-              <p className="text-gray-600 mb-4">Sizning Listening bo&apos;limi bo&apos;yicha bahongiz:</p>
-              <div className="text-6xl font-black text-blue-700 mb-6">{resultScore.toFixed(1)}</div>
-              <button
-                onClick={handleProceed}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-lg shadow transition transform hover:scale-105"
-              >
-                Keyingi: Writing Bo&apos;limiga O&apos;tish →
-              </button>
+              {audioUrl && <AudioPlayer src={audioUrl} allowReplay={false} />}
+            </section>
+
+            {/* Savollar Bloki */}
+            <section aria-label="Savollar" className={`rounded-2xl border p-6 shadow-xs flex-1 ${
+              contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200'
+            }`}>
+              {resultScore !== null ? (
+                <div className="p-8 rounded-2xl border border-green-200 text-center my-auto bg-green-50/50">
+                  <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl font-extrabold mx-auto mb-4">
+                    ✓
+                  </div>
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">Listening Muvaffaqiyatli Yakunlandi!</h3>
+                  <p className="text-gray-600 mb-4">Ushbu bo&apos;lim bo&apos;yicha hisoblangan rasmiy IELTS band bali:</p>
+                  <div className="text-6xl font-black text-blue-700 mb-6">{resultScore.toFixed(1)}</div>
+                  <button
+                    onClick={handleProceed}
+                    className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition transform hover:scale-105"
+                  >
+                    Keyingi: Writing Bo&apos;limiga O&apos;tish &rarr;
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="border-b pb-3 flex justify-between items-center">
+                    <h3 className="text-base font-bold text-gray-800">
+                      Savollar (1 &ndash; {questions.length})
+                    </h3>
+                    <span className="text-xs text-gray-500 font-medium">Audioni tinglab, to&apos;g&apos;ri javobni tanlang</span>
+                  </div>
+
+                  {questions.map((q, idx) => (
+                    <div
+                      key={q.id}
+                      ref={el => { questionRefs.current[idx] = el; }}
+                      className={`transition-all rounded-xl p-3 ${
+                        currentIndex === idx ? 'ring-2 ring-blue-500/40 bg-blue-50/20' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          Savol #{idx + 1}
+                        </span>
+                        {reviewIndices.has(idx) && (
+                          <span className="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full flex items-center space-x-1">
+                            <span>🚩</span>
+                            <span>Review</span>
+                          </span>
+                        )}
+                      </div>
+                      <QuestionCard
+                        question={q}
+                        index={idx + 1}
+                        value={answers[q.id] || ''}
+                        onChange={(val) => handleAnswerChange(q.id, val)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </main>
+
+          {/* Pastki Cambridge Savollar Navigatsiya Lentasi */}
+          {resultScore === null && (
+            <div className="sticky bottom-0 z-30">
+              <QuestionPalette
+                totalQuestions={questions.length}
+                currentIndex={currentIndex}
+                answeredIndices={answeredIndices}
+                reviewIndices={reviewIndices}
+                onSelect={scrollToQuestion}
+                onToggleReview={handleToggleReview}
+                onNext={() => scrollToQuestion(Math.min(questions.length - 1, currentIndex + 1))}
+                onPrev={() => scrollToQuestion(Math.max(0, currentIndex - 1))}
+                onSubmit={handleSubmit}
+                isSubmitting={submitting}
+              />
             </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-4 border-b pb-3">
-                <h3 className="text-lg font-bold text-gray-800">Savollar (1 - {questions.length})</h3>
-                <span className="text-xs text-gray-500 font-medium">Audioni tinglab, javoblarni belgilang</span>
-              </div>
-              <div className="space-y-4">
-                {questions.map((q, idx) => (
-                  <QuestionCard 
-                    key={q.id} 
-                    question={q} 
-                    index={idx + 1} 
-                    value={answers[q.id] || ''} 
-                    onChange={(val) => handleAnswerChange(q.id, val)} 
-                  />
-                ))}
-              </div>
-              
-              <div className="mt-8 flex justify-end">
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition shadow disabled:opacity-50"
-                >
-                  {submitting ? 'Yuborilmoqda...' : 'Javoblarni Yuborish (Submit)'}
-                </button>
-              </div>
-            </>
           )}
-        </div>
         </div>
       </AntiCheatGuard>
     </ProtectedRoute>

@@ -87,6 +87,50 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Target Band Tracker & O'quv Statistikasi Widgeti */}
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 mb-8 shadow-xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-2">
+              <span className="text-xs font-black uppercase tracking-widest text-blue-300 bg-white/10 px-3 py-1 rounded-full">
+                IELTS Target Goal &bull; Shaxsiy Maqsad
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black">
+                Mening Maqsadim: <span className="text-yellow-400">Band 7.5+</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-300 max-w-lg leading-relaxed">
+                Google Gemini 3.8 Flash AI tahlillariga ko&apos;ra, muntazam mock testlar orqali 2 hafta ichida natijangizni kamida +0.5 &ndash; 1.0 bandga oshirishingiz mumkin.
+              </p>
+            </div>
+
+            {/* Statistik Kartochkalar */}
+            <div className="grid grid-cols-3 gap-3 w-full md:w-auto">
+              <div className="bg-white/10 backdrop-blur-md p-3 sm:p-4 rounded-2xl text-center border border-white/10">
+                <span className="text-[10px] sm:text-xs text-gray-300 font-bold uppercase block">Jami Test</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">{tests.length}</span>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md p-3 sm:p-4 rounded-2xl text-center border border-white/10">
+                <span className="text-[10px] sm:text-xs text-gray-300 font-bold uppercase block">Eng Yuqori</span>
+                <span className="text-2xl sm:text-3xl font-black text-yellow-400">
+                  {tests.length > 0 && Math.max(...tests.map(t => t.overall_band_score || 0)) > 0
+                    ? Math.max(...tests.map(t => t.overall_band_score || 0)).toFixed(1)
+                    : '—'}
+                </span>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md p-3 sm:p-4 rounded-2xl text-center border border-white/10">
+                <span className="text-[10px] sm:text-xs text-gray-300 font-bold uppercase block">O&apos;rtacha</span>
+                <span className="text-2xl sm:text-3xl font-black text-green-400">
+                  {(() => {
+                    const completed = tests.filter(t => t.overall_band_score && t.overall_band_score > 0);
+                    if (completed.length === 0) return '—';
+                    const avg = completed.reduce((a, b) => a + (b.overall_band_score || 0), 0) / completed.length;
+                    return avg.toFixed(1);
+                  })()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Tezkor Bo'lim Tanlash Kartochkalari */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div 
@@ -94,7 +138,7 @@ export default function Dashboard() {
               setSelectedSection('reading');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
               📖
@@ -108,7 +152,7 @@ export default function Dashboard() {
               setSelectedSection('listening');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
           >
             <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
               🎧
@@ -122,7 +166,7 @@ export default function Dashboard() {
               setSelectedSection('writing');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
           >
             <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
               ✍️
@@ -136,7 +180,7 @@ export default function Dashboard() {
               setSelectedSection('speaking');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
           >
             <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
               🗣️
