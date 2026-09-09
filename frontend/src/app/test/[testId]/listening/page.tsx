@@ -153,7 +153,7 @@ export default function ListeningTestPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div className="border-b pb-3 flex justify-between items-center">
                     <h3 className="text-base font-bold text-gray-800">
                       Savollar (1 &ndash; {questions.length})
@@ -165,26 +165,16 @@ export default function ListeningTestPage() {
                     <div
                       key={q.id}
                       ref={el => { questionRefs.current[idx] = el; }}
-                      className={`transition-all rounded-xl p-3 ${
-                        currentIndex === idx ? 'ring-2 ring-blue-500/40 bg-blue-50/20' : ''
-                      }`}
+                      className="transition-all"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                          Savol #{idx + 1}
-                        </span>
-                        {reviewIndices.has(idx) && (
-                          <span className="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full flex items-center space-x-1">
-                            <span>🚩</span>
-                            <span>Review</span>
-                          </span>
-                        )}
-                      </div>
                       <QuestionCard
                         question={q}
                         index={idx + 1}
                         value={answers[q.id] || ''}
                         onChange={(val) => handleAnswerChange(q.id, val)}
+                        isReviewed={reviewIndices.has(idx)}
+                        onToggleReview={() => handleToggleReview(idx)}
+                        isActive={currentIndex === idx}
                       />
                     </div>
                   ))}

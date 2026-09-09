@@ -119,11 +119,16 @@ export default function ReadingTestPage() {
               contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200'
             }`}>
               <div className="flex items-center justify-between mb-4 border-b pb-3 border-gray-200">
-                <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                  Reading Passage
-                </span>
-                <span className="text-xs text-gray-500 font-medium">
-                  {questions.length} ta savol &bull; Matnni sichqoncha bilan belgilab sariq rangga bo&apos;yashingiz mumkin
+                <div className="flex items-center space-x-2">
+                  <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                    Reading Passage
+                  </span>
+                  <span className="text-xs text-gray-500 font-medium">
+                    ({questions.length} ta savol)
+                  </span>
+                </div>
+                <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
+                  Matnni belgilab eslatma qoldirishingiz mumkin (Highlight)
                 </span>
               </div>
 
@@ -154,31 +159,21 @@ export default function ReadingTestPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {questions.map((q, idx) => (
                       <div
                         key={q.id}
                         ref={el => { questionRefs.current[idx] = el; }}
-                        className={`transition-all rounded-xl p-2 ${
-                          currentIndex === idx ? 'ring-2 ring-blue-500/40 bg-blue-50/20' : ''
-                        }`}
+                        className="transition-all"
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            Savol #{idx + 1}
-                          </span>
-                          {reviewIndices.has(idx) && (
-                            <span className="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full flex items-center space-x-1">
-                              <span>🚩</span>
-                              <span>Review</span>
-                            </span>
-                          )}
-                        </div>
                         <QuestionCard
                           question={q}
                           index={idx + 1}
                           value={answers[q.id] || ''}
                           onChange={(val) => handleAnswerChange(q.id, val)}
+                          isReviewed={reviewIndices.has(idx)}
+                          onToggleReview={() => handleToggleReview(idx)}
+                          isActive={currentIndex === idx}
                         />
                       </div>
                     ))}

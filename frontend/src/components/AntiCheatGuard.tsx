@@ -421,20 +421,7 @@ export default function AntiCheatGuard({
         </div>
       )}
 
-      {/* Yuqori o'ng burchakdagi Anti-Cheat status nishoni */}
-      <div className="fixed top-20 right-4 z-40 bg-white/95 backdrop-blur border border-gray-200 shadow-md rounded-full px-4 py-1.5 flex items-center space-x-2 text-xs font-bold">
-        <span className={`w-2.5 h-2.5 rounded-full animate-ping ${isFlagged ? 'bg-red-600' : warnings > 0 ? 'bg-orange-500' : 'bg-green-500'}`}></span>
-        <span className="text-gray-700">Anti-Cheat Himoyasi</span>
-        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-          isFlagged 
-            ? 'bg-red-100 text-red-700 font-extrabold' 
-            : warnings > 0 
-            ? 'bg-orange-100 text-orange-700' 
-            : 'bg-green-100 text-green-700'
-        }`}>
-          {isFlagged ? 'XAVF: BELGILANGAN ⚠️' : `${warnings}/3 OGOHLANTIRISH`}
-        </span>
-      </div>
+
 
       {/* Asosiy kontent */}
       {children}
