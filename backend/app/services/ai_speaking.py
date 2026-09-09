@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from app.config import settings
 
 def transcribe_audio(file_path: str) -> str:
@@ -81,7 +82,6 @@ async def _analyze_speaking_with_gemini(transcript: str, part_number: int) -> di
         return None
     try:
         import httpx
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={settings.GEMINI_API_KEY}"
         prompt = f"""You are an official senior IELTS Speaking examiner. Analyze this candidate's Part {part_number} spoken response transcript according to official Cambridge IELTS speaking criteria (Fluency and Coherence, Lexical Resource, Grammatical Range and Accuracy, Pronunciation).
         
         Candidate's spoken transcript:
@@ -103,14 +103,35 @@ async def _analyze_speaking_with_gemini(transcript: str, part_number: int) -> di
                 "response_mime_type": "application/json"
             }
         }
+        
+        # Primary model is settings.GEMINI_MODEL (default: gemini-3.8-flash)
+        models_to_try = [settings.GEMINI_MODEL]
+        for fallback_model in ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-1.5-flash"]:
+            if fallback_model not in models_to_try:
+                models_to_try.append(fallback_model)
+
         async with httpx.AsyncClient(timeout=30.0) as client:
-            res = await client.post(url, json=payload)
-            if res.status_code == 200:
-                data = res.json()
-                content = data["candidates"][0]["content"]["parts"][0]["text"]
-                analysis = json.loads(content)
-                overall = analysis.get("overall_band", 6.0)
-                return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
+            for model_name in models_to_try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={settings.GEMINI_API_KEY}"
+                res = await client.post(url, json=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+                    raw_text = ""
+                    for p in parts:
+                        if not p.get("thought") and "text" in p:
+                            raw_text += p["text"]
+                    if not raw_text and parts and "text" in parts[0]:
+                        raw_text = parts[0]["text"]
+                    cleaned_json = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
+                    analysis = json.loads(cleaned_json)
+                    overall = analysis.get("overall_band", 6.0)
+                    return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
+                elif res.status_code == 404:
+                    continue  # Try next model if 3.8-flash is not available for this key
+                else:
+                    print(f"Gemini Speaking API javobi ({res.status_code}): {res.text[:200]}")
+                    break
     except Exception as e:
         print(f"Gemini Speaking tahlilida xatolik: {e}")
     return None
