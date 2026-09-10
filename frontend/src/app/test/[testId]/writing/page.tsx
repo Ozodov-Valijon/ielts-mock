@@ -100,17 +100,13 @@ export default function WritingTestPage() {
   const count1 = wordCount(task1Text);
   const count2 = wordCount(task2Text);
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleSubmit = async () => {
     if (submitting) return;
 
-    if (count1 < 100 || count2 < 150) {
-      const confirmLow = window.confirm(
-        `Diqqat: So'zlar soni talabdan kamroq:\nTask 1: ${count1} so'z (kamida 150)\nTask 2: ${count2} so'z (kamida 250)\n\nShunda ham yuborishni xohlaysizmi?`
-      );
-      if (!confirmLow) return;
-    }
-
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const res1 = await api.submitWriting(testId, 1, task1Text || "No response provided for Task 1.");
       const res2 = await api.submitWriting(testId, 2, task2Text || "No response provided for Task 2.");
@@ -128,7 +124,7 @@ export default function WritingTestPage() {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Xatolik yuz berdi';
       console.error(msg);
-      alert(msg);
+      setSubmitError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -286,6 +282,12 @@ export default function WritingTestPage() {
                         contrast === 'high-contrast' ? 'bg-gray-900 text-yellow-300 border-yellow-500' : 'bg-white text-gray-900 border-gray-300'
                       }`}
                     />
+
+                    {submitError && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+                        ⚠️ {submitError}
+                      </div>
+                    )}
 
                     {/* Pastki Harakatlar Paneli */}
                     <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
