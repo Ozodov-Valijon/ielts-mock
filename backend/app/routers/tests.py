@@ -50,14 +50,18 @@ def log_anticheat_event(
     elif event.event_type == "paste_attempt":
         test.paste_attempts = (test.paste_attempts or 0) + 1
 
-    # 3 martadan ko'p tab almashtirish yoki paste qilish chiterlik deb belgilanadi
-    if (test.tab_switches or 0) >= 3 or (test.paste_attempts or 0) >= 3:
+    total_violations = (test.tab_switches or 0) + (test.paste_attempts or 0)
+    auto_terminated = False
+    if total_violations >= 3:
         test.is_flagged_cheating = True
+        test.status = "completed"
+        auto_terminated = True
 
     db.commit()
     return {
         "tab_switches": test.tab_switches,
         "paste_attempts": test.paste_attempts,
         "is_flagged_cheating": test.is_flagged_cheating,
+        "auto_terminated": auto_terminated,
         "warning_message": "Diqqat! Test oynasidan chiqish yoki matn ko'chirish taqiqlanadi!"
     }

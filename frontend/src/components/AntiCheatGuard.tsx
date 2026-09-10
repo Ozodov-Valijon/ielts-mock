@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
 interface AntiCheatGuardProps {
@@ -16,8 +17,10 @@ export default function AntiCheatGuard({
   allowPaste = false,
   requireFullscreen = true 
 }: AntiCheatGuardProps) {
+  const router = useRouter();
   const [warnings, setWarnings] = useState(0);
-  const [isFlagged, setIsFlagged] = useState(false);
+  const [isTerminated, setIsTerminated] = useState(false);
+  const [terminationCountdown, setTerminationCountdown] = useState(3);
   
   // Fullscreen nazorati
   const [isFullscreen, setIsFullscreen] = useState(!requireFullscreen);
@@ -74,6 +77,22 @@ export default function AntiCheatGuard({
     }
   }, []);
 
+  // 🛑 Ovozli test bekor qilinganlik xabari
+  const speakTermination = useCallback(() => {
+    try {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("Diqqat! Siz qoidalarni ikki martadan ko'p buzdingiz! Test bekor qilindi va avtomatik yakunlandi!");
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (e) {
+      console.warn("Speech synthesis xatoligi:", e);
+    }
+  }, []);
+
   // Ovoz va sirenani ishga tushirish funksiyasi
   const triggerAlarm = useCallback((message: string) => {
     setCheaterMessage(message);
@@ -118,13 +137,40 @@ export default function AntiCheatGuard({
       const res = await api.logAntiCheatEvent(testId, eventType, message);
       const newWarnings = (res.tab_switches || 0) + (res.paste_attempts || 0);
       setWarnings(newWarnings);
-      if (res.is_flagged_cheating) {
-        setIsFlagged(true);
+      
+      // Agar 2 martadan oshib ketsa (3-marta) -> test avtomatik ravishda yakunlanadi!
+      if (res.is_flagged_cheating || newWarnings > 2 || (res as { auto_terminated?: boolean }).auto_terminated) {
+        setIsTerminated(true);
+        setShowCheaterAlarm(false);
+        if (soundIntervalRef.current) {
+          clearInterval(soundIntervalRef.current);
+          soundIntervalRef.current = null;
+        }
+        playSiren();
+        speakTermination();
       }
     } catch (err) {
       console.error("Anti-cheat hodisasini yuborishda xatolik:", err);
     }
-  }, [testId, triggerAlarm]);
+  }, [testId, triggerAlarm, playSiren, speakTermination]);
+
+  // 🛑 Test bekor qilinganda 3 soniyadan keyin natijalar sahifasiga yo'naltirish
+  useEffect(() => {
+    if (!isTerminated) return;
+
+    const timer = setInterval(() => {
+      setTerminationCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          router.push(`/test/${testId}/results`);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isTerminated, router, testId]);
 
   // To'liq ekranga o'tish funksiyasi
   const enterFullscreen = async () => {
@@ -344,8 +390,50 @@ export default function AntiCheatGuard({
 
   return (
     <div className="relative select-none">
+      {/* 🛑 TEST QOIDABUZARLIK TUFAYLI AVTOMATIK YAKUNLANDI PARDASI */}
+      {isTerminated && (
+        <div className="fixed inset-0 z-[20000] bg-black/98 flex flex-col items-center justify-center p-4 text-center select-none backdrop-blur-3xl animate-in fade-in zoom-in-95">
+          <div className="max-w-2xl w-full bg-gradient-to-b from-red-950 via-slate-950 to-black border-4 border-red-600 rounded-3xl p-8 sm:p-12 shadow-[0_0_100px_rgba(239,68,68,0.9)] relative overflow-hidden">
+            <div className="w-24 h-24 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-6xl mx-auto mb-4 border-2 border-red-500 animate-bounce">
+              🛑
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl font-black text-red-500 tracking-wider uppercase drop-shadow-[0_5px_25px_rgba(239,68,68,1)]">
+              TEST BEKOR QILINDI!
+            </h1>
+
+            <div className="text-lg sm:text-xl font-bold text-white mt-3 uppercase tracking-wide">
+              2 martadan ortiq qoidabuzarlik qayd etildi
+            </div>
+
+            <p className="text-red-200 text-sm sm:text-base mt-4 mb-6 leading-relaxed max-w-lg mx-auto">
+              Siz test paytida ruxsat etilgan <strong>2 ta ogohlantirish</strong> limitidan oshib ketdingiz (Qoidabuzarlik: {warnings} marta). Imtihon qoidalariga binoan test to&apos;xtatildi va avtomatik ravishda yakunlandi.
+            </p>
+
+            <div className="bg-red-600/20 border-2 border-red-500/50 rounded-2xl p-4 mb-6 text-center max-w-md mx-auto">
+              <span className="text-xs text-red-300 font-bold uppercase tracking-wider block mb-1">Holat:</span>
+              <span className="text-xl font-black text-white font-mono uppercase">
+                🚨 Qoidabuzarlik sababli avto-yakunlangan
+              </span>
+            </div>
+
+            <div className="text-sm font-semibold text-gray-300 mb-6">
+              Natijalar sahifasiga o&apos;tilmoqda: <span className="text-red-400 font-mono text-xl font-bold">{terminationCountdown}</span> soniya...
+            </div>
+
+            <button
+              onClick={() => router.push(`/test/${testId}/results`)}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 px-8 rounded-2xl transition shadow-xl text-base flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Natijalar Sahifasiga O&apos;tish</span>
+              <span>&rarr;</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 🚨 KATTA "CHITER!" OGOHLANTIRISH VA SIRENA PARDASI (TO'LIQ EKRANDAN CHIQIB KETILGANDA) */}
-      {showCheaterAlarm && (
+      {showCheaterAlarm && !isTerminated && (
         <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4 text-center select-none backdrop-blur-2xl animate-in fade-in zoom-in-90">
           <div className="max-w-2xl w-full bg-gradient-to-b from-red-950 via-slate-950 to-black border-4 border-red-600 rounded-3xl p-8 sm:p-12 shadow-[0_0_80px_rgba(239,68,68,0.7)] relative overflow-hidden">
             
@@ -369,13 +457,18 @@ export default function AntiCheatGuard({
               {cheaterMessage || "Siz to'liq ekran rejimidan chiqdingiz yoki boshqa oynaga o'tdingiz. IELTS imtihonida oynadan chiqish qat'iyan taqiqlangan!"}
             </p>
 
-            {/* Ogohlantirish hisoblagichi */}
+            {/* Ogohlantirish hisoblagichi (Maksimal 2 ta ogohlantirish) */}
             <div className="bg-red-600/20 border-2 border-red-500/50 rounded-2xl p-4 mb-8 text-center max-w-md mx-auto">
-              <span className="text-xs text-red-300 font-bold uppercase tracking-wider block mb-1">Qoidabuzarlik darajasi:</span>
-              <span className="text-3xl font-black text-white font-mono">{warnings} / 3</span>
-              {(warnings >= 3 || isFlagged) && (
-                <span className="block text-red-400 text-xs font-black mt-2 uppercase">
-                  ⚠️ 3 marta qoidabuzarlik to&apos;ldi! Test chiterlik bayrog&apos;i bilan belgilandi.
+              <span className="text-xs text-red-300 font-bold uppercase tracking-wider block mb-1">Ogohlantirish darajasi:</span>
+              <span className="text-3xl font-black text-white font-mono">{warnings} / 2</span>
+              {warnings === 1 && (
+                <span className="block text-yellow-300 text-xs font-black mt-2 uppercase">
+                  ⚠️ 1-ogohlantirish! Yana 1 ta qoidabuzarlikdan so&apos;ng test avtomatik ravishda yakunlanadi!
+                </span>
+              )}
+              {warnings >= 2 && (
+                <span className="block text-red-400 text-xs font-black mt-2 uppercase animate-pulse">
+                  🚨 2-va OXIRGI ogohlantirish! Keyingi har qanday qoidabuzarlikda test darhol yakunlanadi!
                 </span>
               )}
             </div>
