@@ -8,6 +8,8 @@ class Test(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     status = Column(String, default="in_progress")
+    set_number = Column(Integer, default=1)
+    test_mode = Column(String, default="full")
     overall_band_score = Column(Float, nullable=True)
     started_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)

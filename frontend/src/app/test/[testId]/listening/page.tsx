@@ -42,9 +42,9 @@ export default function ListeningTestPage() {
         if (data && data.length > 0 && data[0].audio_url) {
           setAudioUrl(data[0].audio_url);
         } else {
-          setAudioUrl('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+          setAudioUrl('/uploads/audio/ielts_listening_set1.wav');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Listening savollarini yuklashda xatolik:", err);
       } finally {
         setLoading(false);
@@ -83,9 +83,10 @@ export default function ListeningTestPage() {
       }));
       const res = await api.submitListeningAnswers(testId, payload);
       setResultScore(res.score);
-    } catch (error: any) {
-      console.error(error);
-      alert(error.message || 'Xatolik yuz berdi');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      console.error(msg);
+      alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -111,6 +112,7 @@ export default function ListeningTestPage() {
             durationMinutes={30}
             onTimeUp={handleSubmit}
             isCompleted={resultScore !== null}
+            storageKey={`ielts_timer_${testId}_listening`}
             onFontChange={setFontSize}
             onContrastChange={setContrast}
           />
@@ -129,11 +131,13 @@ export default function ListeningTestPage() {
                   Audio faqat 1 marta ijro etiladi
                 </span>
               </div>
-              {audioUrl && <AudioPlayer src={audioUrl} allowReplay={false} />}
+              {audioUrl && <AudioPlayer src={audioUrl} allowReplay={false} storageKey={`ielts_audio_played_${testId}`} />}
             </section>
 
             {/* Savollar Bloki */}
             <section aria-label="Savollar" className={`rounded-2xl border p-6 shadow-xs flex-1 ${
+              fontSize === 'xlarge' ? 'text-lg' : fontSize === 'large' ? 'text-base' : 'text-sm'
+            } ${
               contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200'
             }`}>
               {resultScore !== null ? (

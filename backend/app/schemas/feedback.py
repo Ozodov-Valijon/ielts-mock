@@ -22,6 +22,12 @@ class FeedbackResponse(BaseModel):
     writing_score: Optional[float] = 0.0
     speaking_score: Optional[float] = 0.0
     overall_band: Optional[float] = 0.0
+    is_approved: bool = True
+    writing_status: Optional[str] = "completed"
+    speaking_status: Optional[str] = "completed"
+    writing_feedback: Optional[str] = None
+    speaking_feedback: Optional[str] = None
+    admin_notes: Optional[str] = None
     strengths: Optional[str] = None
     weaknesses: Optional[str] = None
     recommendations: Optional[str] = None

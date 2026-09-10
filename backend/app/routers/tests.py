@@ -1,7 +1,8 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.test import TestResponse, AntiCheatEvent
+from app.schemas.test import TestCreate, TestResponse, AntiCheatEvent
 from app.models.test import Test
 from app.services.auth import get_current_user
 from app.models.user import User
@@ -9,8 +10,14 @@ from app.models.user import User
 router = APIRouter(prefix="/tests", tags=["tests"])
 
 @router.post("", response_model=TestResponse)
-def start_test(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    new_test = Test(user_id=current_user.id, status="in_progress")
+def start_test(
+    test_in: Optional[TestCreate] = None,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    set_num = test_in.set_number if test_in and test_in.set_number else 1
+    t_mode = test_in.test_mode if test_in and test_in.test_mode else "full"
+    new_test = Test(user_id=current_user.id, status="in_progress", set_number=set_num, test_mode=t_mode)
     db.add(new_test)
     db.commit()
     db.refresh(new_test)

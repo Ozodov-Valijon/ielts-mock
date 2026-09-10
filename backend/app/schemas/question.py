@@ -9,7 +9,7 @@ class QuestionCreate(BaseModel):
     passage_text: Optional[str] = None
     audio_url: Optional[str] = None
     options: Optional[Any] = None
-    correct_answer: str
+    correct_answer: Optional[str] = None
     order_num: int
 
 class QuestionResponse(QuestionCreate):

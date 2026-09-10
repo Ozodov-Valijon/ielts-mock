@@ -41,8 +41,9 @@ export default function RegisterPage() {
       });
       alert("Akkaunt muvaffaqiyatli yaratildi! Endi tizimga kiring.");
       router.push('/login');
-    } catch (err: any) {
-      setError(err.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Ro'yxatdan o'tishda xatolik yuz berdi";
+      setError(msg);
     } finally {
       setLoading(false);
     }

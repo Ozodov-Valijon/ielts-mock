@@ -25,9 +25,10 @@ export default function ResultsPage() {
         setLoading(true);
         const data = await api.getFeedback(testId);
         setFeedback(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Natijalarni yuklashda xatolik:", err);
-        setError(err.message || "Natijalarni hisoblashda xatolik yuz berdi");
+        const msg = err instanceof Error ? err.message : "Natijalarni hisoblashda xatolik yuz berdi";
+        setError(msg);
       } finally {
         setLoading(false);
       }
@@ -64,7 +65,8 @@ export default function ResultsPage() {
     );
   }
 
-  const getBandLabel = (band: number) => {
+  const getBandLabel = (band?: number | null) => {
+    if (band == null) return "Hisoblanmoqda (Kutilmoqda)";
     if (band >= 8.5) return "Expert User (C2)";
     if (band >= 7.5) return "Very Good User (C1)";
     if (band >= 6.5) return "Good User (B2/C1)";
@@ -162,11 +164,26 @@ export default function ResultsPage() {
               </span>
             </div>
 
+            {/* Ustoz tekshiruvi kutilmoqda bildirishnomasi */}
+            {feedback.is_approved === false && (
+              <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 mb-8 flex items-center space-x-4 shadow-xs">
+                <span className="text-3xl">⏳</span>
+                <div>
+                  <h3 className="font-extrabold text-amber-900 text-base">Natijalar Ustoz Tekshiruvida (Kutilmoqda)</h3>
+                  <p className="text-xs text-amber-900 mt-1">
+                    Reading va Listening natijalaringiz avtomatik hisoblangan. Writing (holat: <span className="font-bold">{feedback.writing_status || 'kutilmoqda'}</span>) va Speaking (holat: <span className="font-bold">{feedback.speaking_status || 'kutilmoqda'}</span>) bo&apos;limlaringiz ustoz tomonidan tekshirilmoqda. Tekshiruv yakunlangach, yakuniy overall ball va to&apos;liq sertifikat chiqariladi.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Katta Overall Band Score va 4 ta bo'lim */}
             <div className="flex flex-col md:flex-row gap-8 mb-10 items-center justify-center">
               <div className="w-64 h-64 rounded-full border-8 border-blue-600 flex flex-col items-center justify-center shadow-xl bg-white transform hover:scale-105 transition">
                 <span className="text-gray-400 font-extrabold tracking-widest text-xs uppercase mb-1">Overall Band</span>
-                <span className="text-7xl font-black text-blue-900 leading-none">{feedback.overall_band.toFixed(1)}</span>
+                <span className="text-7xl font-black text-blue-900 leading-none">
+                  {feedback.overall_band != null ? feedback.overall_band.toFixed(1) : '⏳'}
+                </span>
                 <span className="text-xs text-blue-700 font-bold mt-2 bg-blue-50 px-3 py-0.5 rounded-full">
                   {getBandLabel(feedback.overall_band)}
                 </span>
@@ -320,13 +337,40 @@ export default function ResultsPage() {
 
             {/* Gemini AI va Mentor Tavsiyalari */}
             {feedback.recommendations && (
-              <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200 mb-10 shadow-xs">
+              <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200 mb-8 shadow-xs">
                 <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center">
                   <span className="text-2xl mr-2">💡</span> Tavsiyalar va Yo&apos;nalishlar
                 </h3>
                 <div className="text-blue-950 text-sm leading-relaxed whitespace-pre-line font-medium">
                   {feedback.recommendations}
                 </div>
+              </div>
+            )}
+
+            {/* Ustoz Xulosasi va Sharhlari (Admin Notes & Feedback) */}
+            {(feedback.admin_notes || feedback.writing_feedback || feedback.speaking_feedback) && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 mb-10 shadow-xs">
+                <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center">
+                  <span className="text-2xl mr-2">👨‍🏫</span> Ustoz (Admin) Sharhlari va Fikrlari
+                </h3>
+                {feedback.admin_notes && (
+                  <div className="mb-4 text-indigo-950 text-sm">
+                    <span className="font-bold block text-xs uppercase tracking-wider text-indigo-700 mb-1">Umumiy xulosa:</span>
+                    <p className="whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-indigo-100 font-medium">{feedback.admin_notes}</p>
+                  </div>
+                )}
+                {feedback.writing_feedback && (
+                  <div className="mb-4 text-indigo-950 text-sm">
+                    <span className="font-bold block text-xs uppercase tracking-wider text-indigo-700 mb-1">Writing bo&apos;yicha ustoz fikri:</span>
+                    <p className="whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-indigo-100 font-medium">{feedback.writing_feedback}</p>
+                  </div>
+                )}
+                {feedback.speaking_feedback && (
+                  <div className="text-indigo-950 text-sm">
+                    <span className="font-bold block text-xs uppercase tracking-wider text-indigo-700 mb-1">Speaking bo&apos;yicha ustoz fikri:</span>
+                    <p className="whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-indigo-100 font-medium">{feedback.speaking_feedback}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -6,6 +6,7 @@ import AntiCheatGuard from '@/components/AntiCheatGuard';
 import ExamHeader from '@/components/ExamHeader';
 import AudioRecorder from '@/components/AudioRecorder';
 import { api } from '@/lib/api';
+import { Question, SpeakingAnswer } from '@/lib/types';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
 export default function SpeakingTestPage() {
@@ -52,21 +53,21 @@ export default function SpeakingTestPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const topics = await api.getSpeakingTopics(testId, setNumber);
+        const topics: Question[] = await api.getSpeakingTopics(testId, setNumber);
         if (topics && topics.length > 0) {
-          const p1 = topics.find((t: any) => t.order_num === 1);
-          const p2 = topics.find((t: any) => t.order_num === 2);
-          const p3 = topics.find((t: any) => t.order_num === 3);
+          const p1 = topics.find((t: Question) => t.order_num === 1);
+          const p2 = topics.find((t: Question) => t.order_num === 2);
+          const p3 = topics.find((t: Question) => t.order_num === 3);
           if (p1?.question_text) setPart1Prompt(p1.question_text);
           if (p2?.question_text) setPart2Prompt(p2.question_text);
           if (p3?.question_text) setPart3Prompt(p3.question_text);
         }
 
-        const results = await api.getSpeakingResults(testId);
+        const results: SpeakingAnswer[] = await api.getSpeakingResults(testId);
         if (results && results.length > 0) {
           setPartStatus(prev => {
             const updated = { ...prev };
-            results.forEach((r: any) => {
+            results.forEach((r: SpeakingAnswer) => {
               if (r.part_number) updated[r.part_number] = 'completed';
             });
             return updated;
@@ -84,9 +85,10 @@ export default function SpeakingTestPage() {
     try {
       await api.uploadSpeakingAudio(testId, part, blob);
       setPartStatus(prev => ({ ...prev, [part]: 'completed' }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      alert(error.message || 'Audio yuklashda xatolik yuz berdi');
+      const message = error instanceof Error ? error.message : 'Audio yuklashda xatolik yuz berdi';
+      alert(message);
       setPartStatus(prev => ({ ...prev, [part]: 'pending' }));
     }
   };
@@ -103,6 +105,7 @@ export default function SpeakingTestPage() {
             durationMinutes={15}
             onTimeUp={() => {}}
             isCompleted={allCompleted}
+            storageKey={`ielts_timer_${testId}_speaking`}
           />
 
           <main className="flex-1 max-w-4xl w-full mx-auto py-8 px-4">

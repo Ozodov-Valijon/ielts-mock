@@ -7,12 +7,41 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { api } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 
+interface SpeakingDetail {
+  id: number;
+  test_id: number;
+  part_number: number;
+  audio_url?: string;
+  transcript?: string;
+  ai_analysis?: string;
+  ai_score?: number;
+  admin_feedback?: string;
+  admin_score?: number;
+  status: string;
+  reviewed_at?: string;
+  student_name: string;
+  student_email: string;
+  tab_switches?: number;
+  paste_attempts?: number;
+  is_flagged_cheating?: boolean;
+}
+
+interface ParsedSpeakingAi {
+  overall_band?: number;
+  ai_score?: number;
+  fluency_coherence?: { score?: number; comment?: string };
+  lexical_resource?: { score?: number; comment?: string };
+  grammatical_range?: { score?: number; comment?: string };
+  pronunciation?: { score?: number; comment?: string };
+  summary?: string;
+}
+
 export default function AdminReviewSpeakingDetail() {
   const router = useRouter();
   const params = useParams();
   const id = Number(params.id);
 
-  const [speaking, setSpeaking] = useState<any>(null);
+  const [speaking, setSpeaking] = useState<SpeakingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [score, setScore] = useState<number | ''>('');
@@ -27,9 +56,10 @@ export default function AdminReviewSpeakingDetail() {
         if (data.admin_score) setScore(data.admin_score);
         else if (data.ai_score) setScore(data.ai_score);
         if (data.admin_feedback) setFeedback(data.admin_feedback);
-      } catch (err: any) {
-        console.error(err);
-        alert(err.message || "Speaking javobini yuklashda xatolik");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Speaking javobini yuklashda xatolik";
+        console.error(msg);
+        alert(msg);
       } finally {
         setLoading(false);
       }
@@ -50,8 +80,9 @@ export default function AdminReviewSpeakingDetail() {
       });
       alert('Speaking muvaffaqiyatli baholandi va tasdiqlandi!');
       router.push('/admin/review');
-    } catch (err: any) {
-      alert(err.message || "Saqlashda xatolik yuz berdi");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Saqlashda xatolik yuz berdi";
+      alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -65,7 +96,7 @@ export default function AdminReviewSpeakingDetail() {
     );
   }
 
-  let parsedAi: any = null;
+  let parsedAi: ParsedSpeakingAi | null = null;
   if (speaking?.ai_analysis) {
     try {
       parsedAi = JSON.parse(speaking.ai_analysis);
@@ -171,7 +202,7 @@ export default function AdminReviewSpeakingDetail() {
             </div>
             {parsedAi.summary && (
               <p className="text-xs text-blue-900 italic bg-white/70 p-3 rounded-lg">
-                "{parsedAi.summary}"
+                &quot;{parsedAi.summary}&quot;
               </p>
             )}
           </div>

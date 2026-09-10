@@ -6,11 +6,25 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { api } from '@/lib/api';
 import Link from 'next/link';
 
+interface PendingReviewItem {
+  id: number;
+  test_id: number;
+  task_number?: number;
+  part_number?: number;
+  ai_score?: number;
+  status: string;
+  student_name: string;
+  student_email: string;
+  tab_switches?: number;
+  paste_attempts?: number;
+  is_flagged_cheating?: boolean;
+}
+
 export default function AdminReviewPage() {
   const [tab, setTab] = useState<'writing' | 'speaking'>('writing');
   const [loading, setLoading] = useState(true);
-  const [writingPending, setWritingPending] = useState<any[]>([]);
-  const [speakingPending, setSpeakingPending] = useState<any[]>([]);
+  const [writingPending, setWritingPending] = useState<PendingReviewItem[]>([]);
+  const [speakingPending, setSpeakingPending] = useState<PendingReviewItem[]>([]);
 
   useEffect(() => {
     async function loadPending() {

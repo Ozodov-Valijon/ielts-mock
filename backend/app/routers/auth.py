@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
@@ -25,9 +26,10 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
+    login_ident = user.email.strip()
+    db_user = db.query(User).filter(or_(User.email == login_ident, User.phone == login_ident)).first()
     if not db_user or not verify_password(user.password, db_user.password_hash):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Email, telefon raqam yoki parol noto'g'ri")
     token = create_access_token({"sub": str(db_user.id)})
     return {"access_token": token, "token_type": "bearer"}
 

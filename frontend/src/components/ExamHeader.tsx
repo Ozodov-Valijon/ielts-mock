@@ -8,6 +8,7 @@ interface ExamHeaderProps {
   durationMinutes: number;
   onTimeUp: () => void;
   isCompleted?: boolean;
+  storageKey?: string;
   onFontChange?: (size: 'normal' | 'large' | 'xlarge') => void;
   onContrastChange?: (contrast: 'standard' | 'high-contrast') => void;
 }
@@ -17,23 +18,51 @@ export default function ExamHeader({
   durationMinutes,
   onTimeUp,
   isCompleted = false,
+  storageKey,
   onFontChange,
   onContrastChange,
 }: ExamHeaderProps) {
   const { user } = useAuth();
-  const [secondsLeft, setSecondsLeft] = useState(durationMinutes * 60);
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    if (typeof window === 'undefined') return durationMinutes * 60;
+    try {
+      const key = storageKey || `ielts_timer_${testTitle.replace(/\s+/g, '_').toLowerCase()}`;
+      const storedEndTime = localStorage.getItem(key);
+      if (storedEndTime) {
+        const diffSec = Math.floor((parseInt(storedEndTime, 10) - Date.now()) / 1000);
+        if (diffSec > 0) return diffSec;
+        return 0;
+      }
+      const targetEndTime = Date.now() + durationMinutes * 60 * 1000;
+      localStorage.setItem(key, String(targetEndTime));
+    } catch {
+      // localStorage disabled or not accessible
+    }
+    return durationMinutes * 60;
+  });
+
   const [showTime, setShowTime] = useState(true);
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
   const [contrast, setContrast] = useState<'standard' | 'high-contrast'>('standard');
   const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
-    if (isCompleted) return;
+    const key = storageKey || `ielts_timer_${testTitle.replace(/\s+/g, '_').toLowerCase()}`;
+
+    if (isCompleted) {
+      try {
+        localStorage.removeItem(key);
+      } catch {}
+      return;
+    }
 
     const timer = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          try {
+            localStorage.removeItem(key);
+          } catch {}
           onTimeUp();
           return 0;
         }
@@ -42,7 +71,7 @@ export default function ExamHeader({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [durationMinutes, onTimeUp, isCompleted]);
+  }, [isCompleted, onTimeUp, storageKey, testTitle]);
 
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;

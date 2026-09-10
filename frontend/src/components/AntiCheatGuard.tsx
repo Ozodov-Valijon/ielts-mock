@@ -20,8 +20,7 @@ export default function AntiCheatGuard({
   const [isFlagged, setIsFlagged] = useState(false);
   
   // Fullscreen nazorati
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [hasEnteredOnce, setHasEnteredOnce] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(!requireFullscreen);
   const hasEnteredOnceRef = useRef(false);
   const lastEventTimeRef = useRef<number>(0);
 
@@ -33,7 +32,7 @@ export default function AntiCheatGuard({
   // 🔊 Sirena ovozini yaratish (Web Audio API orqali har qanday brauzerda 100% ishlaydi)
   const playSiren = useCallback(() => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
@@ -130,7 +129,12 @@ export default function AntiCheatGuard({
   // To'liq ekranga o'tish funksiyasi
   const enterFullscreen = async () => {
     try {
-      const docEl = document.documentElement as any;
+      interface ExtendedElement extends HTMLElement {
+        webkitRequestFullscreen?: () => Promise<void>;
+        mozRequestFullScreen?: () => Promise<void>;
+        msRequestFullscreen?: () => Promise<void>;
+      }
+      const docEl = document.documentElement as ExtendedElement;
       if (docEl.requestFullscreen) {
         await docEl.requestFullscreen();
       } else if (docEl.webkitRequestFullscreen) {
@@ -141,13 +145,11 @@ export default function AntiCheatGuard({
         await docEl.msRequestFullscreen();
       }
       setIsFullscreen(true);
-      setHasEnteredOnce(true);
       hasEnteredOnceRef.current = true;
       stopAlarm();
     } catch (err) {
       console.warn("Fullscreen ochishda brauzer cheklovi:", err);
       setIsFullscreen(true);
-      setHasEnteredOnce(true);
       hasEnteredOnceRef.current = true;
       stopAlarm();
     }
@@ -160,7 +162,6 @@ export default function AntiCheatGuard({
         if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
           await document.documentElement.requestFullscreen();
           setIsFullscreen(true);
-          setHasEnteredOnce(true);
           hasEnteredOnceRef.current = true;
         }
       } catch {
@@ -173,16 +174,21 @@ export default function AntiCheatGuard({
   // 2. Fullscreen o'zgarishlarini kuzatish
   useEffect(() => {
     if (!requireFullscreen) {
-      setIsFullscreen(true);
       return;
     }
 
     const checkFullscreenStatus = () => {
+      interface ExtendedDocument extends Document {
+        webkitFullscreenElement?: Element;
+        mozFullScreenElement?: Element;
+        msFullscreenElement?: Element;
+      }
+      const doc = document as ExtendedDocument;
       const isFull = !!(
         document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
       );
 
       setIsFullscreen(isFull);
@@ -228,7 +234,7 @@ export default function AntiCheatGuard({
 
   // 4. Tab switch va Window blur nazorati (Boshqa oynaga o'tsa CHITER signali chaladi)
   useEffect(() => {
-    let timeoutId: any = null;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -367,7 +373,7 @@ export default function AntiCheatGuard({
             <div className="bg-red-600/20 border-2 border-red-500/50 rounded-2xl p-4 mb-8 text-center max-w-md mx-auto">
               <span className="text-xs text-red-300 font-bold uppercase tracking-wider block mb-1">Qoidabuzarlik darajasi:</span>
               <span className="text-3xl font-black text-white font-mono">{warnings} / 3</span>
-              {warnings >= 3 && (
+              {(warnings >= 3 || isFlagged) && (
                 <span className="block text-red-400 text-xs font-black mt-2 uppercase">
                   ⚠️ 3 marta qoidabuzarlik to&apos;ldi! Test chiterlik bayrog&apos;i bilan belgilandi.
                 </span>

@@ -17,7 +17,14 @@ async def submit_writing(test_id: int, writing: WritingSubmit, current_user: Use
     if not test:
         raise HTTPException(status_code=404, detail="Test topilmadi")
         
-    analysis = await analyze_writing(writing.user_text, writing.task_number)
+    task_q = db.query(TestQuestion).filter(
+        TestQuestion.section == "writing",
+        TestQuestion.set_number == (test.set_number or 1),
+        TestQuestion.order_num == writing.task_number
+    ).first()
+    task_prompt = task_q.question_text if task_q else ""
+        
+    analysis = await analyze_writing(writing.user_text, writing.task_number, task_prompt)
     
     existing = db.query(WritingAnswer).filter(
         WritingAnswer.test_id == test.id,
@@ -54,9 +61,10 @@ def get_writing_results(test_id: int, current_user: User = Depends(get_current_u
     return results
 
 @router.get("/topics")
-def get_writing_topics(test_id: int, set_number: int = 1, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_writing_topics(test_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Test topilmadi")
-    questions = db.query(TestQuestion).filter(TestQuestion.section == "writing", TestQuestion.set_number == set_number).order_by(TestQuestion.order_num).all()
+    set_num = test.set_number or 1
+    questions = db.query(TestQuestion).filter(TestQuestion.section == "writing", TestQuestion.set_number == set_num).order_by(TestQuestion.order_num).all()
     return questions

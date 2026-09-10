@@ -2,7 +2,7 @@ import json
 import re
 from app.config import settings
 
-def _heuristic_writing_analysis(text: str, task_number: int) -> dict:
+def _heuristic_writing_analysis(text: str, task_number: int, task_prompt: str = "") -> dict:
     cleaned_text = text.strip()
     words = re.findall(r'\b[a-zA-Z]+\b', cleaned_text)
     word_count = len(words)
@@ -146,19 +146,23 @@ def _heuristic_writing_analysis(text: str, task_number: int) -> dict:
     }
     return {"ai_analysis": json.dumps(analysis, ensure_ascii=False), "ai_score": float(overall)}
 
-async def _analyze_writing_with_gemini(text: str, task_number: int) -> dict | None:
+async def _analyze_writing_with_gemini(text: str, task_number: int, task_prompt: str = "") -> dict | None:
     if not settings.GEMINI_API_KEY:
         return None
     try:
         import httpx
         prompt = f"""You are an official senior IELTS Writing examiner. Analyze this Task {task_number} essay rigorously according to official Cambridge IELTS band descriptors (Task Achievement, Coherence & Cohesion, Lexical Resource, Grammatical Range and Accuracy).
         
+        Task {task_number} Prompt / Question:
+        \"\"\"{task_prompt or f"Standard IELTS Academic Writing Task {task_number}"}\"\"\"
+
         Student's essay:
         \"\"\"{text}\"\"\"
         
+        Carefully evaluate how well the student addressed the given prompt and question requirements.
         Provide strict, accurate, and comprehensive feedback in the following exact JSON format:
         {{
-            "task_achievement": {{"score": 6.5, "comment": "Tafsilotli tahlil o'zbek tilida"}},
+            "task_achievement": {{"score": 6.5, "comment": "Tafsilotli tahlil o'zbek tilida (mavzuga moslik va fikrlarning yoritilishi)"}},
             "coherence_cohesion": {{"score": 6.0, "comment": "Tafsilotli tahlil o'zbek tilida"}},
             "lexical_resource": {{"score": 6.5, "comment": "Tafsilotli tahlil o'zbek tilida"}},
             "grammatical_range": {{"score": 6.0, "comment": "Tafsilotli tahlil o'zbek tilida"}},
@@ -206,18 +210,18 @@ async def _analyze_writing_with_gemini(text: str, task_number: int) -> dict | No
         print(f"Gemini Writing tahlilida xatolik: {e}")
     return None
 
-async def analyze_writing(text: str, task_number: int) -> dict:
+async def analyze_writing(text: str, task_number: int, task_prompt: str = "") -> dict:
     cleaned_text = text.strip()
     words = re.findall(r'\b[a-zA-Z]+\b', cleaned_text)
     word_count = len(words)
     
     # 1. Cheklov: 15 tadan kam so'z bo'lsa darhol 0.0 ball qaytarish
     if word_count < 15:
-        return _heuristic_writing_analysis(text, task_number)
+        return _heuristic_writing_analysis(text, task_number, task_prompt)
 
     # 2. Google Gemini API orqali tahlil
     if settings.GEMINI_API_KEY:
-        gemini_result = await _analyze_writing_with_gemini(text, task_number)
+        gemini_result = await _analyze_writing_with_gemini(text, task_number, task_prompt)
         if gemini_result:
             return gemini_result
 
@@ -253,4 +257,4 @@ async def analyze_writing(text: str, task_number: int) -> dict:
             pass
 
     # 4. Fallback evristik baholash
-    return _heuristic_writing_analysis(text, task_number)
+    return _heuristic_writing_analysis(text, task_number, task_prompt)

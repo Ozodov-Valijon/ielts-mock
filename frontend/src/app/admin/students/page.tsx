@@ -6,9 +6,18 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { api } from '@/lib/api';
 import Link from 'next/link';
 
+interface AdminStudentItem {
+  id: number;
+  email: string;
+  full_name: string;
+  phone?: string;
+  test_count: number;
+  created_at: string;
+}
+
 export default function AdminStudentsPage() {
   const [search, setSearch] = useState('');
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<AdminStudentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

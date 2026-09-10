@@ -9,7 +9,7 @@ class UserCreate(BaseModel):
     phone: Optional[str] = None
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str  # Email yoki telefon raqami
     password: str
 
 class UserResponse(BaseModel):

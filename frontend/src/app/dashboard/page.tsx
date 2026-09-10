@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Test } from '@/lib/types';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ProgressChart from '@/components/ProgressChart';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -40,12 +41,18 @@ export default function Dashboard() {
     if (startingTest) return;
     setStartingTest(true);
     try {
-      // 1. Yangi test yaratish
-      const newTest = await api.createTest();
+      // 1. Yangi test yaratish (set_number va test_mode ni bazaga to'g'ri saqlash)
+      const newTest = await api.createTest({
+        set_number: selectedSet,
+        test_mode: selectedSection
+      });
       
       // 2. Fullscreen rejimiga kirishga harakat qilish
       try {
-        const docEl = document.documentElement as any;
+        interface ExtendedElement extends HTMLElement {
+          webkitRequestFullscreen?: () => Promise<void>;
+        }
+        const docEl = document.documentElement as ExtendedElement;
         if (docEl.requestFullscreen) {
           await docEl.requestFullscreen();
         } else if (docEl.webkitRequestFullscreen) {
@@ -58,9 +65,10 @@ export default function Dashboard() {
       // 3. Tanlangan bo'lim va variant bo'yicha yo'naltirish
       const targetSection = selectedSection === 'full' ? 'reading' : selectedSection;
       router.push(`/test/${newTest.id}/${targetSection}?set=${selectedSet}`);
-    } catch (error: any) {
-      console.error(error);
-      alert(error.message || 'Test yaratishda xatolik yuz berdi');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Test yaratishda xatolik yuz berdi';
+      console.error(msg);
+      alert(msg);
       setStartingTest(false);
     }
   };
@@ -189,6 +197,22 @@ export default function Dashboard() {
             <p className="text-xs text-gray-500 mt-0.5">Part 1, 2, 3 ovozli suhbat</p>
           </div>
         </div>
+
+        {/* O'sish Dinamikasi Chart */}
+        {tests.filter(t => t.overall_band_score && t.overall_band_score > 0).length > 0 && (
+          <div className="mb-8">
+            <ProgressChart 
+              tests={tests
+                .filter(t => t.overall_band_score && t.overall_band_score > 0)
+                .slice(0, 5)
+                .map(t => ({
+                  test_id: t.id,
+                  overall_band: t.overall_band_score || 0,
+                  date: t.started_at ? new Date(t.started_at).toLocaleDateString('uz-UZ') : `#${t.id}`
+                }))} 
+            />
+          </div>
+        )}
 
         {/* Testlar Ro'yxati Jadvali */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">

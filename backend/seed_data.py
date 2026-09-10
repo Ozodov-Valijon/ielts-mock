@@ -1,7 +1,6 @@
 import sys
 import os
 
-# app modulini import qilish uchun yo'l qo'shamiz
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import SessionLocal, Base, engine
@@ -15,7 +14,6 @@ def seed_database():
     
     try:
         print("1. Foydalanuvchilarni tekshirish va yaratish...")
-        # Admin foydalanuvchi
         admin = db.query(User).filter(User.email == "admin@ielts.uz").first()
         if not admin:
             admin = User(
@@ -30,7 +28,6 @@ def seed_database():
         else:
             print("  [OK] Admin allaqachon mavjud.")
 
-        # Talaba foydalanuvchi
         student = db.query(User).filter(User.email == "student@ielts.uz").first()
         if not student:
             student = User(
@@ -45,12 +42,9 @@ def seed_database():
 
         db.commit()
 
-        print("2. IELTS Test Set 1 savollarini kiritish...")
-        # Savollar allaqachon bormi?
-        existing_count = db.query(TestQuestion).filter(TestQuestion.set_number == 1).count()
-        if existing_count > 0:
-            print(f"  [OK] Set 1 savollari allaqachon mavjud ({existing_count} ta savol).")
-            return
+        print("2. IELTS Test Set 1 savollarini tozalash va to'liq kiritish (10 Reading, 10 Listening)...")
+        db.query(TestQuestion).filter(TestQuestion.set_number == 1).delete()
+        db.commit()
 
         # Reading matni
         reading_passage = """THE ORIGINS AND GLOBAL IMPACT OF TEA
@@ -59,7 +53,9 @@ Tea is one of the most widely consumed beverages in the world, second only to wa
 
 Initially revered primarily as an herbal medicine and medicinal elixir, tea gradually evolved into an everyday social beverage during the Tang Dynasty (618–907 AD). Lu Yu, often commemorated as the Sage of Tea, authored the 'Cha Jing' (The Classic of Tea), the first known monograph detailing the cultivation, harvesting, processing, and ceremonial brewing of tea.
 
-During the 16th and 17th centuries, Portuguese and Dutch merchants introduced tea to Europe, where it initially became a luxury commodity enjoyed almost exclusively by royal aristocrats. By the 18th century in Great Britain, tea had become central to British cultural identity, leading to vast trading enterprises spearheaded by the East India Company and the subsequent establishment of tea plantations in colonial India, particularly in regions such as Assam and Darjeeling."""
+During the 16th and 17th centuries, Portuguese and Dutch merchants introduced tea to Europe, where it initially became a luxury commodity enjoyed almost exclusively by royal aristocrats. By the 18th century in Great Britain, tea had become central to British cultural identity, leading to vast trading enterprises spearheaded by the East India Company and the subsequent establishment of tea plantations in colonial India, particularly in regions such as Assam and Darjeeling.
+
+Modern biochemical studies confirm that tea leaves are abundant in polyphenols, specifically epigallocatechin gallate (EGCG), a potent antioxidant associated with cardiovascular health and metabolic enhancement. While green tea leaves undergo immediate steaming or pan-firing to prevent enzymatic oxidation, black tea leaves undergo full fermentation and oxidation, developing robust flavors and a deeper amber hue. Today, tea cultivation sustains millions of smallholder farming families across Asia and Africa."""
 
         reading_questions = [
             TestQuestion(
@@ -70,7 +66,7 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 passage_text=reading_passage,
                 question_text="According to the passage, who is traditionally credited with the discovery of tea in 2737 BC?",
                 options=["Emperor Shennong", "Lu Yu", "Portuguese merchants", "Marco Polo"],
-                correct_answer="Emperor Shennong / Shennong"
+                correct_answer="Emperor Shennong"
             ),
             TestQuestion(
                 section="reading",
@@ -111,19 +107,70 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 question_text="Complete the sentence: In colonial India, large-scale tea plantations were predominantly established in regions such as Assam and ______.",
                 options=None,
                 correct_answer="Darjeeling"
+            ),
+            TestQuestion(
+                section="reading",
+                set_number=1,
+                order_num=6,
+                question_type="multiple_choice",
+                passage_text=reading_passage,
+                question_text="What is the botanical name of the plant species from which authentic tea leaves originate?",
+                options=["Camellia sinensis", "Arabica coffea", "Mentha piperita", "Ginkgo biloba"],
+                correct_answer="Camellia sinensis"
+            ),
+            TestQuestion(
+                section="reading",
+                set_number=1,
+                order_num=7,
+                question_type="fill_blank",
+                passage_text=reading_passage,
+                question_text="Complete the sentence: Modern scientific research identifies EGCG as a powerful ______ associated with cardiovascular wellbeing.",
+                options=None,
+                correct_answer="antioxidant"
+            ),
+            TestQuestion(
+                section="reading",
+                set_number=1,
+                order_num=8,
+                question_type="true_false",
+                passage_text=reading_passage,
+                question_text="Green tea leaves undergo full enzymatic oxidation during commercial processing.",
+                options=["True", "False", "Not Given"],
+                correct_answer="False"
+            ),
+            TestQuestion(
+                section="reading",
+                set_number=1,
+                order_num=9,
+                question_type="multiple_choice",
+                passage_text=reading_passage,
+                question_text="Which trading enterprise spearheaded the commercial expansion of British tea imports during the 18th century?",
+                options=["East India Company", "Royal Dutch Trading Guild", "Silk Road Caravan", "Hanseatic League"],
+                correct_answer="East India Company"
+            ),
+            TestQuestion(
+                section="reading",
+                set_number=1,
+                order_num=10,
+                question_type="true_false",
+                passage_text=reading_passage,
+                question_text="Tea is currently the most consumed beverage on earth, surpassing plain drinking water.",
+                options=["True", "False", "Not Given"],
+                correct_answer="False"
             )
         ]
 
         # Listening savollari
+        listening_audio = "/uploads/audio/ielts_listening_set1.wav"
         listening_questions = [
             TestQuestion(
                 section="listening",
                 set_number=1,
                 order_num=1,
                 question_type="multiple_choice",
-                audio_url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                question_text="What is the main topic of the library student registration session?",
-                options=["Borrowing academic textbooks", "Registering for a library membership card", "Applying for campus employment", "Reserving study rooms"],
+                audio_url=listening_audio,
+                question_text="What is the main purpose of the student's visit to the university library?",
+                options=["Registering for a library membership card", "Paying an overdue book fine", "Applying for campus employment", "Booking a silent study room"],
                 correct_answer="Registering for a library membership card"
             ),
             TestQuestion(
@@ -131,8 +178,8 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 set_number=1,
                 order_num=2,
                 question_type="true_false",
-                audio_url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                question_text="International students are allowed to borrow up to 10 books at a time for up to three weeks.",
+                audio_url=listening_audio,
+                question_text="International postgraduate students are allowed to borrow up to 10 books at a time.",
                 options=["True", "False", "Not Given"],
                 correct_answer="True"
             ),
@@ -141,8 +188,8 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 set_number=1,
                 order_num=3,
                 question_type="multiple_choice",
-                audio_url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                question_text="On which floor of the university library is the silent multimedia section located?",
+                audio_url=listening_audio,
+                question_text="On which floor is the multimedia and computer suite located?",
                 options=["Ground floor", "First floor", "Second floor", "Third floor"],
                 correct_answer="Second floor"
             ),
@@ -151,8 +198,8 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 set_number=1,
                 order_num=4,
                 question_type="fill_blank",
-                audio_url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                question_text="The library's weekend operating hours on Sunday conclude at ______ PM.",
+                audio_url=listening_audio,
+                question_text="The library's Sunday operating hours conclude at ______ PM.",
                 options=None,
                 correct_answer="6 / 6 PM / six / 6:00"
             ),
@@ -161,10 +208,60 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
                 set_number=1,
                 order_num=5,
                 question_type="true_false",
-                audio_url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                question_text="Laptops can be recharged free of charge at all designated individual study desks.",
+                audio_url=listening_audio,
+                question_text="Individual study desks are equipped with dedicated electrical sockets for charging laptops.",
                 options=["True", "False", "Not Given"],
                 correct_answer="True"
+            ),
+            TestQuestion(
+                section="listening",
+                set_number=1,
+                order_num=6,
+                question_type="fill_blank",
+                audio_url=listening_audio,
+                question_text="What is the student's full name as stated in the registration dialogue?",
+                options=None,
+                correct_answer="Alex Turner"
+            ),
+            TestQuestion(
+                section="listening",
+                set_number=1,
+                order_num=7,
+                question_type="fill_blank",
+                audio_url=listening_audio,
+                question_text="What is the maximum loan duration for regular borrowed academic books? (______ weeks)",
+                options=None,
+                correct_answer="3 / three / 3 weeks"
+            ),
+            TestQuestion(
+                section="listening",
+                set_number=1,
+                order_num=8,
+                question_type="multiple_choice",
+                audio_url=listening_audio,
+                question_text="For how long may multimedia materials such as audiobooks and DVDs be borrowed?",
+                options=["One week", "Two weeks", "Three weeks", "One month"],
+                correct_answer="One week"
+            ),
+            TestQuestion(
+                section="listening",
+                set_number=1,
+                order_num=9,
+                question_type="true_false",
+                audio_url=listening_audio,
+                question_text="The second floor is strictly designated as a quiet study zone.",
+                options=["True", "False", "Not Given"],
+                correct_answer="True"
+            ),
+            TestQuestion(
+                section="listening",
+                set_number=1,
+                order_num=10,
+                question_type="fill_blank",
+                audio_url=listening_audio,
+                question_text="On Saturdays, the library closes at ______ PM.",
+                options=None,
+                correct_answer="8 / 8 PM / eight / 8:00"
             )
         ]
 
@@ -230,7 +327,7 @@ During the 16th and 17th centuries, Portuguese and Dutch merchants introduced te
         for q in all_questions:
             db.add(q)
         db.commit()
-        print(f"  [OK] Jami {len(all_questions)} ta savol muvaffaqiyatli kiritildi!")
+        print(f"  [OK] Set 1: Jami {len(all_questions)} ta savol muvaffaqiyatli kiritildi!")
 
     except Exception as e:
         db.rollback()

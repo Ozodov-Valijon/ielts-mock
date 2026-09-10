@@ -13,11 +13,12 @@ from app.services.scoring import check_answer, calculate_listening_score
 router = APIRouter(prefix="/tests/{test_id}/listening", tags=["listening"])
 
 @router.get("/questions", response_model=list[QuestionForStudent])
-def get_questions(test_id: int, set_number: int = 1, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_questions(test_id: int, set_number: int = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Test topilmadi")
-    questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == set_number).order_by(TestQuestion.order_num).all()
+    set_num = set_number if set_number is not None else (test.set_number or 1)
+    questions = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == set_num).order_by(TestQuestion.order_num).all()
     return questions
 
 @router.post("/submit", response_model=SectionResult)

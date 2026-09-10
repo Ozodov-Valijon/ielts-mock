@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AntiCheatGuard from '@/components/AntiCheatGuard';
 import ExamHeader from '@/components/ExamHeader';
 import { api } from '@/lib/api';
+import { Question, WritingAnswer } from '@/lib/types';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
 export default function WritingTestPage() {
@@ -33,28 +34,28 @@ export default function WritingTestPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const topics = await api.getWritingTopics(testId, setNumber);
+        const topics: Question[] = await api.getWritingTopics(testId, setNumber);
         if (topics && topics.length > 0) {
-          const t1 = topics.find((t: any) => t.order_num === 1);
-          const t2 = topics.find((t: any) => t.order_num === 2);
+          const t1 = topics.find((t) => t.order_num === 1);
+          const t2 = topics.find((t) => t.order_num === 2);
           if (t1?.question_text) setTask1Prompt(t1.question_text);
           if (t2?.question_text) setTask2Prompt(t2.question_text);
         }
 
         // 1. Agar backendda avval saqlangan bo'lsa
-        const results = await api.getWritingResults(testId);
+        const results: WritingAnswer[] = await api.getWritingResults(testId);
         let loadedT1 = '';
         let loadedT2 = '';
         if (results && results.length > 0) {
-          results.forEach((r: any) => {
+          results.forEach((r) => {
             if (r.task_number === 1 && r.user_text) loadedT1 = r.user_text;
             if (r.task_number === 2 && r.user_text) loadedT2 = r.user_text;
           });
-          const hasTask1 = results.some((r: any) => r.task_number === 1);
-          const hasTask2 = results.some((r: any) => r.task_number === 2);
+          const hasTask1 = results.some((r) => r.task_number === 1);
+          const hasTask2 = results.some((r) => r.task_number === 2);
           if (hasTask1 && hasTask2) {
             setIsSubmitted(true);
-            const scores = results.map((r: any) => (r.ai_score !== undefined && r.ai_score !== null ? r.ai_score : 0.0));
+            const scores = results.map((r) => (r.ai_score !== undefined && r.ai_score !== null ? r.ai_score : 0.0));
             setAiScore(Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 2) / 2);
           }
         }
@@ -124,9 +125,10 @@ export default function WritingTestPage() {
       // Muvaffaqiyatli topshirilgach qoralamani tozalash
       localStorage.removeItem(`ielts_draft_${testId}_t1`);
       localStorage.removeItem(`ielts_draft_${testId}_t2`);
-    } catch (error: any) {
-      console.error(error);
-      alert(error.message || 'Xatolik yuz berdi');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      console.error(msg);
+      alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -148,6 +150,7 @@ export default function WritingTestPage() {
             durationMinutes={60}
             onTimeUp={handleSubmit}
             isCompleted={isSubmitted}
+            storageKey={`ielts_timer_${testId}_writing`}
             onFontChange={setFontSize}
             onContrastChange={setContrast}
           />

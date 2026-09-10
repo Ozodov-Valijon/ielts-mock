@@ -5,8 +5,11 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { api } from '@/lib/api';
 import Link from 'next/link';
 
+import { Question } from '@/lib/types';
+
 export default function AdminQuestionsPage() {
   const [section, setSection] = useState('reading');
+  const [setNumber, setSetNumber] = useState(1);
   const [qType, setQType] = useState('multiple_choice');
   const [qText, setQText] = useState('');
   const [passageText, setPassageText] = useState('');
@@ -25,16 +28,16 @@ export default function AdminQuestionsPage() {
     setSuccess(false);
 
     try {
-      const payload: any = {
+      const payload: Partial<Question> = {
         section,
-        set_number: 1,
+        set_number: Number(setNumber),
         question_type: qType,
         question_text: qText,
         order_num: Number(orderNum),
-        correct_answer: correctAnswer || null,
-        passage_text: section === 'reading' ? (passageText || null) : null,
-        audio_url: section === 'listening' ? (audioUrl || null) : null,
-        options: qType === 'multiple_choice' ? options.filter(Boolean) : null,
+        correct_answer: (section === 'writing' || section === 'speaking') ? undefined : (correctAnswer || undefined),
+        passage_text: section === 'reading' ? (passageText || undefined) : undefined,
+        audio_url: section === 'listening' ? (audioUrl || undefined) : undefined,
+        options: qType === 'multiple_choice' ? options.filter(Boolean) : undefined,
       };
 
       await api.adminAddQuestion(payload);
@@ -43,8 +46,9 @@ export default function AdminQuestionsPage() {
       setCorrectAnswer('');
       setOptions(['', '']);
       setTimeout(() => setSuccess(false), 4000);
-    } catch (err: any) {
-      setError(err.message || 'Savol qo\'shishda xatolik yuz berdi');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Savol qo'shishda xatolik yuz berdi";
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -93,7 +97,7 @@ export default function AdminQuestionsPage() {
         )}
 
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Bo&apos;lim (Section)</label>
               <select 
@@ -105,6 +109,18 @@ export default function AdminQuestionsPage() {
                 <option value="listening">Listening (Eshitish)</option>
                 <option value="writing">Writing (Yozish)</option>
                 <option value="speaking">Speaking (Gapirish)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To&apos;plam (Set #)</label>
+              <select 
+                value={setNumber} 
+                onChange={(e) => setSetNumber(Number(e.target.value))} 
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
+              >
+                <option value={1}>Cambridge Test Set 1</option>
+                <option value={2}>Cambridge Test Set 2</option>
+                <option value={3}>Cambridge Test Set 3</option>
               </select>
             </div>
             <div>
@@ -196,16 +212,18 @@ export default function AdminQuestionsPage() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To&apos;g&apos;ri javob</label>
-              <input 
-                type="text" 
-                value={correctAnswer}
-                onChange={(e) => setCorrectAnswer(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" 
-                placeholder="To'g'ri javob matni..." 
-              />
-            </div>
+            {section !== 'writing' && section !== 'speaking' && (
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To&apos;g&apos;ri javob</label>
+                <input 
+                  type="text" 
+                  value={correctAnswer}
+                  onChange={(e) => setCorrectAnswer(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" 
+                  placeholder="To'g'ri javob matni..." 
+                />
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tartib raqami</label>
               <input 
@@ -224,7 +242,7 @@ export default function AdminQuestionsPage() {
             disabled={submitting}
             className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl transition shadow disabled:opacity-50"
           >
-            {submitting ? 'Qo\'shilmoqda...' : 'Savolni Saqlash'}
+            {submitting ? "Qo'shilmoqda..." : 'Savolni Saqlash'}
           </button>
         </form>
       </div>

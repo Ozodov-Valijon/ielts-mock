@@ -25,17 +25,26 @@ async def upload_audio(
     if not test:
         raise HTTPException(status_code=404, detail="Test topilmadi")
         
-    ext = os.path.splitext(file.filename or "")[1] or ".webm"
+    ALLOWED_EXTS = {".webm", ".wav", ".mp3", ".ogg", ".m4a", ".mp4"}
+    ext = os.path.splitext(file.filename or "")[1].lower() or ".webm"
+    if ext not in ALLOWED_EXTS:
+        raise HTTPException(status_code=400, detail="Faqat audio formatdagi fayllar qabul qilinadi (.webm, .wav, .mp3, .ogg, .m4a)")
+
+    # Fayl hajmini tekshirish
+    content = await file.read()
+    if len(content) > settings.MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="Audio fayl hajmi ruxsat etilgan maksimal me'yordan oshdi (max: 25MB)")
+
     safe_filename = f"{test_id}_part{part_number}_{current_user.id}{ext}"
     file_path = os.path.join(settings.UPLOAD_DIR, safe_filename)
     
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(content)
         
     transcript = transcribe_audio(file_path)
     analysis = await analyze_speaking(transcript, part_number)
     
-    web_audio_url = f"http://localhost:8000/uploads/{safe_filename}"
+    web_audio_url = f"/uploads/{safe_filename}"
     
     # Avvalgi javob bo'lsa yangilash yoki yangi yaratish
     existing = db.query(SpeakingAnswer).filter(
@@ -75,9 +84,10 @@ def get_speaking_results(test_id: int, current_user: User = Depends(get_current_
     return results
 
 @router.get("/topics")
-def get_speaking_topics(test_id: int, set_number: int = 1, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_speaking_topics(test_id: int, set_number: int = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = db.query(Test).filter(Test.id == test_id, Test.user_id == current_user.id).first()
     if not test:
         raise HTTPException(status_code=404, detail="Test topilmadi")
-    questions = db.query(TestQuestion).filter(TestQuestion.section == "speaking", TestQuestion.set_number == set_number).order_by(TestQuestion.order_num).all()
+    set_num = set_number if set_number is not None else (test.set_number or 1)
+    questions = db.query(TestQuestion).filter(TestQuestion.section == "speaking", TestQuestion.set_number == set_num).order_by(TestQuestion.order_num).all()
     return questions

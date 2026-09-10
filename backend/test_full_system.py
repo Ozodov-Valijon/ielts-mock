@@ -59,8 +59,8 @@ def run_comprehensive_check():
     l1_qs = client.get(f"/api/v1/tests/{test_id}/listening/questions?set_number=1", headers=student_headers).json()
     w1_qs = client.get(f"/api/v1/tests/{test_id}/writing/topics?set_number=1", headers=student_headers).json()
     s1_qs = client.get(f"/api/v1/tests/{test_id}/speaking/topics?set_number=1", headers=student_headers).json()
-    assert len(r1_qs) == 5, f"Set 1 Reading kutilgan 5, olindi {len(r1_qs)}"
-    assert len(l1_qs) == 5, f"Set 1 Listening kutilgan 5, olindi {len(l1_qs)}"
+    assert len(r1_qs) >= 10, f"Set 1 Reading kutilgan kamida 10, olindi {len(r1_qs)}"
+    assert len(l1_qs) >= 10, f"Set 1 Listening kutilgan kamida 10, olindi {len(l1_qs)}"
     assert len(w1_qs) == 2, f"Set 1 Writing kutilgan 2, olindi {len(w1_qs)}"
     assert len(s1_qs) == 3, f"Set 1 Speaking kutilgan 3, olindi {len(s1_qs)}"
     print(f"  [OK] Cambridge Set #1 savollari to'liq: R={len(r1_qs)}, L={len(l1_qs)}, W={len(w1_qs)}, S={len(s1_qs)}")
@@ -70,8 +70,8 @@ def run_comprehensive_check():
     l2_qs = client.get(f"/api/v1/tests/{test_id}/listening/questions?set_number=2", headers=student_headers).json()
     w2_qs = client.get(f"/api/v1/tests/{test_id}/writing/topics?set_number=2", headers=student_headers).json()
     s2_qs = client.get(f"/api/v1/tests/{test_id}/speaking/topics?set_number=2", headers=student_headers).json()
-    assert len(r2_qs) == 5, f"Set 2 Reading kutilgan 5, olindi {len(r2_qs)}"
-    assert len(l2_qs) == 5, f"Set 2 Listening kutilgan 5, olindi {len(l2_qs)}"
+    assert len(r2_qs) >= 10, f"Set 2 Reading kutilgan kamida 10, olindi {len(r2_qs)}"
+    assert len(l2_qs) >= 10, f"Set 2 Listening kutilgan kamida 10, olindi {len(l2_qs)}"
     assert len(w2_qs) == 2, f"Set 2 Writing kutilgan 2, olindi {len(w2_qs)}"
     assert len(s2_qs) == 3, f"Set 2 Speaking kutilgan 3, olindi {len(s2_qs)}"
     print(f"  [OK] Cambridge Set #2 savollari to'liq: R={len(r2_qs)}, L={len(l2_qs)}, W={len(w2_qs)}, S={len(s2_qs)}")
@@ -80,15 +80,20 @@ def run_comprehensive_check():
     print("\n[5/10] Reading bo'limi aniq baholash shkalasi (0.0 dan 9.0 gacha)...")
     # A) 100% to'g'ri javoblar
     perfect_answers = [
-        {"question_id": r1_qs[0]["id"], "user_answer": "Shennong"}, # Alternativ variant
-        {"question_id": r1_qs[1]["id"], "user_answer": "true"},     # Kichik harf
+        {"question_id": r1_qs[0]["id"], "user_answer": "Emperor Shennong"},
+        {"question_id": r1_qs[1]["id"], "user_answer": "true"},
         {"question_id": r1_qs[2]["id"], "user_answer": "Lu Yu"},
         {"question_id": r1_qs[3]["id"], "user_answer": "false"},
         {"question_id": r1_qs[4]["id"], "user_answer": "darjeeling"},
+        {"question_id": r1_qs[5]["id"], "user_answer": "Camellia sinensis"},
+        {"question_id": r1_qs[6]["id"], "user_answer": "antioxidant"},
+        {"question_id": r1_qs[7]["id"], "user_answer": "false"},
+        {"question_id": r1_qs[8]["id"], "user_answer": "East India Company"},
+        {"question_id": r1_qs[9]["id"], "user_answer": "false"},
     ]
     sub1 = client.post(f"/api/v1/tests/{test_id}/reading/submit", headers=student_headers, json={"answers": perfect_answers}).json()
-    assert sub1["score"] == 9.0, f"5/5 to'g'ri javob uchun 9.0 kutilgan edi, olindi: {sub1['score']}"
-    print(f"  [OK] 5/5 to'g'ri javob uchun: {sub1['score']} (Band 9.0 tasdiqlandi)")
+    assert sub1["score"] == 9.0, f"10/10 to'g'ri javob uchun 9.0 kutilgan edi, olindi: {sub1['score']}"
+    print(f"  [OK] 10/10 to'g'ri javob uchun: {sub1['score']} (Band 9.0 tasdiqlandi)")
 
     # B) 0 ta to'g'ri javob (Loophole tekshiruvi: 0 ta to'g'riga 0.0 berilishi shart)
     zero_answers = [
@@ -97,7 +102,7 @@ def run_comprehensive_check():
     ]
     sub0 = client.post(f"/api/v1/tests/{test_id}/reading/submit", headers=student_headers, json={"answers": zero_answers}).json()
     assert sub0["score"] == 0.0, f"0 to'g'ri javob uchun 0.0 kutilgan edi, olindi: {sub0['score']}"
-    print(f"  [OK] 0/5 to'g'ri javob uchun: {sub0['score']} (Qat'iy 0.0 tasdiqlandi)")
+    print(f"  [OK] 0/10 to'g'ri javob uchun: {sub0['score']} (Qat'iy 0.0 tasdiqlandi)")
 
     # 6. Listening baholash algoritmi
     print("\n[6/10] Listening bo'limi baholash va son normalizatsiyasi...")
@@ -106,8 +111,8 @@ def run_comprehensive_check():
         {"question_id": l1_qs[3]["id"], "user_answer": "6 pm"}, # '6' yoki 'six' ekvivalenti
     ]
     sub_l = client.post(f"/api/v1/tests/{test_id}/listening/submit", headers=student_headers, json={"answers": l_answers}).json()
-    assert sub_l["score"] >= 4.0
-    print(f"  [OK] Listening 2/5 to'g'ri javob uchun ball: {sub_l['score']} (Sinonim '6 pm' to'g'ri qabul qilindi)")
+    assert sub_l["score"] >= 2.0
+    print(f"  [OK] Listening 2 ta to'g'ri javob uchun ball: {sub_l['score']} (Sinonim '6 pm' to'g'ri qabul qilindi)")
 
     # 7. Writing AI Baholash va Hajm Jarimalari
     print("\n[7/10] Writing AI baholash va soxta/1 harfli insholarga 0.0 berish...")

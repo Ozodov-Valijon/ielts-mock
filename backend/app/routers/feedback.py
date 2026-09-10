@@ -72,19 +72,55 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
     else:
         s_score = 0.0
     
-    has_r = db.query(ReadingAnswer).filter(ReadingAnswer.test_id == test_id).count() > 0
-    has_l = db.query(ListeningAnswer).filter(ListeningAnswer.test_id == test_id).count() > 0
-    has_w = len(w_ans) > 0
-    has_s = len(s_ans) > 0
+    # Baholar va holatni hisoblash
+    w_pending = any(w.status == "pending" for w in w_ans) if w_ans else False
+    w_approved = (len(w_ans) > 0 and not w_pending)
+    writing_status = "pending" if w_pending else ("approved" if w_approved else "none")
 
-    attempted_sections = [s for s, has in [(r_score, has_r), (l_score, has_l), (w_score, has_w), (s_score, has_s)] if has]
+    s_pending = any(s.status == "pending" for s in s_ans) if s_ans else False
+    s_approved = (len(s_ans) > 0 and not s_pending)
+    speaking_status = "pending" if s_pending else ("approved" if s_approved else "none")
 
-    if len(attempted_sections) == 1:
-        # Faqat bitta bo'lim amaliyoti topshirilganda, overall band o'sha bo'lim bahosiga teng bo'ladi
-        overall = attempted_sections[0]
-    else:
-        overall = calculate_overall_band([r_score, l_score, w_score, s_score])
-    
+    # Rejimga qarab tasdiqlanish holati
+    test_mode = getattr(test, "test_mode", "full") or "full"
+    if test_mode == "reading":
+        is_approved = True
+        overall = r_score
+    elif test_mode == "listening":
+        is_approved = True
+        overall = l_score
+    elif test_mode == "writing":
+        is_approved = w_approved
+        overall = w_score if is_approved else None
+    elif test_mode == "speaking":
+        is_approved = s_approved
+        overall = s_score if is_approved else None
+    else: # full
+        if w_pending or s_pending or (not w_ans and not s_ans):
+            is_approved = False
+            overall = None
+        else:
+            is_approved = True
+            overall = calculate_overall_band([r_score, l_score, w_score, s_score])
+
+    # Talabaga admin tasdiqlamagan baholarni ko'rsatmaslik
+    student_w_score = w_score if w_approved else None
+    student_s_score = s_score if s_approved else None
+
+    # Admin izohlari va tavsiyalar
+    w_notes = [f"Task {w.task_number}: {w.admin_feedback}" for w in w_ans if w.admin_feedback]
+    writing_feedback = "\n".join(w_notes) if w_notes else None
+
+    s_notes = [f"Part {s.part_number}: {s.admin_feedback}" for s in s_ans if s.admin_feedback]
+    speaking_feedback = "\n".join(s_notes) if s_notes else None
+
+    admin_notes_list = []
+    if writing_feedback:
+        admin_notes_list.append(f"Writing bo'yicha ustoz izohi:\n{writing_feedback}")
+    if speaking_feedback:
+        admin_notes_list.append(f"Speaking bo'yicha ustoz izohi:\n{speaking_feedback}")
+    admin_notes = "\n\n".join(admin_notes_list) if admin_notes_list else None
+
     # Tavsiyalar va tahlillar
     strengths = []
     weaknesses = []
@@ -106,20 +142,26 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
         weaknesses.append("Listening: So'zlarning talaffuzidan ma'no ajratish va raqamli ma'lumotlarda xatoliklar kuzatildi.")
         recommendations.append("Turli aksentdagi (British, Australian) podkast va monologlarni har kuni 20 daqiqa tinglang.")
 
-    if w_score >= 6.5:
-        strengths.append("Writing: Fikrlarni abzaslarga to'g'ri ajratish va akademik bog'lovchilarni qo'llash ko'nikmasi yaxshi.")
-    elif w_score > 0:
-        weaknesses.append("Writing: Fikrlarni kengroq asoslash va murakkab sintaktik tuzilmalarni ko'paytirish zarur.")
-        recommendations.append("Task 1 grafiklarining asosiy trendlarini ajratish va Task 2 insho strukturasini mashq qiling.")
+    if student_w_score is not None:
+        if student_w_score >= 6.5:
+            strengths.append("Writing: Fikrlarni abzaslarga to'g'ri ajratish va akademik bog'lovchilarni qo'llash ko'nikmasi yaxshi.")
+        elif student_w_score > 0:
+            weaknesses.append("Writing: Fikrlarni kengroq asoslash va murakkab sintaktik tuzilmalarni ko'paytirish zarur.")
+            recommendations.append("Task 1 grafiklarining asosiy trendlarini ajratish va Task 2 insho strukturasini mashq qiling.")
+    elif w_pending:
+        recommendations.append("Writing: Sizning yozma javobingiz ustoz tekshiruvida. Tez orada yakuniy baho e'lon qilinadi.")
     else:
         weaknesses.append("Writing: Insho topshirilmagan. IELTS da to'liq band olish uchun Task 1 va Task 2 ni bajarish shart.")
         recommendations.append("Writing bo'limida kamida bitta insho yozib mashq qiling.")
 
-    if s_score >= 6.5:
-        strengths.append("Speaking: Nutq ravonligi, so'z boyligi va savollarga javob berish ishonchliligi yuqori.")
-    elif s_score > 0:
-        weaknesses.append("Speaking: So'z qidirish sababli yuzaga keladigan ortiqcha pauzalarni kamaytirish lozim.")
-        recommendations.append("Har kuni tanlangan savollarga 2 daqiqa to'xtovsiz javob berib, diktofon yozuvini tahlil qiling.")
+    if student_s_score is not None:
+        if student_s_score >= 6.5:
+            strengths.append("Speaking: Nutq ravonligi, so'z boyligi va savollarga javob berish ishonchliligi yuqori.")
+        elif student_s_score > 0:
+            weaknesses.append("Speaking: So'z qidirish sababli yuzaga keladigan ortiqcha pauzalarni kamaytirish lozim.")
+            recommendations.append("Har kuni tanlangan savollarga 2 daqiqa to'xtovsiz javob berib, diktofon yozuvini tahlil qiling.")
+    elif s_pending:
+        recommendations.append("Speaking: Audio javoblaringiz ustoz tekshiruvida. Tez orada yakuniy baho e'lon qilinadi.")
     else:
         weaknesses.append("Speaking: Ovozli javob yozilmagan. Gapirish ko'nikmasini shakllantirish uchun audio topshiriqlarni bajaring.")
         recommendations.append("Speaking bo'limida mikrofon orqali savollarga javob bering.")
@@ -130,9 +172,9 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
             test_id=test.id,
             reading_score=r_score,
             listening_score=l_score,
-            writing_score=w_score,
-            speaking_score=s_score,
-            overall_band=overall,
+            writing_score=student_w_score or 0.0,
+            speaking_score=student_s_score or 0.0,
+            overall_band=overall or 0.0,
             strengths="\n".join(strengths) if strengths else "Barcha bo'limlar bo'yicha barqaror harakat qilindi.",
             weaknesses="\n".join(weaknesses) if weaknesses else "Katta jiddiy kamchiliklar qayd etilmadi.",
             recommendations="\n".join(recommendations) if recommendations else "Muntazam amaliyot bilan natijalarni saqlab qoling."
@@ -141,16 +183,20 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
     else:
         fb.reading_score = r_score
         fb.listening_score = l_score
-        fb.writing_score = w_score
-        fb.speaking_score = s_score
-        fb.overall_band = overall
+        fb.writing_score = student_w_score or 0.0
+        fb.speaking_score = student_s_score or 0.0
+        fb.overall_band = overall or 0.0
         fb.strengths = "\n".join(strengths)
         fb.weaknesses = "\n".join(weaknesses)
         fb.recommendations = "\n".join(recommendations)
 
-    test.status = "completed"
-    test.overall_band_score = overall
-    test.completed_at = datetime.utcnow()
+    # Faqat test to'liq tasdiqlangandagina uni completed qilamiz (muddatidan oldin yopishni oldini olish)
+    if is_approved:
+        test.status = "completed"
+        test.overall_band_score = overall
+        if not test.completed_at:
+            test.completed_at = datetime.utcnow()
+
     db.commit()
     db.refresh(fb)
 
@@ -192,11 +238,17 @@ def get_feedback(test_id: int, current_user: User = Depends(get_current_user), d
     return FeedbackResponse(
         id=fb.id,
         test_id=fb.test_id,
-        reading_score=fb.reading_score,
-        listening_score=fb.listening_score,
-        writing_score=fb.writing_score,
-        speaking_score=fb.speaking_score,
-        overall_band=fb.overall_band,
+        reading_score=r_score,
+        listening_score=l_score,
+        writing_score=student_w_score,
+        speaking_score=student_s_score,
+        overall_band=overall,
+        is_approved=is_approved,
+        writing_status=writing_status,
+        speaking_status=speaking_status,
+        writing_feedback=writing_feedback,
+        speaking_feedback=speaking_feedback,
+        admin_notes=admin_notes,
         strengths=fb.strengths,
         weaknesses=fb.weaknesses,
         recommendations=fb.recommendations,

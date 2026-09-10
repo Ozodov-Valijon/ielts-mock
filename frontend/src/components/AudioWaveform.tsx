@@ -29,7 +29,7 @@ export default function AudioWaveform({ stream, isRecording, className = '' }: A
     if (!ctx) return;
 
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const audioCtx = new AudioCtx();
       audioContextRef.current = audioCtx;
 

@@ -12,7 +12,8 @@ interface OfficialTRFProps {
 export default function OfficialTRF({ feedback, testId }: OfficialTRFProps) {
   const { user } = useAuth();
 
-  const getCEFR = (band: number) => {
+  const getCEFR = (band?: number | null) => {
+    if (band == null) return 'Pending';
     if (band >= 8.5) return 'C2';
     if (band >= 7.0) return 'C1';
     if (band >= 5.5) return 'B2';
@@ -34,6 +35,16 @@ export default function OfficialTRF({ feedback, testId }: OfficialTRFProps) {
 
   return (
     <div className="my-8">
+      {feedback.is_approved === false && (
+        <div className="max-w-4xl mx-auto mb-4 p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-center space-x-3 text-amber-900 print:hidden">
+          <span className="text-2xl">⏳</span>
+          <div>
+            <p className="text-sm font-bold">Ushbu TRF dastlabki hisoblanadi (Tasdiqlash kutilmoqda)</p>
+            <p className="text-xs text-amber-800">Writing va Speaking bo&apos;yicha topshiriqlaringiz ustoz tekshiruvida. Ustoz tasdiqlagach yakuniy ballar to&apos;liq chiqariladi.</p>
+          </div>
+        </div>
+      )}
+
       {/* Chop etish / PDF yuklab olish tugmasi (faqat ekranda ko'rinadi) */}
       <div className="flex justify-end mb-4 print:hidden">
         <button
@@ -99,31 +110,31 @@ export default function OfficialTRF({ feedback, testId }: OfficialTRFProps) {
             {/* Listening */}
             <div className="p-3">
               <p className="text-[11px] font-bold text-gray-600 uppercase">Listening</p>
-              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.listening_score.toFixed(1)}</p>
+              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.listening_score != null ? feedback.listening_score.toFixed(1) : '-'}</p>
             </div>
 
             {/* Reading */}
             <div className="p-3">
               <p className="text-[11px] font-bold text-gray-600 uppercase">Reading</p>
-              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.reading_score.toFixed(1)}</p>
+              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.reading_score != null ? feedback.reading_score.toFixed(1) : '-'}</p>
             </div>
 
             {/* Writing */}
             <div className="p-3">
               <p className="text-[11px] font-bold text-gray-600 uppercase">Writing</p>
-              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.writing_score.toFixed(1)}</p>
+              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.writing_score != null ? feedback.writing_score.toFixed(1) : '⏳'}</p>
             </div>
 
             {/* Speaking */}
             <div className="p-3">
               <p className="text-[11px] font-bold text-gray-600 uppercase">Speaking</p>
-              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.speaking_score.toFixed(1)}</p>
+              <p className="text-2xl font-black text-blue-900 mt-1">{feedback.speaking_score != null ? feedback.speaking_score.toFixed(1) : '⏳'}</p>
             </div>
 
             {/* Overall Band */}
             <div className="p-3 bg-red-50 sm:col-span-1">
               <p className="text-[11px] font-black text-red-700 uppercase">Overall Band</p>
-              <p className="text-3xl font-black text-red-600 mt-0.5">{feedback.overall_band.toFixed(1)}</p>
+              <p className="text-3xl font-black text-red-600 mt-0.5">{feedback.overall_band != null ? feedback.overall_band.toFixed(1) : '⏳'}</p>
             </div>
 
             {/* CEFR Level */}

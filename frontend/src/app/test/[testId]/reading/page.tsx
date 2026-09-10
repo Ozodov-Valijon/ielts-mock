@@ -38,7 +38,7 @@ export default function ReadingTestPage() {
         setLoading(true);
         const data = await api.getReadingQuestions(testId, setNumber);
         setQuestions(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Savollarni yuklashda xatolik:", err);
       } finally {
         setLoading(false);
@@ -77,9 +77,10 @@ export default function ReadingTestPage() {
       }));
       const res = await api.submitReadingAnswers(testId, payload);
       setResultScore(res.score);
-    } catch (error: any) {
-      console.error(error);
-      alert(error.message || 'Xatolik yuz berdi');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      console.error(msg);
+      alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -108,6 +109,7 @@ export default function ReadingTestPage() {
             durationMinutes={60}
             onTimeUp={handleSubmit}
             isCompleted={resultScore !== null}
+            storageKey={`ielts_timer_${testId}_reading`}
             onFontChange={setFontSize}
             onContrastChange={setContrast}
           />

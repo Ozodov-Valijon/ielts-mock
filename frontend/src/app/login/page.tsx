@@ -18,8 +18,9 @@ export default function LoginPage() {
 
     try {
       await login({ email, password });
-    } catch (err: any) {
-      setError(err.message || 'Email yoki parol xato kiritildi');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Email/telefon yoki parol xato kiritildi';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -44,13 +45,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email Manzil</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email yoki Telefon Raqam</label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
-              placeholder="talaba@ielts.uz"
+              placeholder="talaba@ielts.uz yoki +998901234567"
               required
             />
           </div>
@@ -69,6 +70,7 @@ export default function LoginPage() {
           <div className="bg-blue-50 p-3 rounded-xl text-xs text-blue-900 leading-relaxed border border-blue-100">
             <strong>Sinov hisoblari:</strong><br />
             • Talaba: <code>student@ielts.uz</code> / <code>student123</code><br />
+            • Telefon: <code>+998907654321</code> / <code>student123</code><br />
             • Admin: <code>admin@ielts.uz</code> / <code>admin123</code>
           </div>
 
@@ -82,9 +84,9 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
-          Akkauntingiz yo'qmi?{' '}
+          Akkauntingiz yo&apos;qmi?{' '}
           <Link href="/register" className="text-blue-600 font-bold hover:underline">
-            Ro'yxatdan o'tish
+            Ro&apos;yxatdan o&apos;tish
           </Link>
         </p>
       </div>

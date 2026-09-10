@@ -1,16 +1,26 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface AudioPlayerProps {
   src: string;
   allowReplay?: boolean;
+  storageKey?: string;
 }
 
-export default function AudioPlayer({ src, allowReplay = false }: AudioPlayerProps) {
+export default function AudioPlayer({ src, allowReplay = false, storageKey }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [hasPlayed, setHasPlayed] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(() => {
+    if (typeof window !== 'undefined' && !allowReplay && storageKey) {
+      try {
+        return localStorage.getItem(storageKey) === 'true';
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
   const [progress, setProgress] = useState(0);
 
   const togglePlay = () => {
@@ -30,7 +40,9 @@ export default function AudioPlayer({ src, allowReplay = false }: AudioPlayerPro
     if (audioRef.current) {
       const current = audioRef.current.currentTime;
       const duration = audioRef.current.duration;
-      setProgress((current / duration) * 100);
+      if (duration > 0) {
+        setProgress((current / duration) * 100);
+      }
     }
   };
 
@@ -38,6 +50,9 @@ export default function AudioPlayer({ src, allowReplay = false }: AudioPlayerPro
     setIsPlaying(false);
     if (!allowReplay) {
       setHasPlayed(true);
+      if (storageKey && typeof window !== 'undefined') {
+        localStorage.setItem(storageKey, 'true');
+      }
     }
   };
 
@@ -66,7 +81,9 @@ export default function AudioPlayer({ src, allowReplay = false }: AudioPlayerPro
         <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${progress}%` }}></div>
       </div>
       {!allowReplay && (
-        <span className="text-xs text-red-500 font-medium px-2">Faqat 1 marta</span>
+        <span className="text-xs text-red-500 font-medium px-2">
+          {hasPlayed ? "Tinglab bo'lingan" : 'Faqat 1 marta'}
+        </span>
       )}
     </div>
   );
