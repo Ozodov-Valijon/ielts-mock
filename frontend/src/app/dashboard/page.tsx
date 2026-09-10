@@ -46,6 +46,11 @@ export default function Dashboard() {
         set_number: selectedSet,
         test_mode: selectedSection
       });
+
+      // Imtihon boshlanganligini saqlash (qayta kirish hiylalarini oldini olish uchun)
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(`ielts_exam_active_${newTest.id}`, 'true');
+      }
       
       // 2. Fullscreen rejimiga kirishga harakat qilish
       try {

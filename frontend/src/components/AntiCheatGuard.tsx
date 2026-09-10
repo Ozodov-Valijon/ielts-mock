@@ -21,10 +21,34 @@ export default function AntiCheatGuard({
   const [warnings, setWarnings] = useState(0);
   const [isTerminated, setIsTerminated] = useState(false);
   const [terminationCountdown, setTerminationCountdown] = useState(3);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // Helper: check and mark exam active in sessionStorage
+  const isExamActive = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem(`ielts_exam_active_${testId}`) === 'true';
+  }, [testId]);
+
+  const markExamActive = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(`ielts_exam_active_${testId}`, 'true');
+  }, [testId]);
   
   // Fullscreen nazorati
   const [isFullscreen, setIsFullscreen] = useState(!requireFullscreen);
-  const hasEnteredOnceRef = useRef(false);
+  const [hasEnteredOnce, setHasEnteredOnce] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem(`ielts_exam_active_${testId}`) === 'true';
+    }
+    return false;
+  });
+  const hasEnteredOnceRef = useRef(hasEnteredOnce);
+
+  const markEntered = useCallback(() => {
+    setHasEnteredOnce(true);
+    hasEnteredOnceRef.current = true;
+    markExamActive();
+  }, [markExamActive]);
   const lastEventTimeRef = useRef<number>(0);
 
   // Katta CHITER signali va ovozi
@@ -93,10 +117,47 @@ export default function AntiCheatGuard({
     }
   }, []);
 
+  // Backend bilan test holatini sinxronlashtirish
+  useEffect(() => {
+    let isMounted = true;
+    async function syncTestStatus() {
+      try {
+        const test = await api.getTestDetails(testId);
+        if (!isMounted) return;
+        const totalViolations = (test.tab_switches || 0) + (test.paste_attempts || 0);
+        setWarnings(totalViolations);
+        if (test.is_flagged_cheating || totalViolations >= 3 || test.status === 'completed') {
+          setIsTerminated(true);
+          speakTermination();
+        }
+      } catch (e) {
+        console.warn("Test holatini tekshirishda xatolik:", e);
+      }
+    }
+    syncTestStatus();
+    return () => { isMounted = false; };
+  }, [testId, speakTermination]);
+
+  // Lockout countdown taymeri
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSeconds]);
+
   // Ovoz va sirenani ishga tushirish funksiyasi
   const triggerAlarm = useCallback((message: string) => {
     setCheaterMessage(message);
     setShowCheaterAlarm(true);
+    setLockoutSeconds(5); // 5 soniyalik jarima qulfi
     playSiren();
     speakCheater();
 
@@ -191,12 +252,12 @@ export default function AntiCheatGuard({
         await docEl.msRequestFullscreen();
       }
       setIsFullscreen(true);
-      hasEnteredOnceRef.current = true;
+      markEntered();
       stopAlarm();
     } catch (err) {
       console.warn("Fullscreen ochishda brauzer cheklovi:", err);
       setIsFullscreen(true);
-      hasEnteredOnceRef.current = true;
+      markEntered();
       stopAlarm();
     }
   };
@@ -208,14 +269,14 @@ export default function AntiCheatGuard({
         if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
           await document.documentElement.requestFullscreen();
           setIsFullscreen(true);
-          hasEnteredOnceRef.current = true;
+          markEntered();
         }
       } catch {
         // Agar foydalanuvchi tugmani bosmagan bo'lsa brauzer bloklashi mumkin (overlay ochiladi)
       }
     };
     tryAutoFullscreen();
-  }, []);
+  }, [markEntered]);
 
   // 2. Fullscreen o'zgarishlarini kuzatish
   useEffect(() => {
@@ -239,14 +300,18 @@ export default function AntiCheatGuard({
 
       setIsFullscreen(isFull);
 
-      // Agar oldin to'liq ekranda bo'lib, keyin chiqib ketgan bo'lsa -> KATTA CHITER SIGNALIZATSIYASI!
-      if (!isFull && hasEnteredOnceRef.current) {
+      const active = isExamActive();
+
+      if (isFull) {
+        markEntered();
+        stopAlarm();
+      } else if (!isFull && (hasEnteredOnceRef.current || active)) {
+        // Agar imtihon boshlangan bo'lsa va to'liq ekrandan chiqilsa:
+        // HECH QANDAY KOD YOKI TUGMA BILAN QOCHIB BO'LMAYDI! DARHOL QOIDABUZARLIK QAYD ETILADI!
         reportEvent(
           'fullscreen_exit', 
-          "Siz to'liq ekran (Fullscreen) rejimidan chiqdingiz! IELTS Mock imtihonida boshqa dastur va oynalarga o'tish qat'iyan taqiqlanadi!"
+          "Siz to'liq ekran (Fullscreen) rejimidan chiqdingiz! IELTS Mock imtihonida oynadan chiqish qat'iyan taqiqlanadi!"
         );
-      } else if (isFull) {
-        stopAlarm();
       }
     };
 
@@ -264,7 +329,7 @@ export default function AntiCheatGuard({
       document.removeEventListener('MSFullscreenChange', checkFullscreenStatus);
       if (soundIntervalRef.current) clearInterval(soundIntervalRef.current);
     };
-  }, [requireFullscreen, reportEvent, stopAlarm]);
+  }, [requireFullscreen, reportEvent, stopAlarm, isExamActive, markEntered]);
 
   // 3. Sahifadan chiqishni oldini olish (beforeunload)
   useEffect(() => {
@@ -473,24 +538,38 @@ export default function AntiCheatGuard({
               )}
             </div>
 
-            {/* To'liq ekranga qaytish tugmasi */}
+            {/* To'liq ekranga qaytish tugmasi (5 soniyalik jarima taymeri bilan) */}
             <button
               onClick={enterFullscreen}
-              className="w-full bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-black py-4 px-8 rounded-2xl transition transform hover:scale-[1.03] shadow-[0_10px_30px_rgba(239,68,68,0.5)] text-lg sm:text-xl flex items-center justify-center gap-3 cursor-pointer"
+              disabled={lockoutSeconds > 0}
+              className={`w-full text-white font-black py-4 px-8 rounded-2xl transition shadow-[0_10px_30px_rgba(239,68,68,0.5)] text-lg sm:text-xl flex items-center justify-center gap-3 ${
+                lockoutSeconds > 0
+                  ? 'bg-red-950/80 border-2 border-red-500/40 text-red-300 cursor-not-allowed opacity-90'
+                  : 'bg-red-600 hover:bg-red-500 active:bg-red-700 hover:scale-[1.02] cursor-pointer'
+              }`}
             >
-              <span className="text-2xl">🖥️</span>
-              <span>TO&apos;LIQ EKRANGA QAYTISH</span>
+              {lockoutSeconds > 0 ? (
+                <>
+                  <span className="text-2xl animate-spin">⏳</span>
+                  <span>QOIDABUZARLIK QAYD ETILMOQDA... ({lockoutSeconds}s)</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-2xl">🖥️</span>
+                  <span>TO&apos;LIQ EKRANGA QAYTISH</span>
+                </>
+              )}
             </button>
 
             <p className="text-gray-400 text-xs mt-4">
-              Imtihon shartlariga rioya qiling.
+              Imtihon shartlariga rioya qiling. To&apos;liq ekrandan har bir chiqish ogohlantirish sifatida saqlanadi.
             </p>
           </div>
         </div>
       )}
 
-      {/* 🔒 Boshlang'ich To'liq Ekran Talabi (Agar test endi boshlangan bo'lsa va hali full screenga kirmagan bo'lsa) */}
-      {requireFullscreen && !isFullscreen && !showCheaterAlarm && (
+      {/* 🔒 Boshlang'ich To'liq Ekran Talabi (Faqat testga eng birinchi kirganda va hali imtihon boshlanmagan bo'lsa) */}
+      {requireFullscreen && !isFullscreen && !showCheaterAlarm && !isTerminated && !hasEnteredOnce && (
         <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-white text-center select-none backdrop-blur-xl">
           <div className="max-w-lg w-full bg-slate-900 border-2 border-blue-500/80 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
             <div className="w-24 h-24 bg-blue-500/10 text-blue-400 rounded-3xl flex items-center justify-center text-5xl mx-auto mb-6 border border-blue-500/20 shadow-inner">
@@ -505,9 +584,15 @@ export default function AntiCheatGuard({
               Test Boshlandi!
             </h2>
             
-            <p className="text-slate-300 text-sm sm:text-base mb-8 leading-relaxed">
+            <p className="text-slate-300 text-sm sm:text-base mb-6 leading-relaxed">
               Haqiqiy IELTS formati bo&apos;yicha ishlash uchun test to&apos;liq ekranda (Fullscreen) o&apos;tkaziladi.
             </p>
+
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-8 text-left">
+              <p className="text-amber-300 text-xs font-bold leading-relaxed">
+                ⚠️ <strong>Qat&apos;iy imtihon qoidasi:</strong> Test boshlangach ekrandan chiqish yoki boshqa oynalarga o&apos;tish taqiqlanadi. Jami <strong>2 ta ogohlantirish</strong> beriladi, 3-qoidabuzarlikda test avtomatik bekor qilinadi!
+              </p>
+            </div>
 
             <button
               onClick={enterFullscreen}

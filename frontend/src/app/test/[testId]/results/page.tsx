@@ -20,6 +20,14 @@ export default function ResultsPage() {
   const [activeReviewTab, setActiveReviewTab] = useState<'reading' | 'listening'>('reading');
 
   useEffect(() => {
+    // Imtihon yakunlanganda active flagni tozalash va to'liq ekrandan chiqish
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(`ielts_exam_active_${testId}`);
+    }
+    if (typeof document !== 'undefined' && document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+
     async function loadFeedback() {
       try {
         setLoading(true);
