@@ -77,7 +77,7 @@ export default function QuestionCard({
             return (
               <label
                 key={i}
-                className={`group flex items-center justify-between p-3.5 sm:p-4 rounded-xl border-2 cursor-pointer transition-all duration-150 select-none ${
+                className={`relative group flex items-center justify-between p-3.5 sm:p-4 rounded-xl border-2 cursor-pointer transition-all duration-150 select-none ${
                   isSelected
                     ? 'border-blue-600 bg-blue-50/60 shadow-xs ring-1 ring-blue-500/20'
                     : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
@@ -108,7 +108,7 @@ export default function QuestionCard({
                   value={opt}
                   checked={isSelected}
                   onChange={() => onChange(opt)}
-                  className="sr-only"
+                  className="hidden"
                 />
 
                 <div
@@ -136,7 +136,7 @@ export default function QuestionCard({
             return (
               <label
                 key={opt}
-                className={`group flex items-center justify-between p-3.5 sm:p-4 rounded-xl border-2 cursor-pointer transition-all duration-150 select-none ${
+                className={`relative group flex items-center justify-between p-3.5 sm:p-4 rounded-xl border-2 cursor-pointer transition-all duration-150 select-none ${
                   isSelected
                     ? 'border-blue-600 bg-blue-50/60 shadow-xs ring-1 ring-blue-500/20'
                     : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
@@ -167,7 +167,7 @@ export default function QuestionCard({
                   value={opt}
                   checked={isSelected}
                   onChange={() => onChange(opt)}
-                  className="sr-only"
+                  className="hidden"
                 />
 
                 <div

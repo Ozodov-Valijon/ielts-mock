@@ -31,6 +31,7 @@ export default function ReadingTestPage() {
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
   const [contrast, setContrast] = useState<'standard' | 'high-contrast'>('standard');
   const questionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const questionsContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     async function loadQuestions() {
@@ -62,8 +63,17 @@ export default function ReadingTestPage() {
 
   const scrollToQuestion = (index: number) => {
     setCurrentIndex(index);
-    if (questionRefs.current[index]) {
-      questionRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const targetEl = questionRefs.current[index];
+    const container = questionsContainerRef.current;
+    if (targetEl && container) {
+      const containerTop = container.getBoundingClientRect().top;
+      const targetTop = targetEl.getBoundingClientRect().top;
+      const scrollOffset = targetTop - containerTop + container.scrollTop - 16;
+      container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+    } else if (targetEl) {
+      const yOffset = -80;
+      const y = targetEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
     }
   };
 
@@ -102,22 +112,24 @@ export default function ReadingTestPage() {
   return (
     <ProtectedRoute>
       <AntiCheatGuard testId={testId}>
-        <div className={`min-h-screen flex flex-col ${contrast === 'high-contrast' ? 'bg-black text-yellow-300' : 'bg-[#f8fafc] text-gray-900'}`}>
+        <div className={`h-screen flex flex-col overflow-hidden ${contrast === 'high-contrast' ? 'bg-black text-yellow-300' : 'bg-[#f8fafc] text-gray-900'}`}>
           {/* Rasmiy Cambridge Imtihon Headeri */}
-          <ExamHeader
-            testTitle={`Academic Reading — Set #${setNumber}`}
-            durationMinutes={60}
-            onTimeUp={handleSubmit}
-            isCompleted={resultScore !== null}
-            storageKey={`ielts_timer_${testId}_reading`}
-            onFontChange={setFontSize}
-            onContrastChange={setContrast}
-          />
+          <div className="shrink-0">
+            <ExamHeader
+              testTitle={`Academic Reading — Set #${setNumber}`}
+              durationMinutes={60}
+              onTimeUp={handleSubmit}
+              isCompleted={resultScore !== null}
+              storageKey={`ielts_timer_${testId}_reading`}
+              onFontChange={setFontSize}
+              onContrastChange={setContrast}
+            />
+          </div>
 
           {/* Asosiy Ish Maydoni (Split Screen) */}
-          <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 flex flex-col md:flex-row gap-4 overflow-hidden">
+          <main className="flex-1 min-h-0 max-w-[1600px] w-full mx-auto p-3 sm:p-4 flex flex-col md:flex-row gap-4 overflow-hidden">
             {/* Chap tomon: Reading Passage (Matnni ajratish va eslatma qoldirish imkoniyati bilan) */}
-            <section aria-label="Reading Passage" className={`w-full md:w-1/2 rounded-xl border p-5 sm:p-7 overflow-y-auto max-h-[calc(100vh-130px)] shadow-xs ${
+            <section aria-label="Reading Passage" className={`w-full md:w-1/2 rounded-xl border p-5 sm:p-7 overflow-y-auto h-full shadow-xs ${
               contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200'
             }`}>
               <div className="flex items-center justify-between mb-4 border-b pb-3 border-gray-200">
@@ -136,8 +148,8 @@ export default function ReadingTestPage() {
             </section>
 
             {/* O'ng tomon: Savollar bloki */}
-            <section aria-label="Savollar" className="w-full md:w-1/2 flex flex-col max-h-[calc(100vh-130px)]">
-              <div className={`flex-1 rounded-xl border p-4 sm:p-6 overflow-y-auto ${
+            <section aria-label="Savollar" className="w-full md:w-1/2 flex flex-col h-full min-h-0">
+              <div ref={questionsContainerRef} className={`flex-1 rounded-xl border p-4 sm:p-6 overflow-y-auto ${
                 contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200 shadow-xs'
               }`}>
                 {resultScore !== null ? (
@@ -182,7 +194,7 @@ export default function ReadingTestPage() {
 
           {/* Pastki Cambridge Savollar Navigatsiya Lentasi */}
           {resultScore === null && (
-            <div className="sticky bottom-0 z-30">
+            <div className="shrink-0 z-30">
               <QuestionPalette
                 totalQuestions={questions.length}
                 currentIndex={currentIndex}

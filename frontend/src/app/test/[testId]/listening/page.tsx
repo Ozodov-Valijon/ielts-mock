@@ -68,8 +68,11 @@ export default function ListeningTestPage() {
 
   const scrollToQuestion = (index: number) => {
     setCurrentIndex(index);
-    if (questionRefs.current[index]) {
-      questionRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const targetEl = questionRefs.current[index];
+    if (targetEl) {
+      const yOffset = -80;
+      const y = targetEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
     }
   };
 
