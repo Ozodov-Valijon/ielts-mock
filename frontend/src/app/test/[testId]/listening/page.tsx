@@ -9,15 +9,18 @@ import QuestionCard from '@/components/QuestionCard';
 import AudioPlayer from '@/components/AudioPlayer';
 import { api } from '@/lib/api';
 import { Question } from '@/lib/types';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ExamError from '@/components/ExamError';
+import { useExamSession, nextExamRoute, readDraft, saveDraft, clearDraft } from '@/lib/exam';
 
 export default function ListeningTestPage() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const testId = String(params.testId);
-  const setNumber = Number(searchParams?.get('set')) || 1;
+  const session = useExamSession(testId, 'listening');
+  const setNumber = session.test?.set_number || 1;
+  const [loadError, setLoadError] = useState('');
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -34,27 +37,29 @@ export default function ListeningTestPage() {
   const questionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
+    if (!session.ready) return;
     async function loadQuestions() {
       try {
         setLoading(true);
-        const data = await api.getListeningQuestions(testId, setNumber);
+        const data = await api.getListeningQuestions(testId);
+        if (!data.length || !data[0].audio_url) throw new Error('Listening savollari yoki audio mavjud emas. Admin to‘plamni tayyorlashi kerak.');
         setQuestions(data);
-        if (data && data.length > 0 && data[0].audio_url) {
-          setAudioUrl(data[0].audio_url);
-        } else {
-          setAudioUrl('/uploads/audio/ielts_listening_set1.wav');
-        }
+        setAudioUrl(data[0].audio_url);
+        setAnswers(readDraft(`ielts_answers_${testId}_listening`, {}));
       } catch (err: unknown) {
         console.error("Listening savollarini yuklashda xatolik:", err);
+        setLoadError(err instanceof Error ? err.message : 'Savollar yuklanmadi');
       } finally {
         setLoading(false);
       }
     }
     loadQuestions();
-  }, [testId, setNumber]);
+  }, [testId, session.ready]);
 
   const handleAnswerChange = (questionId: number, value: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+    const updated = { ...answers, [questionId]: value };
+    setAnswers(updated);
+    saveDraft(`ielts_answers_${testId}_listening`, updated);
   };
 
   const handleToggleReview = (index: number) => {
@@ -77,7 +82,7 @@ export default function ListeningTestPage() {
   };
 
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || resultScore !== null || !questions.length) return;
     setSubmitting(true);
     try {
       const payload = questions.map(q => ({
@@ -86,6 +91,7 @@ export default function ListeningTestPage() {
       }));
       const res = await api.submitListeningAnswers(testId, payload);
       setResultScore(res.score);
+      clearDraft(`ielts_answers_${testId}_listening`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Xatolik yuz berdi';
       console.error(msg);
@@ -96,10 +102,11 @@ export default function ListeningTestPage() {
   };
 
   const handleProceed = () => {
-    router.push(`/test/${testId}/writing?set=${setNumber}`);
+    if (session.test) router.push(nextExamRoute(session.test, 'listening'));
   };
 
-  if (loading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
+  if (session.error || loadError) return <ProtectedRoute><ExamError message={session.error || loadError} /></ProtectedRoute>;
+  if (loading || !session.ready) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
 
   const answeredIndices = new Set(
     questions.map((q, idx) => (answers[q.id] && answers[q.id].trim() !== '' ? idx : -1)).filter(idx => idx !== -1)
@@ -113,6 +120,7 @@ export default function ListeningTestPage() {
           <ExamHeader
             testTitle={`Academic Listening — Set #${setNumber}`}
             durationMinutes={30}
+            deadlineAt={session.state?.deadline_at}
             onTimeUp={handleSubmit}
             isCompleted={resultScore !== null}
             storageKey={`ielts_timer_${testId}_listening`}
@@ -134,7 +142,7 @@ export default function ListeningTestPage() {
                   Audio faqat 1 marta ijro etiladi
                 </span>
               </div>
-              {audioUrl && <AudioPlayer src={audioUrl} allowReplay={false} storageKey={`ielts_audio_played_${testId}`} />}
+              {audioUrl && resultScore === null && <AudioPlayer src={audioUrl} allowReplay={false} startedAt={session.state?.audio_started_at} onFirstPlay={() => api.startListeningAudio(testId)} />}
             </section>
 
             {/* Savollar Bloki */}
@@ -149,13 +157,13 @@ export default function ListeningTestPage() {
                     ✓
                   </div>
                   <h3 className="text-2xl font-black text-gray-900 mb-2">Listening Muvaffaqiyatli Yakunlandi!</h3>
-                  <p className="text-gray-600 mb-4">Ushbu bo&apos;lim bo&apos;yicha hisoblangan rasmiy IELTS band bali:</p>
+                  <p className="text-gray-600 mb-4">Ushbu mashq bo&apos;yicha taxminiy band:</p>
                   <div className="text-6xl font-black text-blue-700 mb-6">{resultScore.toFixed(1)}</div>
                   <button
                     onClick={handleProceed}
                     className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition transform hover:scale-105"
                   >
-                    Keyingi: Writing Bo&apos;limiga O&apos;tish &rarr;
+                    {session.test?.test_mode === 'full' ? 'Keyingi: Writing' : 'Natijalarni ko‘rish'} &rarr;
                   </button>
                 </div>
               ) : (

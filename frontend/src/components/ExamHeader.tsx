@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useEffectEvent, useRef } from 'react';
 import { useAuth } from '@/lib/auth';
+import { utcTime } from '@/lib/exam';
 
 interface ExamHeaderProps {
   testTitle: string;
@@ -9,6 +10,7 @@ interface ExamHeaderProps {
   onTimeUp: () => void;
   isCompleted?: boolean;
   storageKey?: string;
+  deadlineAt?: string;
   onFontChange?: (size: 'normal' | 'large' | 'xlarge') => void;
   onContrastChange?: (contrast: 'standard' | 'high-contrast') => void;
 }
@@ -18,28 +20,14 @@ export default function ExamHeader({
   durationMinutes,
   onTimeUp,
   isCompleted = false,
-  storageKey,
+  deadlineAt,
   onFontChange,
   onContrastChange,
 }: ExamHeaderProps) {
   const { user } = useAuth();
-  const [secondsLeft, setSecondsLeft] = useState(() => {
-    if (typeof window === 'undefined') return durationMinutes * 60;
-    try {
-      const key = storageKey || `ielts_timer_${testTitle.replace(/\s+/g, '_').toLowerCase()}`;
-      const storedEndTime = localStorage.getItem(key);
-      if (storedEndTime) {
-        const diffSec = Math.floor((parseInt(storedEndTime, 10) - Date.now()) / 1000);
-        if (diffSec > 0) return diffSec;
-        return 0;
-      }
-      const targetEndTime = Date.now() + durationMinutes * 60 * 1000;
-      localStorage.setItem(key, String(targetEndTime));
-    } catch {
-      // localStorage disabled or not accessible
-    }
-    return durationMinutes * 60;
-  });
+  const [secondsLeft, setSecondsLeft] = useState(durationMinutes * 60);
+  const expired = useRef(false);
+  const expire = useEffectEvent(() => onTimeUp());
 
   const [showTime, setShowTime] = useState(true);
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
@@ -47,31 +35,16 @@ export default function ExamHeader({
   const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
-    const key = storageKey || `ielts_timer_${testTitle.replace(/\s+/g, '_').toLowerCase()}`;
-
-    if (isCompleted) {
-      try {
-        localStorage.removeItem(key);
-      } catch {}
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          try {
-            localStorage.removeItem(key);
-          } catch {}
-          onTimeUp();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isCompleted, onTimeUp, storageKey, testTitle]);
+    if (isCompleted || !deadlineAt) return;
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((utcTime(deadlineAt) - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining === 0 && !expired.current) { expired.current = true; expire(); }
+    };
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, 1000);
+    return () => { clearTimeout(first); clearInterval(timer); };
+  }, [isCompleted, deadlineAt]);
 
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;

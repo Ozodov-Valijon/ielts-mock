@@ -6,14 +6,20 @@ import AntiCheatGuard from '@/components/AntiCheatGuard';
 import ExamHeader from '@/components/ExamHeader';
 import { api } from '@/lib/api';
 import { Question, WritingAnswer } from '@/lib/types';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ExamError from '@/components/ExamError';
+import { useExamSession, nextExamRoute } from '@/lib/exam';
 
 export default function WritingTestPage() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const testId = String(params.testId);
-  const setNumber = Number(searchParams?.get('set')) || 1;
+  const session = useExamSession(testId, 'writing');
+  const setNumber = session.test?.set_number || 1;
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const submittedTasks = useRef(new Set<number>());
 
   const [activeTab, setActiveTab] = useState<'task1' | 'task2'>('task1');
   const [task1Text, setTask1Text] = useState('');
@@ -22,7 +28,6 @@ export default function WritingTestPage() {
   const [task2Prompt, setTask2Prompt] = useState('Some educators argue that technological advancement and artificial intelligence will eventually replace traditional classroom teaching, while others believe that the physical presence of a human teacher remains indispensable. Discuss both views and present your personal perspective with relevant examples.');
   const [submitting, setSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [aiScore, setAiScore] = useState<number | null>(null);
 
   // Sozlamalar va Avto-saqlash
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
@@ -32,9 +37,11 @@ export default function WritingTestPage() {
 
   // Dastlabki ma'lumotlarni va LocalStorage qoralamasini yuklash
   useEffect(() => {
+    if (!session.ready) return;
     async function loadData() {
       try {
-        const topics: Question[] = await api.getWritingTopics(testId, setNumber);
+        const topics: Question[] = await api.getWritingTopics(testId);
+        if (topics.length !== 2) throw new Error('Writing to‘plamida ikkala topshiriq ham mavjud bo‘lishi kerak.');
         if (topics && topics.length > 0) {
           const t1 = topics.find((t) => t.order_num === 1);
           const t2 = topics.find((t) => t.order_num === 2);
@@ -44,6 +51,7 @@ export default function WritingTestPage() {
 
         // 1. Agar backendda avval saqlangan bo'lsa
         const results: WritingAnswer[] = await api.getWritingResults(testId);
+        submittedTasks.current = new Set(results.map(r => r.task_number));
         let loadedT1 = '';
         let loadedT2 = '';
         if (results && results.length > 0) {
@@ -55,8 +63,6 @@ export default function WritingTestPage() {
           const hasTask2 = results.some((r) => r.task_number === 2);
           if (hasTask1 && hasTask2) {
             setIsSubmitted(true);
-            const scores = results.map((r) => (r.ai_score !== undefined && r.ai_score !== null ? r.ai_score : 0.0));
-            setAiScore(Math.round((scores.reduce((a: number, b: number) => a + b, 0) / scores.length) * 2) / 2);
           }
         }
 
@@ -68,20 +74,23 @@ export default function WritingTestPage() {
         setTask2Text(loadedT2 || draftT2 || '');
       } catch (e) {
         console.error("Writing ma'lumotlarini yuklashda xatolik:", e);
-      }
+        setLoadError(e instanceof Error ? e.message : 'Writing yuklanmadi');
+      } finally { setLoading(false); }
     }
     loadData();
-  }, [testId, setNumber]);
+  }, [testId, session.ready]);
 
   // Avtomatik saqlash (Har 3 soniyada LocalStorage ga saqlaydi)
   useEffect(() => {
-    if (isSubmitted) return;
+    if (isSubmitted || loading) return;
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
 
     autoSaveTimerRef.current = setTimeout(() => {
-      localStorage.setItem(`ielts_draft_${testId}_t1`, task1Text);
-      localStorage.setItem(`ielts_draft_${testId}_t2`, task2Text);
+      try {
+        localStorage.setItem(`ielts_draft_${testId}_t1`, task1Text);
+        localStorage.setItem(`ielts_draft_${testId}_t2`, task2Text);
+      } catch { setLastSavedTime('Saqlash imkoni yo‘q'); return; }
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       setLastSavedTime(timeStr);
     }, 2000);
@@ -89,7 +98,7 @@ export default function WritingTestPage() {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [task1Text, task2Text, testId, isSubmitted]);
+  }, [task1Text, task2Text, testId, isSubmitted, loading]);
 
   const wordCount = (text: string) => {
     const trimmed = text.trim();
@@ -103,19 +112,16 @@ export default function WritingTestPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || isSubmitted || loading) return;
 
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res1 = await api.submitWriting(testId, 1, task1Text || "No response provided for Task 1.");
-      const res2 = await api.submitWriting(testId, 2, task2Text || "No response provided for Task 2.");
-      
-      const score1 = res1.ai_analysis?.ai_score !== undefined && res1.ai_analysis?.ai_score !== null ? res1.ai_analysis.ai_score : 0.0;
-      const score2 = res2.ai_analysis?.ai_score !== undefined && res2.ai_analysis?.ai_score !== null ? res2.ai_analysis.ai_score : 0.0;
-      
-      const combined = Math.round(((score1 + 2 * score2) / 3) * 2) / 2;
-      setAiScore(combined);
+      for (const task of [1, 2]) {
+        if (submittedTasks.current.has(task)) continue;
+        await api.submitWriting(testId, task, task === 1 ? task1Text : task2Text);
+        submittedTasks.current.add(task);
+      }
       setIsSubmitted(true);
 
       // Muvaffaqiyatli topshirilgach qoralamani tozalash
@@ -131,10 +137,12 @@ export default function WritingTestPage() {
   };
 
   const handleNext = () => {
-    router.push(`/test/${testId}/speaking?set=${setNumber}`);
+    if (session.test) router.push(nextExamRoute(session.test, 'writing'));
   };
 
   const fontClass = fontSize === 'xlarge' ? 'text-lg' : fontSize === 'large' ? 'text-base' : 'text-sm';
+  if (session.error || loadError) return <ProtectedRoute><ExamError message={session.error || loadError} /></ProtectedRoute>;
+  if (loading || !session.ready) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
 
   return (
     <ProtectedRoute>
@@ -144,6 +152,7 @@ export default function WritingTestPage() {
           <ExamHeader
             testTitle={`Academic Writing — Set #${setNumber}`}
             durationMinutes={60}
+            deadlineAt={session.state?.deadline_at}
             onTimeUp={handleSubmit}
             isCompleted={isSubmitted}
             storageKey={`ielts_timer_${testId}_writing`}
@@ -160,20 +169,14 @@ export default function WritingTestPage() {
                 </div>
                 <h2 className="text-2xl font-black text-gray-900 mb-2">Insholar Muvaffaqiyatli Qabul Qilindi!</h2>
                 <p className="text-gray-600 mb-6">
-                  Inshoingiz muvaffaqiyatli qabul qilindi va mezonlar bo&apos;yicha baholandi.
+                  Insholaringiz saqlandi. Ustoz tekshirganidan keyin tasdiqlangan baho va izohlar natijalar sahifasida ko&apos;rinadi.
                 </p>
-                {aiScore !== null && (
-                  <div className="inline-block bg-blue-50 border border-blue-200 rounded-2xl px-8 py-4 mb-8">
-                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Insho Bali</span>
-                    <span className="text-5xl font-black text-blue-700">{aiScore.toFixed(1)}</span>
-                  </div>
-                )}
                 <div>
                   <button
                     onClick={handleNext}
                     className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3.5 rounded-xl font-bold transition shadow-lg transform hover:scale-102"
                   >
-                    Keyingi: Speaking Bo&apos;limiga O&apos;tish &rarr;
+                    {session.test?.test_mode === 'full' ? 'Keyingi: Speaking' : 'Natijalarni ko‘rish'} &rarr;
                   </button>
                 </div>
               </div>

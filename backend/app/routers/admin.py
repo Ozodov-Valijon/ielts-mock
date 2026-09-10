@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
 from app.services.auth import get_current_admin
 from app.models.user import User
@@ -14,6 +15,7 @@ from app.schemas.question import QuestionCreate, QuestionResponse
 from app.schemas.answer import AdminReview
 from app.services.scoring import calculate_reading_score, calculate_listening_score, calculate_overall_band
 from datetime import datetime
+from app.services.exam import update_completion
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -100,64 +102,10 @@ def get_writing_detail(id: int, admin: User = Depends(get_current_admin), db: Se
     }
 
 def check_and_finalize_test(test_id: int, db: Session):
-    test = db.query(Test).filter(Test.id == test_id).first()
-    if not test:
-        return
-        
-    w_ans = db.query(WritingAnswer).filter(WritingAnswer.test_id == test_id).all()
-    s_ans = db.query(SpeakingAnswer).filter(SpeakingAnswer.test_id == test_id).all()
-    
-    if any(w.status == "pending" for w in w_ans) or any(s.status == "pending" for s in s_ans):
-        return
-
-    r_correct = db.query(ReadingAnswer).filter(ReadingAnswer.test_id == test_id, ReadingAnswer.is_correct == True).count()
-    l_correct = db.query(ListeningAnswer).filter(ListeningAnswer.test_id == test_id, ListeningAnswer.is_correct == True).count()
-    
-    total_r = db.query(TestQuestion).filter(TestQuestion.section == "reading", TestQuestion.set_number == (test.set_number or 1)).count() or 5
-    total_l = db.query(TestQuestion).filter(TestQuestion.section == "listening", TestQuestion.set_number == (test.set_number or 1)).count() or 5
-    
-    r_score = calculate_reading_score(r_correct, total_r)
-    l_score = calculate_listening_score(l_correct, total_l)
-    
-    t1 = next((w for w in w_ans if w.task_number == 1), None)
-    t2 = next((w for w in w_ans if w.task_number == 2), None)
-    t1_score = (t1.admin_score if t1 and t1.admin_score is not None else 0.0)
-    t2_score = (t2.admin_score if t2 and t2.admin_score is not None else 0.0)
-    w_score = round(((t1_score + 2 * t2_score) / 3.0) * 2) / 2 if (t1 or t2) else 0.0
-    
-    p1 = next((s for s in s_ans if s.part_number == 1), None)
-    p2 = next((s for s in s_ans if s.part_number == 2), None)
-    p3 = next((s for s in s_ans if s.part_number == 3), None)
-    p1_s = (p1.admin_score if p1 and p1.admin_score is not None else 0.0)
-    p2_s = (p2.admin_score if p2 and p2.admin_score is not None else 0.0)
-    p3_s = (p3.admin_score if p3 and p3.admin_score is not None else 0.0)
-    s_score = round(((p1_s + p2_s + p3_s) / 3.0) * 2) / 2 if (p1 or p2 or p3) else 0.0
-    
-    test_mode = getattr(test, "test_mode", "full") or "full"
-    if test_mode == "reading":
-        overall = r_score
-    elif test_mode == "listening":
-        overall = l_score
-    elif test_mode == "writing":
-        overall = w_score
-    elif test_mode == "speaking":
-        overall = s_score
-    else:
-        overall = calculate_overall_band([r_score, l_score, w_score, s_score])
-        
-    fb = db.query(Feedback).filter(Feedback.test_id == test_id).first()
-    if fb:
-        fb.reading_score = r_score
-        fb.listening_score = l_score
-        fb.writing_score = w_score
-        fb.speaking_score = s_score
-        fb.overall_band = overall
-        
-    test.status = "completed"
-    test.overall_band_score = overall
-    if not test.completed_at:
-        test.completed_at = datetime.utcnow()
-    db.commit()
+    test = db.query(Test).filter(Test.id == test_id).with_for_update().first()
+    if test is not None:
+        update_completion(db, test)
+        db.commit()
 
 @router.put("/writing/{id}/review")
 def review_writing(id: int, review: AdminReview, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
@@ -183,7 +131,7 @@ def get_speaking_detail(id: int, admin: User = Depends(get_current_admin), db: S
         "id": s.id,
         "test_id": s.test_id,
         "part_number": s.part_number,
-        "audio_url": s.audio_url,
+        "audio_url": f"/api/v1/tests/{s.test_id}/speaking/audio/{s.id}" if s.audio_url else None,
         "transcript": s.transcript,
         "ai_analysis": s.ai_analysis,
         "ai_score": s.ai_score,
@@ -217,6 +165,10 @@ def get_all_questions(admin: User = Depends(get_current_admin), db: Session = De
 
 @router.post("/questions", response_model=QuestionResponse)
 def add_question(q: QuestionCreate, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    duplicate = db.query(TestQuestion).filter(TestQuestion.section == q.section,
+        TestQuestion.set_number == q.set_number, TestQuestion.order_num == q.order_num).first()
+    if duplicate:
+        raise HTTPException(409, "Ushbu bo'lim/to'plamda savol raqami allaqachon mavjud")
     new_q = TestQuestion(**q.model_dump())
     db.add(new_q)
     db.commit()
@@ -232,5 +184,17 @@ def get_stats(admin: User = Depends(get_current_admin), db: Session = Depends(ge
     return {
         "total_students": total_students,
         "total_tests": total_tests,
-        "pending_reviews": pending_writing + pending_speaking
+        "pending_reviews": pending_writing + pending_speaking,
+        "average_band": db.query(func.avg(Test.overall_band_score)).filter(Test.status == "completed").scalar(),
+        "completed_tests": db.query(Test).filter(Test.status == "completed").count()
     }
+
+@router.get("/tests")
+def list_all_tests(admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    return [{
+        "id": test.id, "user_id": test.user_id, "student_name": user.full_name,
+        "student_email": user.email, "status": test.status, "test_mode": test.test_mode or "full",
+        "set_number": test.set_number or 1, "overall_band_score": test.overall_band_score,
+        "started_at": test.started_at, "completed_at": test.completed_at,
+        "is_flagged_cheating": bool(test.is_flagged_cheating),
+    } for test, user in db.query(Test, User).join(User, Test.user_id == User.id).order_by(Test.started_at.desc()).all()]

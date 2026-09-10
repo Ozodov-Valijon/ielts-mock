@@ -7,14 +7,20 @@ import ExamHeader from '@/components/ExamHeader';
 import AudioRecorder from '@/components/AudioRecorder';
 import { api } from '@/lib/api';
 import { Question, SpeakingAnswer } from '@/lib/types';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ExamError from '@/components/ExamError';
+import { useExamSession, saveDraft, readDraft } from '@/lib/exam';
 
 export default function SpeakingTestPage() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const testId = String(params.testId);
-  const setNumber = Number(searchParams?.get('set')) || 1;
+  const session = useExamSession(testId, 'speaking');
+  const setNumber = session.test?.set_number || 1;
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [expired, setExpired] = useState(false);
 
   const [partStatus, setPartStatus] = useState<Record<number, 'pending' | 'uploading' | 'completed'>>({
     1: 'pending', 2: 'pending', 3: 'pending'
@@ -53,7 +59,8 @@ export default function SpeakingTestPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const topics: Question[] = await api.getSpeakingTopics(testId, setNumber);
+        const topics: Question[] = await api.getSpeakingTopics(testId);
+        if (topics.length !== 3) throw new Error('Speaking to‘plamida uchala topshiriq ham mavjud bo‘lishi kerak.');
         if (topics && topics.length > 0) {
           const p1 = topics.find((t: Question) => t.order_num === 1);
           const p2 = topics.find((t: Question) => t.order_num === 2);
@@ -64,6 +71,7 @@ export default function SpeakingTestPage() {
         }
 
         const results: SpeakingAnswer[] = await api.getSpeakingResults(testId);
+        setPrepNotes(readDraft(`ielts_prep_${testId}`, ''));
         if (results && results.length > 0) {
           setPartStatus(prev => {
             const updated = { ...prev };
@@ -75,10 +83,11 @@ export default function SpeakingTestPage() {
         }
       } catch (e) {
         console.error("Mavjud speaking ma'lumotlarini yuklashda xatolik:", e);
-      }
+        setLoadError(e instanceof Error ? e.message : 'Speaking yuklanmadi');
+      } finally { setLoading(false); }
     }
-    loadData();
-  }, [testId, setNumber]);
+    if (session.ready) void loadData();
+  }, [testId, session.ready]);
 
   const handleAudioComplete = async (part: number, blob: Blob) => {
     setPartStatus(prev => ({ ...prev, [part]: 'uploading' }));
@@ -88,12 +97,14 @@ export default function SpeakingTestPage() {
     } catch (error: unknown) {
       console.error(error);
       const message = error instanceof Error ? error.message : 'Audio yuklashda xatolik yuz berdi';
-      alert(message);
       setPartStatus(prev => ({ ...prev, [part]: 'pending' }));
+      throw new Error(message);
     }
   };
 
   const allCompleted = Object.values(partStatus).every(s => s === 'completed');
+  if (session.error || loadError) return <ProtectedRoute><ExamError message={session.error || loadError} /></ProtectedRoute>;
+  if (loading || !session.ready) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
 
   return (
     <ProtectedRoute>
@@ -103,12 +114,14 @@ export default function SpeakingTestPage() {
           <ExamHeader
             testTitle={`Academic Speaking — Set #${setNumber}`}
             durationMinutes={15}
-            onTimeUp={() => {}}
+            deadlineAt={session.state?.deadline_at}
+            onTimeUp={() => { setExpired(true); void api.finishSpeaking(testId).catch(err => setLoadError(err instanceof Error ? err.message : 'Bo‘lim yakunlanmadi')); }}
             isCompleted={allCompleted}
             storageKey={`ielts_timer_${testId}_speaking`}
           />
 
           <main className="flex-1 max-w-4xl w-full mx-auto py-8 px-4">
+            {expired && <div role="alert" className="p-4 mb-5 bg-amber-50 border border-amber-300 rounded-xl">Speaking vaqti tugadi. Saqlangan javoblaringiz ustozga yuborilgan. <button className="underline font-bold" onClick={() => router.push(`/test/${testId}/results`)}>Natijalar holatini ko‘rish</button></div>}
             <div className="text-center mb-8">
               <span className="bg-blue-100 text-blue-800 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
                 IELTS Speaking
@@ -133,8 +146,8 @@ export default function SpeakingTestPage() {
               </div>
               <p className="text-gray-800 mb-6 whitespace-pre-wrap leading-relaxed font-serif text-base">{part1Prompt}</p>
 
-              {partStatus[1] === 'pending' && (
-                <AudioRecorder onRecordingComplete={(blob) => handleAudioComplete(1, blob)} />
+              {partStatus[1] !== 'completed' && (
+                <AudioRecorder disabled={expired} onRecordingComplete={(blob) => handleAudioComplete(1, blob)} />
               )}
               {partStatus[1] === 'uploading' && (
                 <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
@@ -148,12 +161,9 @@ export default function SpeakingTestPage() {
                     <span>✓</span>
                     <span>Part 1 audio yozuvi qabul qilindi va tahlil qilindi!</span>
                   </span>
-                  <button 
-                    onClick={() => setPartStatus(prev => ({ ...prev, 1: 'pending' }))}
-                    className="text-xs text-green-700 underline hover:text-green-900"
-                  >
-                    Qayta yozish
-                  </button>
+                  <span className="text-xs text-green-800 bg-green-200/70 font-bold px-3 py-1 rounded-full">
+                    ✓ Saqlandi
+                  </span>
                 </div>
               )}
             </div>
@@ -203,7 +213,7 @@ export default function SpeakingTestPage() {
 
                   <textarea
                     value={prepNotes}
-                    onChange={(e) => setPrepNotes(e.target.value)}
+                    onChange={(e) => { setPrepNotes(e.target.value); saveDraft(`ielts_prep_${testId}`, e.target.value); }}
                     placeholder="Qoralama eslatmalar (Notes)..."
                     rows={2}
                     className="w-full text-xs p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
@@ -211,8 +221,8 @@ export default function SpeakingTestPage() {
                 </div>
               )}
 
-              {partStatus[2] === 'pending' && (
-                <AudioRecorder onRecordingComplete={(blob) => handleAudioComplete(2, blob)} />
+              {partStatus[2] !== 'completed' && (
+                <AudioRecorder disabled={expired} maxSeconds={120} onRecordingComplete={(blob) => handleAudioComplete(2, blob)} />
               )}
               {partStatus[2] === 'uploading' && (
                 <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
@@ -226,12 +236,9 @@ export default function SpeakingTestPage() {
                     <span>✓</span>
                     <span>Part 2 (Cue card) nutqi muvaffaqiyatli saqlandi!</span>
                   </span>
-                  <button 
-                    onClick={() => setPartStatus(prev => ({ ...prev, 2: 'pending' }))}
-                    className="text-xs text-green-700 underline hover:text-green-900"
-                  >
-                    Qayta yozish
-                  </button>
+                  <span className="text-xs text-green-800 bg-green-200/70 font-bold px-3 py-1 rounded-full">
+                    ✓ Saqlandi
+                  </span>
                 </div>
               )}
             </div>
@@ -250,8 +257,8 @@ export default function SpeakingTestPage() {
               </div>
               <p className="text-gray-800 mb-6 whitespace-pre-wrap leading-relaxed font-serif text-base">{part3Prompt}</p>
 
-              {partStatus[3] === 'pending' && (
-                <AudioRecorder onRecordingComplete={(blob) => handleAudioComplete(3, blob)} />
+              {partStatus[3] !== 'completed' && (
+                <AudioRecorder disabled={expired} onRecordingComplete={(blob) => handleAudioComplete(3, blob)} />
               )}
               {partStatus[3] === 'uploading' && (
                 <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
@@ -265,12 +272,9 @@ export default function SpeakingTestPage() {
                     <span>✓</span>
                     <span>Part 3 audio yozuvi qabul qilindi va tahlil qilindi!</span>
                   </span>
-                  <button 
-                    onClick={() => setPartStatus(prev => ({ ...prev, 3: 'pending' }))}
-                    className="text-xs text-green-700 underline hover:text-green-900"
-                  >
-                    Qayta yozish
-                  </button>
+                  <span className="text-xs text-green-800 bg-green-200/70 font-bold px-3 py-1 rounded-full">
+                    ✓ Saqlandi
+                  </span>
                 </div>
               )}
             </div>
@@ -278,15 +282,15 @@ export default function SpeakingTestPage() {
             {/* BARCHA BO'LIMLAR YAKUNLANGANIDA NATIJA TUGMASI */}
             {allCompleted && (
               <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white p-8 rounded-3xl text-center mt-8 shadow-xl animate-in zoom-in-95">
-                <h2 className="text-3xl font-black mb-2">🎉 To&apos;liq IELTS Mock Testi Yakunlandi!</h2>
+                <h2 className="text-3xl font-black mb-2">Speaking javoblari qabul qilindi!</h2>
                 <p className="text-blue-100 mb-6 text-sm max-w-lg mx-auto">
-                  Siz Reading, Listening, Writing va Speaking bo&apos;limlarini to&apos;liq topshirdingiz. Rasmiy IELTS Test Report Form (TRF) sertifikati tayyorlandi.
+                  Javoblaringiz ustoz tekshiruviga yuborildi. Baho va izohlar tasdiqlangandan so&apos;ng ko&apos;rinadi.
                 </p>
                 <button
                   onClick={() => router.push(`/test/${testId}/results`)}
                   className="bg-white text-blue-900 hover:bg-blue-50 px-10 py-4 rounded-2xl font-black text-lg transition shadow-2xl transform hover:scale-105"
                 >
-                  Rasmiy TRF Sertifikatini Ko&apos;rish &amp; Yuklab Olish &rarr;
+                  Natijalar holatini ko&apos;rish &rarr;
                 </button>
               </div>
             )}

@@ -1,52 +1,54 @@
+import asyncio
+from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from app.database import engine, Base
-from app.routers import auth, tests, reading, listening, writing, speaking, feedback, admin
 from app.config import settings
+from app.migrations import initialize_database
+from app.routers import auth, tests, reading, listening, writing, speaking, feedback, admin, content
+from app.services.backup import backup_loop
 
-from sqlalchemy import inspect, text
-
-settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-Base.metadata.create_all(bind=engine)
-
-def run_migrations():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    settings.CONTENT_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    initialize_database()
+    backup = asyncio.create_task(backup_loop())
     try:
-        with engine.connect() as conn:
-            inspector = inspect(engine)
-            if "tests" in inspector.get_table_names():
-                columns = [col["name"] for col in inspector.get_columns("tests")]
-                if "set_number" not in columns:
-                    conn.execute(text("ALTER TABLE tests ADD COLUMN set_number INTEGER DEFAULT 1"))
-                if "test_mode" not in columns:
-                    conn.execute(text("ALTER TABLE tests ADD COLUMN test_mode VARCHAR DEFAULT 'full'"))
-                conn.commit()
-    except Exception as e:
-        pass
+        yield
+    finally:
+        backup.cancel()
+        with suppress(asyncio.CancelledError):
+            await backup
 
-run_migrations()
-
-app = FastAPI(title="IELTS Mock Test Platform", version="1.0.0")
-
+app = FastAPI(title="IELTS Practice Platform", version="1.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.FRONTEND_ORIGINS,
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
-app.mount("/uploads", StaticFiles(directory=str(settings.UPLOAD_DIR)), name="uploads")
+@app.middleware("http")
+async def request_safety(request, call_next):
+    from fastapi.responses import JSONResponse
+    limit = settings.MAX_UPLOAD_SIZE_BYTES + 1024 * 1024 if "multipart/form-data" in request.headers.get("content-type", "") else 256 * 1024
+    try:
+        length = int(request.headers.get("content-length", "0"))
+    except ValueError:
+        return JSONResponse({"detail": "Invalid request length"}, status_code=400)
+    if length < 0 or length > limit:
+        return JSONResponse({"detail": "So'rov hajmi ruxsat etilganidan katta."}, status_code=413)
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "same-origin"
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(tests.router, prefix="/api/v1")
-app.include_router(reading.router, prefix="/api/v1")
-app.include_router(listening.router, prefix="/api/v1")
-app.include_router(writing.router, prefix="/api/v1")
-app.include_router(speaking.router, prefix="/api/v1")
-app.include_router(feedback.router, prefix="/api/v1")
-app.include_router(admin.router, prefix="/api/v1")
+for route in (auth, tests, reading, listening, writing, speaking, feedback, admin, content):
+    app.include_router(route.router, prefix="/api/v1")
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to IELTS Mock Platform API", "status": "online"}
+    return {"message": "IELTS Practice Platform API", "status": "online"}

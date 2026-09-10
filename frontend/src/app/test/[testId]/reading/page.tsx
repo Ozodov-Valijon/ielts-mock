@@ -9,15 +9,18 @@ import TextHighlighter from '@/components/TextHighlighter';
 import QuestionCard from '@/components/QuestionCard';
 import { api } from '@/lib/api';
 import { Question } from '@/lib/types';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import ExamError from '@/components/ExamError';
+import { useExamSession, nextExamRoute, readDraft, saveDraft, clearDraft } from '@/lib/exam';
 
 export default function ReadingTestPage() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const testId = String(params.testId);
-  const setNumber = Number(searchParams?.get('set')) || 1;
+  const session = useExamSession(testId, 'reading');
+  const setNumber = session.test?.set_number || 1;
+  const [loadError, setLoadError] = useState('');
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -34,22 +37,28 @@ export default function ReadingTestPage() {
   const questionsContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!session.ready) return;
     async function loadQuestions() {
       try {
         setLoading(true);
-        const data = await api.getReadingQuestions(testId, setNumber);
+        const data = await api.getReadingQuestions(testId);
+        if (!data.length) throw new Error('Bu to‘plamda Reading savollari mavjud emas.');
         setQuestions(data);
+        setAnswers(readDraft(`ielts_answers_${testId}_reading`, {}));
       } catch (err: unknown) {
         console.error("Savollarni yuklashda xatolik:", err);
+        setLoadError(err instanceof Error ? err.message : 'Savollar yuklanmadi');
       } finally {
         setLoading(false);
       }
     }
     loadQuestions();
-  }, [testId, setNumber]);
+  }, [testId, session.ready]);
 
   const handleAnswerChange = (questionId: number, value: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+    const updated = { ...answers, [questionId]: value };
+    setAnswers(updated);
+    saveDraft(`ielts_answers_${testId}_reading`, updated);
   };
 
   const handleToggleReview = (index: number) => {
@@ -78,7 +87,7 @@ export default function ReadingTestPage() {
   };
 
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || resultScore !== null || !questions.length) return;
     setSubmitting(true);
     try {
       const payload = questions.map(q => ({
@@ -87,6 +96,7 @@ export default function ReadingTestPage() {
       }));
       const res = await api.submitReadingAnswers(testId, payload);
       setResultScore(res.score);
+      clearDraft(`ielts_answers_${testId}_reading`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Xatolik yuz berdi';
       console.error(msg);
@@ -97,10 +107,11 @@ export default function ReadingTestPage() {
   };
 
   const handleProceed = () => {
-    router.push(`/test/${testId}/listening?set=${setNumber}`);
+    if (session.test) router.push(nextExamRoute(session.test, 'reading'));
   };
 
-  if (loading) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
+  if (session.error || loadError) return <ProtectedRoute><ExamError message={session.error || loadError} /></ProtectedRoute>;
+  if (loading || !session.ready) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
 
   // Qaysi savollarga javob berilganligini hisoblash
   const answeredIndices = new Set(
@@ -118,6 +129,7 @@ export default function ReadingTestPage() {
             <ExamHeader
               testTitle={`Academic Reading — Set #${setNumber}`}
               durationMinutes={60}
+              deadlineAt={session.state?.deadline_at}
               onTimeUp={handleSubmit}
               isCompleted={resultScore !== null}
               storageKey={`ielts_timer_${testId}_reading`}
@@ -142,7 +154,7 @@ export default function ReadingTestPage() {
               </div>
 
               <TextHighlighter
-                content={questions[0]?.passage_text || "Reading matni yuklanmoqda..."}
+                content={questions[currentIndex]?.passage_text || questions[0]?.passage_text || 'Matn mavjud emas'}
                 className={`${fontClass} leading-relaxed whitespace-pre-wrap`}
               />
             </section>
@@ -158,13 +170,13 @@ export default function ReadingTestPage() {
                       ✓
                     </div>
                     <h3 className="text-2xl font-black text-gray-900 mb-2">Reading Muvaffaqiyatli Yakunlandi!</h3>
-                    <p className="text-gray-600 mb-4">Ushbu bo&apos;lim bo&apos;yicha hisoblangan rasmiy IELTS band bali:</p>
+                    <p className="text-gray-600 mb-4">Ushbu mashq bo&apos;yicha taxminiy band:</p>
                     <div className="text-6xl font-black text-blue-700 mb-6">{resultScore.toFixed(1)}</div>
                     <button
                       onClick={handleProceed}
                       className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition transform hover:scale-105"
                     >
-                      Keyingi: Listening Bo&apos;limiga O&apos;tish &rarr;
+                      {session.test?.test_mode === 'full' ? 'Keyingi: Listening' : 'Natijalarni ko‘rish'} &rarr;
                     </button>
                   </div>
                 ) : (

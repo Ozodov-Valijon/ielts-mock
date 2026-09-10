@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Any
 
 class QuestionReviewItem(BaseModel):
@@ -15,14 +15,18 @@ class AntiCheatSummary(BaseModel):
     is_flagged_cheating: bool = False
 
 class FeedbackResponse(BaseModel):
-    id: int
+    id: Optional[int] = None
     test_id: int
-    reading_score: Optional[float] = 0.0
-    listening_score: Optional[float] = 0.0
-    writing_score: Optional[float] = 0.0
-    speaking_score: Optional[float] = 0.0
-    overall_band: Optional[float] = 0.0
-    is_approved: bool = True
+    reading_score: Optional[float] = None
+    listening_score: Optional[float] = None
+    writing_score: Optional[float] = None
+    speaking_score: Optional[float] = None
+    overall_band: Optional[float] = None
+    is_approved: bool = False
+    status: str = "in_progress"
+    test_status: str = "in_progress"
+    test_mode: str = "full"
+    section_state: dict = Field(default_factory=dict)
     writing_status: Optional[str] = "completed"
     speaking_status: Optional[str] = "completed"
     writing_feedback: Optional[str] = None
@@ -31,8 +35,8 @@ class FeedbackResponse(BaseModel):
     strengths: Optional[str] = None
     weaknesses: Optional[str] = None
     recommendations: Optional[str] = None
-    reading_details: Optional[List[QuestionReviewItem]] = []
-    listening_details: Optional[List[QuestionReviewItem]] = []
+    reading_details: List[QuestionReviewItem] = Field(default_factory=list)
+    listening_details: List[QuestionReviewItem] = Field(default_factory=list)
     anti_cheat: Optional[AntiCheatSummary] = None
 
     class Config:

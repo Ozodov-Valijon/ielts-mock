@@ -17,7 +17,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login({ email, password });
+      await login({ identifier: email.trim(), password });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Email/telefon yoki parol xato kiritildi';
       setError(msg);
@@ -67,12 +67,12 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="bg-blue-50 p-3 rounded-xl text-xs text-blue-900 leading-relaxed border border-blue-100">
+          {process.env.NEXT_PUBLIC_SHOW_DEMO_ACCOUNTS === 'true' && <div className="bg-blue-50 p-3 rounded-xl text-xs text-blue-900 leading-relaxed border border-blue-100">
             <strong>Sinov hisoblari:</strong><br />
             • Talaba: <code>student@ielts.uz</code> / <code>student123</code><br />
             • Telefon: <code>+998907654321</code> / <code>student123</code><br />
             • Admin: <code>admin@ielts.uz</code> / <code>admin123</code>
-          </div>
+          </div>}
 
           <button
             type="submit"

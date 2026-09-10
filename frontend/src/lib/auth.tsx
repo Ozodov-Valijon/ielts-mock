@@ -6,7 +6,7 @@ import { api } from './api';
 import { useRouter } from 'next/navigation';
 
 interface LoginData {
-  email: string;
+  identifier: string;
   password: string;
 }
 

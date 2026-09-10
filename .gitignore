@@ -29,6 +29,8 @@ ENV/
 *.sqlite
 backend/uploads/
 uploads/
+backend/backups/
+*.partial
 
 # Node & Next.js
 node_modules/

@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Test } from '@/lib/types';
+import { Test, TestSet } from '@/lib/types';
+import { nextExamRoute } from '@/lib/exam';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ProgressChart from '@/components/ProgressChart';
 
@@ -14,6 +15,8 @@ export default function Dashboard() {
   const { user } = useAuth();
   const router = useRouter();
   const [tests, setTests] = useState<Test[]>([]);
+  const [catalog, setCatalog] = useState<TestSet[]>([]);
+  const [loadError, setLoadError] = useState('');
   const [loading, setLoading] = useState(true);
   const [startingTest, setStartingTest] = useState(false);
 
@@ -26,10 +29,14 @@ export default function Dashboard() {
     async function loadTests() {
       try {
         setLoading(true);
-        const data = await api.getTests();
+        const [data, sets] = await Promise.all([api.getTests(), api.getTestSets()]);
         setTests(data);
+        setCatalog(sets);
+        const preferred = sets.find(s => s.is_complete) || sets[0];
+        if (preferred) setSelectedSet(preferred.set_number);
       } catch (err) {
         console.error("Testlarni yuklashda xatolik:", err);
+        setLoadError(err instanceof Error ? err.message : 'Ma‘lumotlar yuklanmadi');
       } finally {
         setLoading(false);
       }
@@ -38,7 +45,7 @@ export default function Dashboard() {
   }, []);
 
   const handleStartExam = async () => {
-    if (startingTest) return;
+    if (startingTest || !catalog.some(s => s.set_number === selectedSet && s.available_modes.includes(selectedSection))) return;
     setStartingTest(true);
     try {
       // 1. Yangi test yaratish (set_number va test_mode ni bazaga to'g'ri saqlash)
@@ -69,7 +76,7 @@ export default function Dashboard() {
 
       // 3. Tanlangan bo'lim va variant bo'yicha yo'naltirish
       const targetSection = selectedSection === 'full' ? 'reading' : selectedSection;
-      router.push(`/test/${newTest.id}/${targetSection}?set=${selectedSet}`);
+      router.push(`/test/${newTest.id}/${targetSection}`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Test yaratishda xatolik yuz berdi';
       console.error(msg);
@@ -81,6 +88,7 @@ export default function Dashboard() {
   return (
     <ProtectedRoute>
       <div className="max-w-6xl mx-auto py-8 px-4">
+        {loadError && <p role="alert" className="p-4 bg-red-50 text-red-800 rounded-xl mb-4">{loadError}</p>}
         {/* Banner va Boshqaruv */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
@@ -268,45 +276,17 @@ export default function Dashboard() {
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {test.status === 'completed' ? 'Tugallangan ✓' : 'Jarayonda'}
+                          {test.status === 'completed' ? 'Tasdiqlangan ✓' : test.status === 'pending_review' ? 'Ustoz tekshiruvida' : test.status === 'terminated' ? 'Bekor qilingan' : 'Jarayonda'}
                         </span>
                       </td>
                       <td className="px-6 py-4 font-black text-center text-base text-blue-700">
-                        {test.overall_band_score ? test.overall_band_score.toFixed(1) : '-'}
+                        {test.overall_band_score != null ? test.overall_band_score.toFixed(1) : '-'}
                       </td>
                       
                       {/* Har bir bo'limga tezkor kirish tugmalari */}
                       <td className="px-6 py-4 text-center">
-                        <div className="inline-flex items-center gap-1.5 bg-gray-50 p-1 rounded-xl border border-gray-200">
-                          <Link 
-                            href={`/test/${test.id}/reading`} 
-                            title="Reading bo'limi"
-                            className="px-2 py-1 text-xs font-bold bg-white text-blue-700 border border-gray-200 rounded-lg hover:bg-blue-50 transition"
-                          >
-                            📖 R
-                          </Link>
-                          <Link 
-                            href={`/test/${test.id}/listening`} 
-                            title="Listening bo'limi"
-                            className="px-2 py-1 text-xs font-bold bg-white text-indigo-700 border border-gray-200 rounded-lg hover:bg-indigo-50 transition"
-                          >
-                            🎧 L
-                          </Link>
-                          <Link 
-                            href={`/test/${test.id}/writing`} 
-                            title="Writing bo'limi"
-                            className="px-2 py-1 text-xs font-bold bg-white text-purple-700 border border-gray-200 rounded-lg hover:bg-purple-50 transition"
-                          >
-                            ✍️ W
-                          </Link>
-                          <Link 
-                            href={`/test/${test.id}/speaking`} 
-                            title="Speaking bo'limi"
-                            className="px-2 py-1 text-xs font-bold bg-white text-teal-700 border border-gray-200 rounded-lg hover:bg-teal-50 transition"
-                          >
-                            🗣️ S
-                          </Link>
-                        </div>
+                        <span className="text-xs text-gray-500">Set {test.set_number} · {test.test_mode === 'full' ? '4 bo‘lim' : test.test_mode}</span>
+                        {test.status === 'in_progress' && <Link className="block text-blue-700 underline font-bold mt-1" href={nextExamRoute(test)}>Davom ettirish →</Link>}
                       </td>
 
                       <td className="px-6 py-4 text-right space-x-2">
@@ -432,35 +412,11 @@ export default function Dashboard() {
                   2. Imtihon Varianti (Test Set):
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div 
-                    onClick={() => setSelectedSet(1)}
-                    className={`p-4 rounded-2xl border-2 transition cursor-pointer ${
-                      selectedSet === 1 
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm' 
-                        : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-black text-sm">📚 Cambridge Set #1</span>
-                      {selectedSet === 1 && <span className="text-xs text-blue-600 font-bold">✓ Tanlangan</span>}
-                    </div>
-                    <p className="text-xs text-gray-600">The History &amp; Culture of Tea / Campus Life</p>
-                  </div>
-
-                  <div 
-                    onClick={() => setSelectedSet(2)}
-                    className={`p-4 rounded-2xl border-2 transition cursor-pointer ${
-                      selectedSet === 2 
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm' 
-                        : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-black text-sm">⚡ Cambridge Set #2</span>
-                      {selectedSet === 2 && <span className="text-xs text-blue-600 font-bold">✓ Tanlangan</span>}
-                    </div>
-                    <p className="text-xs text-gray-600">Renewable Energy Technologies &amp; AI Evolution</p>
-                  </div>
+                  {catalog.map(set => <button key={set.set_number} type="button" onClick={() => setSelectedSet(set.set_number)} disabled={!set.available_modes.includes(selectedSection)} className={`text-left p-4 rounded-2xl border-2 disabled:opacity-40 ${selectedSet === set.set_number ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}>
+                    <strong className="block text-sm">{set.title}</strong>
+                    <span className="block text-xs text-gray-600 mt-1">{set.is_complete ? 'To‘liq mashq' : 'Demo'} · R {set.counts.reading} / L {set.counts.listening} / W {set.counts.writing} / S {set.counts.speaking}</span>
+                    {!set.audio_ready && <span className="text-xs text-amber-700">Listening audio tayyor emas</span>}
+                  </button>)}
                 </div>
               </div>
 
@@ -483,7 +439,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={handleStartExam}
-                  disabled={startingTest}
+                  disabled={startingTest || !catalog.some(s => s.set_number === selectedSet && s.available_modes.includes(selectedSection))}
                   className="flex-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-black py-3.5 px-6 rounded-2xl transition shadow-lg transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <span>{startingTest ? 'Boshlanmoqda...' : '🖥️ To\'liq Ekranda Boshlash'}</span>

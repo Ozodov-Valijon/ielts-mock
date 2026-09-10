@@ -1,90 +1,69 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getAudioBlob } from '@/lib/api';
+import { utcTime } from '@/lib/exam';
+import { SectionState } from '@/lib/types';
 
 interface AudioPlayerProps {
   src: string;
   allowReplay?: boolean;
-  storageKey?: string;
+  startedAt?: string | null;
+  onFirstPlay?: () => Promise<SectionState>;
 }
 
-export default function AudioPlayer({ src, allowReplay = false, storageKey }: AudioPlayerProps) {
+export default function AudioPlayer({ src, allowReplay = false, startedAt, onFirstPlay }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasPlayed, setHasPlayed] = useState(() => {
-    if (typeof window !== 'undefined' && !allowReplay && storageKey) {
-      try {
-        return localStorage.getItem(storageKey) === 'true';
-      } catch {
-        return false;
-      }
-    }
-    return false;
-  });
+  const started = useRef<string | null>(startedAt || null);
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  const [playing, setPlaying] = useState(false);
+  const [ended, setEnded] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    let objectUrl = '';
+    let cancelled = false;
+    getAudioBlob(src).then(blob => {
+      if (cancelled) return;
+      objectUrl = URL.createObjectURL(blob);
+      setUrl(objectUrl);
+    }).catch(err => { if (!cancelled) setError(err instanceof Error ? err.message : 'Audio yuklanmadi'); });
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [src]);
 
-  const togglePlay = () => {
-    if (!allowReplay && hasPlayed) return;
-    
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
+  const play = async () => {
+    const audio = audioRef.current;
+    if (!audio || busy || (!allowReplay && ended)) return;
+    if (playing) { audio.pause(); return; }
+    setBusy(true); setError('');
+    try {
+      if (!allowReplay && !started.current) {
+        if (!onFirstPlay) throw new Error('Audio boshlash xizmati mavjud emas');
+        const state = await onFirstPlay();
+        started.current = state.audio_started_at || null;
       }
-      setIsPlaying(!isPlaying);
-    }
+      if (!allowReplay && started.current) {
+        const offset = Math.max(0, (Date.now() - utcTime(started.current)) / 1000);
+        if (Number.isFinite(audio.duration) && offset >= audio.duration) { setEnded(true); setProgress(100); return; }
+        audio.currentTime = offset;
+      }
+      await audio.play();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Audio ijro etilmadi'); }
+    finally { setBusy(false); }
   };
 
-  const onTimeUpdate = () => {
-    if (audioRef.current) {
-      const current = audioRef.current.currentTime;
-      const duration = audioRef.current.duration;
-      if (duration > 0) {
-        setProgress((current / duration) * 100);
-      }
-    }
-  };
-
-  const onEnded = () => {
-    setIsPlaying(false);
-    if (!allowReplay) {
-      setHasPlayed(true);
-      if (storageKey && typeof window !== 'undefined') {
-        localStorage.setItem(storageKey, 'true');
-      }
-    }
-  };
-
-  const disabled = !allowReplay && hasPlayed;
-
-  return (
-    <div className="bg-white p-4 rounded-lg shadow flex items-center space-x-4 border border-gray-200">
-      <audio 
-        ref={audioRef} 
-        src={src} 
-        onTimeUpdate={onTimeUpdate}
-        onEnded={onEnded}
-      />
-      <button
-        onClick={togglePlay}
-        disabled={disabled}
-        className={`w-12 h-12 flex items-center justify-center rounded-full text-white transition ${disabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-      >
-        {isPlaying ? (
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-        ) : (
-          <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
-        )}
-      </button>
-      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${progress}%` }}></div>
-      </div>
-      {!allowReplay && (
-        <span className="text-xs text-red-500 font-medium px-2">
-          {hasPlayed ? "Tinglab bo'lingan" : 'Faqat 1 marta'}
-        </span>
-      )}
+  return <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+    <audio ref={audioRef} src={url || undefined} preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
+      onEnded={() => { setPlaying(false); setEnded(true); }}
+      onError={() => setError('Brauzer audioni o‘qiy olmadi. Fayl formatini tekshiring.')}
+      onTimeUpdate={() => { const a = audioRef.current; if (a && a.duration > 0) setProgress(a.currentTime / a.duration * 100); }} />
+    <div className="flex items-center gap-4">
+      <button type="button" onClick={play} disabled={!url || busy || (!allowReplay && ended)} className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-xl px-4 py-3 font-bold" aria-label={playing ? 'Audioni to‘xtatish' : 'Audioni tinglash'}>{busy ? '…' : playing ? '❚❚' : '▶'}</button>
+      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-blue-600" style={{width: `${progress}%`}} /></div>
+      {!allowReplay && <span className="text-xs text-gray-600">{ended ? 'Tinglash vaqti tugadi' : 'Bir marta; davom ettirish mumkin'}</span>}
     </div>
-  );
+    {!allowReplay && <p className="text-xs text-gray-500 mt-2">Pauza yoki sahifani yangilash audio vaqtini to‘xtatmaydi.</p>}
+    {error && <p role="alert" className="text-red-700 text-sm mt-2">{error}</p>}
+  </div>;
 }

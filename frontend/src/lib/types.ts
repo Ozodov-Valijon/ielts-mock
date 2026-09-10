@@ -1,6 +1,6 @@
 export interface User {
   id: number;
-  email: string;
+  email: string | null;
   phone?: string;
   full_name: string;
   role: string;
@@ -19,6 +19,37 @@ export interface Test {
   tab_switches?: number;
   paste_attempts?: number;
   is_flagged_cheating?: boolean;
+  section_state?: Partial<Record<Section, SectionState>>;
+}
+
+export type Section = 'reading' | 'listening' | 'writing' | 'speaking';
+export interface SectionState {
+  started_at: string;
+  deadline_at: string;
+  submitted_at?: string | null;
+  audio_started_at?: string | null;
+}
+export interface TestSet {
+  set_number: number;
+  title: string;
+  kind: 'practice' | 'demo';
+  counts: Record<Section, number>;
+  available_modes: string[];
+  is_complete: boolean;
+  audio_ready: boolean;
+}
+export interface ReviewIdentity {
+  student_name: string;
+  student_email: string;
+  tab_switches?: number;
+  paste_attempts?: number;
+  is_flagged_cheating?: boolean;
+}
+export interface AdminStats {
+  total_students: number;
+  total_tests: number;
+  pending_reviews: number;
+  average_band?: number | null;
 }
 
 export interface Question {
@@ -30,7 +61,7 @@ export interface Question {
   passage_text?: string;
   audio_url?: string;
   options?: string[];
-  correct_answer?: string;
+  correct_answer?: string | null;
   order_num: number;
 }
 
@@ -110,4 +141,6 @@ export interface Feedback {
   reading_details?: QuestionReviewItem[];
   listening_details?: QuestionReviewItem[];
   anti_cheat?: AntiCheatSummary;
+  test_status?: string;
+  test_mode?: string;
 }

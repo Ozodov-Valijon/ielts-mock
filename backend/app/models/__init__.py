@@ -6,3 +6,4 @@ from .writing import WritingAnswer
 from .speaking import SpeakingAnswer
 from .feedback import Feedback
 from .question import TestQuestion
+from .ai_usage import AIUsageDay

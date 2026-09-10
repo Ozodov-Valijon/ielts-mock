@@ -66,10 +66,13 @@ def run_comprehensive_check():
     print(f"  [OK] Cambridge Set #1 savollari to'liq: R={len(r1_qs)}, L={len(l1_qs)}, W={len(w1_qs)}, S={len(s1_qs)}")
 
     # Set 2
-    r2_qs = client.get(f"/api/v1/tests/{test_id}/reading/questions?set_number=2", headers=student_headers).json()
-    l2_qs = client.get(f"/api/v1/tests/{test_id}/listening/questions?set_number=2", headers=student_headers).json()
-    w2_qs = client.get(f"/api/v1/tests/{test_id}/writing/topics?set_number=2", headers=student_headers).json()
-    s2_qs = client.get(f"/api/v1/tests/{test_id}/speaking/topics?set_number=2", headers=student_headers).json()
+    test2_res = client.post("/api/v1/tests", headers=student_headers, json={"set_number": 2, "test_mode": "full"})
+    assert test2_res.status_code == 200
+    test2_id = test2_res.json()["id"]
+    r2_qs = client.get(f"/api/v1/tests/{test2_id}/reading/questions", headers=student_headers).json()
+    l2_qs = client.get(f"/api/v1/tests/{test2_id}/listening/questions", headers=student_headers).json()
+    w2_qs = client.get(f"/api/v1/tests/{test2_id}/writing/topics", headers=student_headers).json()
+    s2_qs = client.get(f"/api/v1/tests/{test2_id}/speaking/topics", headers=student_headers).json()
     assert len(r2_qs) >= 10, f"Set 2 Reading kutilgan kamida 10, olindi {len(r2_qs)}"
     assert len(l2_qs) >= 10, f"Set 2 Listening kutilgan kamida 10, olindi {len(l2_qs)}"
     assert len(w2_qs) == 2, f"Set 2 Writing kutilgan 2, olindi {len(w2_qs)}"
@@ -79,6 +82,7 @@ def run_comprehensive_check():
     # 5. Reading baholash algoritmi (Scoring, Normalizatsiya va 0.0 holatlari)
     print("\n[5/10] Reading bo'limi aniq baholash shkalasi (0.0 dan 9.0 gacha)...")
     # A) 100% to'g'ri javoblar
+    client.post(f"/api/v1/tests/{test_id}/sections/reading/start", headers=student_headers)
     perfect_answers = [
         {"question_id": r1_qs[0]["id"], "user_answer": "Emperor Shennong"},
         {"question_id": r1_qs[1]["id"], "user_answer": "true"},
@@ -95,17 +99,20 @@ def run_comprehensive_check():
     assert sub1["score"] == 9.0, f"10/10 to'g'ri javob uchun 9.0 kutilgan edi, olindi: {sub1['score']}"
     print(f"  [OK] 10/10 to'g'ri javob uchun: {sub1['score']} (Band 9.0 tasdiqlandi)")
 
-    # B) 0 ta to'g'ri javob (Loophole tekshiruvi: 0 ta to'g'riga 0.0 berilishi shart)
+    # B) 0 ta to'g'ri javob (Alohida test sessiyasida qat'iy 0.0 tekshiruvi)
+    zero_test = client.post("/api/v1/tests", headers=student_headers, json={"set_number": 1, "test_mode": "reading"}).json()
+    client.post(f"/api/v1/tests/{zero_test['id']}/sections/reading/start", headers=student_headers)
     zero_answers = [
         {"question_id": r1_qs[0]["id"], "user_answer": "x"},
         {"question_id": r1_qs[1]["id"], "user_answer": "y"},
     ]
-    sub0 = client.post(f"/api/v1/tests/{test_id}/reading/submit", headers=student_headers, json={"answers": zero_answers}).json()
+    sub0 = client.post(f"/api/v1/tests/{zero_test['id']}/reading/submit", headers=student_headers, json={"answers": zero_answers}).json()
     assert sub0["score"] == 0.0, f"0 to'g'ri javob uchun 0.0 kutilgan edi, olindi: {sub0['score']}"
     print(f"  [OK] 0/10 to'g'ri javob uchun: {sub0['score']} (Qat'iy 0.0 tasdiqlandi)")
 
     # 6. Listening baholash algoritmi
     print("\n[6/10] Listening bo'limi baholash va son normalizatsiyasi...")
+    client.post(f"/api/v1/tests/{test_id}/sections/listening/start", headers=student_headers)
     l_answers = [
         {"question_id": l1_qs[0]["id"], "user_answer": "Registering for a library membership card"},
         {"question_id": l1_qs[3]["id"], "user_answer": "6 pm"}, # '6' yoki 'six' ekvivalenti
@@ -114,23 +121,18 @@ def run_comprehensive_check():
     assert sub_l["score"] >= 2.0
     print(f"  [OK] Listening 2 ta to'g'ri javob uchun ball: {sub_l['score']} (Sinonim '6 pm' to'g'ri qabul qilindi)")
 
-    # 7. Writing AI Baholash va Hajm Jarimalari
-    print("\n[7/10] Writing AI baholash va soxta/1 harfli insholarga 0.0 berish...")
-    # A) 1 harfli soxta insho ("a" yoki "def")
-    fake_w1 = client.post(f"/api/v1/tests/{test_id}/writing/submit", headers=student_headers, json={"task_number": 1, "user_text": "a"}).json()
-    assert fake_w1["ai_analysis"]["ai_score"] == 0.0, f"1 harf uchun 0.0 kutilgan edi, olindi: {fake_w1['ai_analysis']['ai_score']}"
-    print(f"  [OK] 1 harfli insho ('a') uchun ball: {fake_w1['ai_analysis']['ai_score']} (Qat'iy 0.0 qaytarildi)")
-
-    # B) Haqiqiy akademik insho
+    # 7. Writing Topshirish va AI/Mentor Navbati
+    print("\n[7/10] Writing bo'limi topshirish va navbatga joylash...")
+    client.post(f"/api/v1/tests/{test_id}/sections/writing/start", headers=student_headers)
     real_text_1 = """The supplied bar chart illustrates the employment proportion of recent university alumni across three distinct European jurisdictions over a decade-long period spanning from 2010 to 2020. Overall, a positive upward trajectory is evident in full-time employment acquisition across all scrutinized countries. Country A maintained the predominant position throughout the entire survey duration, whilst Country C exhibited the most pronounced proportional growth despite starting from the lowest baseline figure."""
     real_w1 = client.post(f"/api/v1/tests/{test_id}/writing/submit", headers=student_headers, json={"task_number": 1, "user_text": real_text_1}).json()
-    assert real_w1["ai_analysis"]["ai_score"] >= 2.0
-    print(f"  [OK] Mazmunli Task 1 inshosi uchun AI bahosi: {real_w1['ai_analysis']['ai_score']}")
+    assert real_w1["status"] == "pending"
+    print(f"  [OK] Task 1 inshosi qabul qilindi (Status: {real_w1['status']})")
 
     real_text_2 = """In contemporary educational discourse, the unprecedented progression of artificial intelligence and educational technology has triggered heated debate concerning the longevity of traditional pedagogical institutions. Proponents of digital disruption argue that automated adaptive algorithms can provide personalized pacing and instantaneous diagnostic evaluations far surpassing human capacity. Conversely, traditionalists firmly maintain that human educators provide indispensable psychological scaffolding, moral guidance, and empathic mentorship that no algorithmic model can replicate. In my view, technology should serve strictly as a pedagogical accelerator rather than a wholesale replacement for educators."""
     real_w2 = client.post(f"/api/v1/tests/{test_id}/writing/submit", headers=student_headers, json={"task_number": 2, "user_text": real_text_2}).json()
-    assert real_w2["ai_analysis"]["ai_score"] >= 2.0
-    print(f"  [OK] Mazmunli Task 2 inshosi uchun AI bahosi: {real_w2['ai_analysis']['ai_score']}")
+    assert real_w2["status"] == "pending"
+    print(f"  [OK] Task 2 inshosi qabul qilindi (Status: {real_w2['status']})")
 
     # 8. Anti-Cheat xavfsizlik nazorati (Tab switch, Fullscreen exit, Paste attempt)
     print("\n[8/10] Anti-Cheat xavfsizlik tizimi va avtomatik Flaglash...")
