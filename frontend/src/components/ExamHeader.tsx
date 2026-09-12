@@ -138,9 +138,9 @@ export default function ExamHeader({
           <button
             onClick={toggleContrast}
             title="Yuqori kontrast rejimi"
-            className="px-2 py-1 text-xs rounded bg-white/10 hover:bg-white/20 transition flex items-center space-x-1"
+            className="px-2.5 py-1 text-xs rounded bg-white/10 hover:bg-white/20 transition font-medium"
           >
-            <span className="text-xs">🌓</span>
+            Contrast
           </button>
 
           {/* Yordam */}
@@ -159,9 +159,8 @@ export default function ExamHeader({
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 text-gray-900 shadow-2xl">
             <div className="flex items-center justify-between border-b pb-3 mb-4">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center space-x-2">
-                <span>📘</span>
-                <span>Computer-Delivered IELTS Qo&apos;llanmasi</span>
+              <h3 className="text-lg font-bold text-gray-900">
+                Computer-Delivered IELTS Qo&apos;llanmasi
               </h3>
               <button 
                 onClick={() => setShowHelpModal(false)}

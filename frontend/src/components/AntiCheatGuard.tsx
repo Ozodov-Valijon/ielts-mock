@@ -89,15 +89,15 @@ export default function AntiCheatGuard({
     }
   }, []);
 
-  // 🗣️ Ovozli "CHITER!" ogohlantirishi (SpeechSynthesis orqali)
+  // Ovozli ogohlantirish (SpeechSynthesis orqali)
   const speakCheater = useCallback(() => {
     try {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance("Chiter! Qoidabuzarlik aniqlandi! Testga qayting!");
-        utterance.rate = 1.05;
-        utterance.pitch = 1.2;
-        utterance.volume = 1.0;
+        const utterance = new SpeechSynthesisUtterance("Qoidabuzarlik qayd etildi. Iltimos, testga qayting.");
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 0.9;
         window.speechSynthesis.speak(utterance);
       }
     } catch (e) {
@@ -105,15 +105,15 @@ export default function AntiCheatGuard({
     }
   }, []);
 
-  // 🛑 Ovozli test bekor qilinganlik xabari
+  // Ovozli test yakunlanganlik xabari
   const speakTermination = useCallback(() => {
     try {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance("Diqqat! Siz qoidalarni ikki martadan ko'p buzdingiz! Test bekor qilindi va avtomatik yakunlandi!");
+        const utterance = new SpeechSynthesisUtterance("Qoidabuzarliklar soni chegaradan oshdi. Test yakunlandi.");
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
-        utterance.volume = 1.0;
+        utterance.volume = 0.9;
         window.speechSynthesis.speak(utterance);
       }
     } catch (e) {
@@ -467,151 +467,91 @@ export default function AntiCheatGuard({
   return (
     <div className="relative select-none">
       {fullscreenError && <p role="alert" className="fixed top-4 left-4 right-4 z-[30000] bg-red-100 text-red-900 p-4 rounded-xl text-center">{fullscreenError}</p>}
-      {/* 🛑 TEST QOIDABUZARLIK TUFAYLI AVTOMATIK YAKUNLANDI PARDASI */}
+      {/* Test qoidabuzarlik tufayli yakunlanganda */}
       {isTerminated && (
-        <div className="fixed inset-0 z-[20000] bg-black/98 flex flex-col items-center justify-center p-4 text-center select-none backdrop-blur-3xl animate-in fade-in zoom-in-95">
-          <div className="max-w-2xl w-full bg-gradient-to-b from-red-950 via-slate-950 to-black border-4 border-red-600 rounded-3xl p-8 sm:p-12 shadow-[0_0_100px_rgba(239,68,68,0.9)] relative overflow-hidden">
-            <div className="w-24 h-24 bg-red-600/30 text-red-500 rounded-full flex items-center justify-center text-6xl mx-auto mb-4 border-2 border-red-500 animate-bounce">
-              🛑
-            </div>
-
-            <h1 className="text-4xl sm:text-6xl font-black text-red-500 tracking-wider uppercase drop-shadow-[0_5px_25px_rgba(239,68,68,1)]">
-              TEST BEKOR QILINDI!
-            </h1>
-
-            <div className="text-lg sm:text-xl font-bold text-white mt-3 uppercase tracking-wide">
-              2 martadan ortiq qoidabuzarlik qayd etildi
-            </div>
-
-            <p className="text-red-200 text-sm sm:text-base mt-4 mb-6 leading-relaxed max-w-lg mx-auto">
-              Siz test paytida ruxsat etilgan <strong>2 ta ogohlantirish</strong> limitidan oshib ketdingiz (Qoidabuzarlik: {warnings} marta). Imtihon qoidalariga binoan test to&apos;xtatildi va avtomatik ravishda yakunlandi.
+        <div className="fixed inset-0 z-[20000] bg-black/95 flex flex-col items-center justify-center p-4 text-center select-none backdrop-blur-md animate-in fade-in">
+          <div className="max-w-md w-full bg-slate-900 border border-red-500/60 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold text-red-500 uppercase tracking-wide">
+              Test to&apos;xtatildi
+            </h2>
+            <p className="text-sm text-gray-300 mt-3 mb-5 leading-relaxed">
+              Ruxsat etilgan ogohlantirishlar limiti oshib ketgani sababli imtihon avtomatik yakunlandi.
             </p>
-
-            <div className="bg-red-600/20 border-2 border-red-500/50 rounded-2xl p-4 mb-6 text-center max-w-md mx-auto">
-              <span className="text-xs text-red-300 font-bold uppercase tracking-wider block mb-1">Holat:</span>
-              <span className="text-xl font-black text-white font-mono uppercase">
-                🚨 Qoidabuzarlik sababli avto-yakunlangan
-              </span>
+            <div className="bg-red-950/50 border border-red-500/30 rounded-xl p-3 mb-5 text-sm text-red-300 font-medium">
+              Qoidabuzarliklar soni: {warnings} / 2
             </div>
-
-            <div className="text-sm font-semibold text-gray-300 mb-6">
-              Natijalar sahifasiga o&apos;tilmoqda: <span className="text-red-400 font-mono text-xl font-bold">{terminationCountdown}</span> soniya...
-            </div>
-
+            <p className="text-xs text-gray-400 mb-5">
+              Natijalar sahifasiga o&apos;tilmoqda: <span className="text-white font-mono font-bold">{terminationCountdown}</span> soniya...
+            </p>
             <button
               onClick={() => router.push(`/test/${testId}/results`)}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 px-8 rounded-2xl transition shadow-xl text-base flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition text-sm cursor-pointer"
             >
-              <span>Natijalar Sahifasiga O&apos;tish</span>
-              <span>&rarr;</span>
+              Natijalar sahifasiga o&apos;tish &rarr;
             </button>
           </div>
         </div>
       )}
 
-      {/* 🚨 KATTA "CHITER!" OGOHLANTIRISH VA SIRENA PARDASI (TO'LIQ EKRANDAN CHIQIB KETILGANDA) */}
+      {/* Qoidabuzarlik ogohlantirish oynasi */}
       {showCheaterAlarm && !isTerminated && (
-        <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4 text-center select-none backdrop-blur-2xl animate-in fade-in zoom-in-90">
-          <div className="max-w-2xl w-full bg-gradient-to-b from-red-950 via-slate-950 to-black border-4 border-red-600 rounded-3xl p-8 sm:p-12 shadow-[0_0_80px_rgba(239,68,68,0.7)] relative overflow-hidden">
-            
-            {/* Pulsatsiya qiluvchi qizil nurlar */}
-            <div className="absolute inset-0 bg-red-600/10 animate-pulse pointer-events-none" />
-
-            <div className="w-24 h-24 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center text-6xl mx-auto mb-4 border-2 border-red-500 shadow-2xl animate-bounce">
-              🚨
-            </div>
-
-            {/* KATTA QALIN "CHITER!" YOZUVI */}
-            <h1 className="text-6xl sm:text-8xl font-black text-red-500 tracking-widest uppercase drop-shadow-[0_5px_25px_rgba(239,68,68,1)] animate-pulse">
-              CHITER!
-            </h1>
-
-            <div className="text-xl sm:text-2xl font-black text-white mt-2 uppercase tracking-wide">
-              Qoidabuzarlik Qayd Etildi!
-            </div>
-
-            <p className="text-red-200 text-sm sm:text-base mt-4 mb-6 leading-relaxed max-w-lg mx-auto font-medium">
-              {cheaterMessage || "Siz to'liq ekran rejimidan chiqdingiz yoki boshqa oynaga o'tdingiz. IELTS imtihonida oynadan chiqish qat'iyan taqiqlangan!"}
+        <div className="fixed inset-0 z-[10000] bg-black/90 flex flex-col items-center justify-center p-4 text-center select-none backdrop-blur-md animate-in fade-in">
+          <div className="max-w-lg w-full bg-slate-900 border border-red-500/60 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold text-red-400">
+              Qoidabuzarlik qayd etildi
+            </h2>
+            <p className="text-sm text-gray-300 mt-2 mb-5 leading-relaxed">
+              {cheaterMessage || "Imtihon qoidalariga ko'ra boshqa oynaga o'tish yoki to'liq ekrandan chiqish taqiqlanadi."}
             </p>
-
-            {/* Ogohlantirish hisoblagichi (Maksimal 2 ta ogohlantirish) */}
-            <div className="bg-red-600/20 border-2 border-red-500/50 rounded-2xl p-4 mb-8 text-center max-w-md mx-auto">
-              <span className="text-xs text-red-300 font-bold uppercase tracking-wider block mb-1">Ogohlantirish darajasi:</span>
-              <span className="text-3xl font-black text-white font-mono">{warnings} / 2</span>
+            <div className="bg-red-950/50 border border-red-500/30 rounded-xl p-4 mb-6">
+              <span className="text-xs text-gray-400 block mb-1">Ogohlantirish darajasi:</span>
+              <span className="text-2xl font-black text-white font-mono">{warnings} / 2</span>
               {warnings === 1 && (
-                <span className="block text-yellow-300 text-xs font-black mt-2 uppercase">
-                  ⚠️ 1-ogohlantirish! Yana 1 ta qoidabuzarlikdan so&apos;ng test avtomatik ravishda yakunlanadi!
+                <span className="block text-yellow-400 text-xs font-semibold mt-1">
+                  1-ogohlantirish. Yana 1 ta qoidabuzarlikdan so&apos;ng test yakunlanadi.
                 </span>
               )}
               {warnings >= 2 && (
-                <span className="block text-red-400 text-xs font-black mt-2 uppercase animate-pulse">
-                  🚨 2-va OXIRGI ogohlantirish! Keyingi har qanday qoidabuzarlikda test darhol yakunlanadi!
+                <span className="block text-red-400 text-xs font-semibold mt-1">
+                  Oxirgi ogohlantirish. Keyingi qoidabuzarlikda test darhol to&apos;xtatiladi.
                 </span>
               )}
             </div>
-
-            {/* To'liq ekranga qaytish tugmasi (5 soniyalik jarima taymeri bilan) */}
             <button
               onClick={enterFullscreen}
               disabled={lockoutSeconds > 0}
-              className={`w-full text-white font-black py-4 px-8 rounded-2xl transition shadow-[0_10px_30px_rgba(239,68,68,0.5)] text-lg sm:text-xl flex items-center justify-center gap-3 ${
+              className={`w-full text-white font-bold py-3 px-6 rounded-xl transition text-sm ${
                 lockoutSeconds > 0
-                  ? 'bg-red-950/80 border-2 border-red-500/40 text-red-300 cursor-not-allowed opacity-90'
-                  : 'bg-red-600 hover:bg-red-500 active:bg-red-700 hover:scale-[1.02] cursor-pointer'
+                  ? 'bg-slate-800 text-gray-400 cursor-not-allowed border border-gray-700'
+                  : 'bg-red-600 hover:bg-red-700 cursor-pointer'
               }`}
             >
-              {lockoutSeconds > 0 ? (
-                <>
-                  <span className="text-2xl animate-spin">⏳</span>
-                  <span>QOIDABUZARLIK QAYD ETILMOQDA... ({lockoutSeconds}s)</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-2xl">🖥️</span>
-                  <span>TO&apos;LIQ EKRANGA QAYTISH</span>
-                </>
-              )}
+              {lockoutSeconds > 0
+                ? `Qaytish kutilmoqda (${lockoutSeconds}s)`
+                : "To'liq ekranga qaytish"}
             </button>
-
-            <p className="text-gray-400 text-xs mt-4">
-              Imtihon shartlariga rioya qiling. To&apos;liq ekrandan har bir chiqish ogohlantirish sifatida saqlanadi.
-            </p>
           </div>
         </div>
       )}
 
-      {/* 🔒 Boshlang'ich To'liq Ekran Talabi (Faqat testga eng birinchi kirganda va hali imtihon boshlanmagan bo'lsa) */}
+      {/* Boshlang'ich to'liq ekran talabi */}
       {requireFullscreen && !isFullscreen && !showCheaterAlarm && !isTerminated && !hasEnteredOnce && (
-        <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-white text-center select-none backdrop-blur-xl">
-          <div className="max-w-lg w-full bg-slate-900 border-2 border-blue-500/80 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
-            <div className="w-24 h-24 bg-blue-500/10 text-blue-400 rounded-3xl flex items-center justify-center text-5xl mx-auto mb-6 border border-blue-500/20 shadow-inner">
-              🖥️
-            </div>
-            
-            <span className="bg-blue-500/20 text-blue-300 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider mb-3 inline-block border border-blue-500/30">
-              Imtihon Rejimi
-            </span>
-            
-            <h2 className="text-3xl font-black text-white mb-3 tracking-tight">
-              Test Boshlandi!
+        <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-white text-center select-none backdrop-blur-md">
+          <div className="max-w-md w-full bg-slate-900 border border-blue-500/50 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              To&apos;liq ekran rejimi
             </h2>
-            
-            <p className="text-slate-300 text-sm sm:text-base mb-6 leading-relaxed">
-              Haqiqiy IELTS formati bo&apos;yicha ishlash uchun test to&apos;liq ekranda (Fullscreen) o&apos;tkaziladi.
+            <p className="text-slate-300 text-sm mb-4 leading-relaxed">
+              Imtihon to&apos;liq ekran rejimida o&apos;tkaziladi. Oynadan chiqish yoki vkladkani almashtirish qoidabuzarlik hisoblanadi.
             </p>
-
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-8 text-left">
-              <p className="text-amber-300 text-xs font-bold leading-relaxed">
-                ⚠️ <strong>Qat&apos;iy imtihon qoidasi:</strong> Test boshlangach ekrandan chiqish yoki boshqa oynalarga o&apos;tish taqiqlanadi. Jami <strong>2 ta ogohlantirish</strong> beriladi, 3-qoidabuzarlikda test avtomatik bekor qilinadi!
-              </p>
+            <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-3 mb-6 text-xs text-slate-300 text-left">
+              Maksimal 2 ta ogohlantirish beriladi. 3-qoidabuzarlikda test avtomatik bekor qilinadi.
             </div>
-
             <button
               onClick={enterFullscreen}
-              className="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold py-4 px-6 rounded-2xl transition transform hover:scale-[1.02] shadow-2xl text-lg flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition text-sm cursor-pointer"
             >
-              <span className="text-2xl">🚀</span>
-              <span>Testni Boshlash</span>
+              Imtihonni boshlash
             </button>
           </div>
         </div>

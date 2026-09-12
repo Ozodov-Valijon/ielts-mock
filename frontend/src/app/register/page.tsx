@@ -58,16 +58,13 @@ export default function RegisterPage() {
     <div className="max-w-md mx-auto my-10 px-4">
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
         <div className="text-center mb-6">
-          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            Yangi Hisob
-          </span>
-          <h1 className="text-2xl font-extrabold text-gray-900 mt-2">Ro&apos;yxatdan O&apos;tish</h1>
-          <p className="text-gray-500 text-xs mt-1">Platformadan bepul foydalanish uchun ma&apos;lumotlaringizni kiriting</p>
+          <h1 className="text-2xl font-bold text-gray-900">Ro&apos;yxatdan o&apos;tish</h1>
+          <p className="text-gray-500 text-xs mt-1">Platformadan foydalanish uchun hisob yarating</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-4 text-sm font-medium">
-            ⚠️ {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-4 text-xs font-medium">
+            {error}
           </div>
         )}
 

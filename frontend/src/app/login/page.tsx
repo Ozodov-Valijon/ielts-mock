@@ -29,34 +29,31 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto my-12 px-4">
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-        <div className="text-center mb-8">
-          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            IELTS Mock Portal
-          </span>
-          <h1 className="text-2xl font-extrabold text-gray-900 mt-2">Tizimga Kirish</h1>
-          <p className="text-gray-500 text-xs mt-1">Hisobingizga kiring va test topshirishni davom eting</p>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Tizimga kirish</h1>
+          <p className="text-gray-500 text-xs mt-1">Shaxsiy kabinetingizga kirish</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-6 text-sm font-medium">
-            ⚠️ {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-5 text-xs font-medium">
+            {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email yoki Telefon Raqam</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Email yoki telefon raqam</label>
             <input
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+              className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               placeholder="talaba@ielts.uz yoki +998901234567"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Parol (Password)</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Parol</label>
             <input
               type="password"
               value={password}

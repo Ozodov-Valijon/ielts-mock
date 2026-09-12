@@ -168,20 +168,17 @@ export default function WritingTestPage() {
           {/* Asosiy Ish Maydoni */}
           <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 flex flex-col overflow-hidden">
             {isSubmitted ? (
-              <div className="max-w-xl mx-auto my-auto p-10 rounded-2xl border border-green-200 text-center bg-white shadow-sm">
-                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl font-extrabold mx-auto mb-4">
-                  ✓
-                </div>
-                <h2 className="text-2xl font-black text-gray-900 mb-2">Insholar Muvaffaqiyatli Qabul Qilindi!</h2>
-                <p className="text-gray-600 mb-6">
-                  Insholaringiz saqlandi. Ustoz tekshirganidan keyin tasdiqlangan baho va izohlar natijalar sahifasida ko&apos;rinadi.
+              <div className="max-w-md mx-auto my-auto p-8 rounded-2xl border border-gray-200 text-center bg-white shadow-sm">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Writing bo&apos;limi topshirildi</h2>
+                <p className="text-sm text-gray-600 mb-6">
+                  Insholaringiz muvaffaqiyatli qabul qilindi. Baholar tekshiruvdan so&apos;ng hisobotda aks etadi.
                 </p>
                 <div>
                   <button
                     onClick={handleNext}
-                    className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3.5 rounded-xl font-bold transition shadow-lg transform hover:scale-102"
+                    className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl font-semibold transition text-sm cursor-pointer"
                   >
-                    {session.test?.test_mode === 'full' ? 'Keyingi: Speaking' : 'Natijalarni ko‘rish'} &rarr;
+                    {session.test?.test_mode === 'full' ? 'Speaking bo‘limiga o‘tish' : 'Natijalarni ko‘rish'} &rarr;
                   </button>
                 </div>
               </div>
@@ -192,9 +189,9 @@ export default function WritingTestPage() {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setActiveTab('task1')}
-                      className={`px-5 py-2.5 font-bold text-sm rounded-xl transition flex items-center space-x-2 ${
+                      className={`px-4 py-2 font-semibold text-sm rounded-lg transition flex items-center space-x-2 ${
                         activeTab === 'task1'
-                          ? 'bg-blue-700 text-white shadow-sm'
+                          ? 'bg-blue-700 text-white shadow-xs'
                           : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                       }`}
                     >
@@ -208,13 +205,13 @@ export default function WritingTestPage() {
 
                     <button
                       onClick={() => setActiveTab('task2')}
-                      className={`px-5 py-2.5 font-bold text-sm rounded-xl transition flex items-center space-x-2 ${
+                      className={`px-4 py-2 font-semibold text-sm rounded-lg transition flex items-center space-x-2 ${
                         activeTab === 'task2'
-                          ? 'bg-blue-700 text-white shadow-sm'
+                          ? 'bg-blue-700 text-white shadow-xs'
                           : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                       }`}
                     >
-                      <span>Task 2 (Muhimroq, 2/3 ball)</span>
+                      <span>Task 2 (2/3 ball)</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         count2 >= 250 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
                       }`}>
@@ -225,9 +222,8 @@ export default function WritingTestPage() {
 
                   {/* Avtomatik Saqlash Ko'rsatkichi */}
                   {lastSavedTime && (
-                    <div className="hidden sm:flex items-center space-x-1.5 text-xs text-green-700 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200">
-                      <span>💾</span>
-                      <span>Avtosaqlandi: {lastSavedTime}</span>
+                    <div className="hidden sm:flex items-center text-xs text-green-700 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                      <span>Saqlandi: {lastSavedTime}</span>
                     </div>
                   )}
                 </div>
@@ -237,13 +233,13 @@ export default function WritingTestPage() {
                   {/* Chap: Topshiriq ko'rsatmasi */}
                   <div className="w-full md:w-5/12 p-5 sm:p-6 overflow-y-auto max-h-[calc(100vh-210px)] bg-gray-50/60">
                     <div className="mb-4">
-                      <span className="text-xs font-black uppercase tracking-wider text-blue-800 bg-blue-100 px-3 py-1 rounded-full">
-                        {activeTab === 'task1' ? 'Task 1 Prompt (Kamida 150 so\'z)' : 'Task 2 Prompt (Kamida 250 so\'z)'}
+                      <span className="text-xs font-bold uppercase tracking-wider text-blue-800 bg-blue-100 px-3 py-1 rounded-full">
+                        {activeTab === 'task1' ? 'Task 1 (Kamida 150 so\'z)' : 'Task 2 (Kamida 250 so\'z)'}
                       </span>
                       <p className="text-xs text-gray-500 mt-2">
                         {activeTab === 'task1' 
-                          ? "Tavsiya etilgan vaqt: 20 daqiqa. Berilgan diagramma yoki jarayonni xolisona tahlil qiling." 
-                          : "Tavsiya etilgan vaqt: 40 daqiqa. Ikkala fikrni muhokama qiling va o'z shaxsiy nuqtai nazaringizni bildiring."}
+                          ? "Tavsiya etilgan vaqt: 20 daqiqa. Berilgan diagramma yoki jadvalni tahlil qiling." 
+                          : "Tavsiya etilgan vaqt: 40 daqiqa. Masalani yoriting va asoslangan fikringizni bildiring."}
                       </p>
                     </div>
 
@@ -252,8 +248,8 @@ export default function WritingTestPage() {
                     </div>
 
                     <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                      <p className="font-semibold text-slate-800 mb-1">Ko&apos;rsatma:</p>
-                      <p>Task 1 uchun kamida 150 so&apos;z, Task 2 uchun kamida 250 so&apos;z yozish talab etiladi.</p>
+                      <p className="font-semibold text-slate-800 mb-1">Eslatma:</p>
+                      <p>Task 1 uchun kamida 150 so&apos;z, Task 2 uchun kamida 250 so&apos;z tavsiya etiladi.</p>
                     </div>
                   </div>
 
@@ -261,14 +257,14 @@ export default function WritingTestPage() {
                   <div className="w-full md:w-7/12 p-4 sm:p-6 flex flex-col max-h-[calc(100vh-210px)]">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Sizning Inshoingiz ({activeTab.toUpperCase()})
+                        Insho matni ({activeTab.toUpperCase()})
                       </span>
-                      <div className={`text-xs font-bold px-3 py-1 rounded-full flex items-center space-x-1.5 ${
+                      <div className={`text-xs font-semibold px-3 py-1 rounded-full flex items-center space-x-1.5 ${
                         (activeTab === 'task1' ? count1 >= 150 : count2 >= 250)
                           ? 'bg-green-100 text-green-800 border border-green-300'
                           : 'bg-amber-100 text-amber-800 border border-amber-300'
                       }`}>
-                        <span>📝 So&apos;zlar soni:</span>
+                        <span>So&apos;zlar soni:</span>
                         <span className="font-mono text-sm">{activeTab === 'task1' ? count1 : count2}</span>
                         <span>/ {activeTab === 'task1' ? 150 : 250}</span>
                       </div>
@@ -293,7 +289,7 @@ export default function WritingTestPage() {
 
                     {submitError && (
                       <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
-                        ⚠️ {submitError}
+                        {submitError}
                       </div>
                     )}
 

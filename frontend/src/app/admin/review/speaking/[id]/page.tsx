@@ -134,25 +134,22 @@ export default function AdminReviewSpeakingDetail() {
             ? 'bg-red-50 border-red-200 text-red-900' 
             : 'bg-green-50 border-green-200 text-green-900'
         }`}>
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{speaking?.is_flagged_cheating ? '🚨' : '🛡️'}</span>
-            <div>
-              <p className="font-bold text-sm">
-                {speaking?.is_flagged_cheating 
-                  ? "DIQQAT: Ushbu testda chiterlik ehtimoli yuqori deb belgilangan!"
-                  : "Anti-Cheat Nazorati: Test intizom bilan topshirilgan."}
-              </p>
-              <p className="text-xs opacity-80 mt-0.5">
-                Vkladkani almashtirish (Tab switch): <strong>{speaking?.tab_switches ?? 0} marta</strong> &bull; Tashqaridan nusxa ko&apos;chirish (Paste): <strong>{speaking?.paste_attempts ?? 0} marta</strong>
-              </p>
-            </div>
+          <div>
+            <p className="font-bold text-sm">
+              {speaking?.is_flagged_cheating 
+                ? "Nazorat qaydlari: Qoidabuzarlik shubhasi qayd etilgan" 
+                : "Nazorat qaydlari: Qoidabuzarlik holatlari aniqlanmadi"}
+            </p>
+            <p className="text-xs opacity-80 mt-0.5">
+              Oynadan chiqish (Tab switch): <strong>{speaking?.tab_switches ?? 0} marta</strong> &bull; Nusxa ko&apos;chirish (Paste): <strong>{speaking?.paste_attempts ?? 0} marta</strong>
+            </p>
           </div>
-          <span className={`text-xs font-extrabold px-3 py-1 rounded-full self-start sm:self-auto ${
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full self-start sm:self-auto ${
             speaking?.is_flagged_cheating 
               ? 'bg-red-200 text-red-800' 
               : 'bg-green-200 text-green-800'
           }`}>
-            {speaking?.is_flagged_cheating ? 'SHUBHALI TEST' : 'TOZA'}
+            {speaking?.is_flagged_cheating ? 'Shubhali' : 'Me\'yorda'}
           </span>
         </div>
 

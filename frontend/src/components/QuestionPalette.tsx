@@ -40,8 +40,10 @@ export default function QuestionPalette({
             onChange={() => onToggleReview(currentIndex)}
             className="w-4 h-4 rounded text-yellow-600 focus:ring-yellow-500 border-gray-400"
           />
-          <span className="flex items-center space-x-1">
-            <span className="text-yellow-500">🚩</span>
+          <span className="flex items-center space-x-1.5">
+            <svg className={`w-3.5 h-3.5 ${isCurrentReviewed ? 'text-amber-500 fill-amber-500' : 'text-gray-400 stroke-current'}`} viewBox="0 0 24 24" fill={isCurrentReviewed ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+            </svg>
             <span>Review</span>
           </span>
         </label>
@@ -76,9 +78,9 @@ export default function QuestionPalette({
             >
               <span>{i + 1}</span>
 
-              {/* Review qilinganlik belgisi (sariq uchburchak/bayroqcha) */}
+              {/* Review qilinganlik belgisi (sariq nuqta) */}
               {isReviewed && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-yellow-600 shadow-xs" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full border border-amber-600 shadow-xs" />
               )}
             </button>
           );
@@ -108,15 +110,12 @@ export default function QuestionPalette({
           <button
             onClick={onSubmit}
             disabled={isSubmitting}
-            className="px-4 py-1.5 rounded bg-green-600 hover:bg-green-700 text-white font-bold transition shadow-sm flex items-center space-x-1 disabled:opacity-60"
+            className="px-4 py-1.5 rounded bg-green-600 hover:bg-green-700 text-white font-bold transition shadow-xs flex items-center space-x-1 disabled:opacity-60 cursor-pointer"
           >
             {isSubmitting ? (
               <span>Tekshirilmoqda...</span>
             ) : (
-              <>
-                <span>Submit</span>
-                <span>✓</span>
-              </>
+              <span>Submit</span>
             )}
           </button>
         )}

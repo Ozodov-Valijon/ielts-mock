@@ -142,79 +142,72 @@ export default function SpeakingTestPage() {
             </div>
 
             {/* PART 1 */}
-            <div className="bg-white p-6 sm:p-7 rounded-2xl shadow-xs border border-gray-200 mb-6 transition">
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-gray-200 mb-5">
               <div className="flex items-center justify-between mb-4 border-b pb-3 border-gray-200">
-                <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                  Part 1: Introduction &amp; Familiar Topics (4-5 daqiqa)
+                <span className="text-xs font-bold text-blue-900 uppercase tracking-wider">
+                  Part 1: Kirish va umumiy savollar (4-5 daqiqa)
                 </span>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                   partStatus[1] === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                 }`}>
-                  {partStatus[1] === 'completed' ? 'Bajarildi ✓' : partStatus[1] === 'uploading' ? 'Yuklanmoqda...' : 'Kutilmoqda'}
+                  {partStatus[1] === 'completed' ? 'Bajarildi' : partStatus[1] === 'uploading' ? 'Yuklanmoqda...' : 'Kutilmoqda'}
                 </span>
               </div>
-              <p className="text-gray-800 mb-6 whitespace-pre-wrap leading-relaxed font-serif text-base">{part1Prompt}</p>
+              <p className="text-gray-800 mb-5 whitespace-pre-wrap leading-relaxed font-serif text-sm">{part1Prompt}</p>
 
               {partStatus[1] !== 'completed' && (
                 <AudioRecorder disabled={expired} onRecordingComplete={(blob) => handleAudioComplete(1, blob)} />
               )}
               {partStatus[1] === 'uploading' && (
-                <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Audio qabul qilinmoqda va tahlil qilinmoqda...</span>
+                <div className="text-center py-4 text-blue-600 text-xs font-semibold animate-pulse">
+                  Audio saqlanmoqda va tahlil qilinmoqda...
                 </div>
               )}
               {partStatus[1] === 'completed' && (
-                <div className="bg-green-50 text-green-800 p-4 rounded-xl font-bold flex items-center justify-between">
-                  <span className="flex items-center space-x-2">
-                    <span>✓</span>
-                    <span>Part 1 audio yozuvi qabul qilindi va tahlil qilindi!</span>
-                  </span>
-                  <span className="text-xs text-green-800 bg-green-200/70 font-bold px-3 py-1 rounded-full">
-                    ✓ Saqlandi
-                  </span>
+                <div className="bg-green-50 text-green-800 p-3 rounded-xl text-xs font-semibold flex items-center justify-between border border-green-200">
+                  <span>Part 1 audio yozuvi saqlandi</span>
+                  <span className="text-xs bg-green-200/70 px-2.5 py-0.5 rounded-md">Saqlandi</span>
                 </div>
               )}
             </div>
 
             {/* PART 2: CUE CARD (1 min prep + scratchpad) */}
-            <div className="bg-white p-6 sm:p-7 rounded-2xl shadow-xs border border-gray-200 mb-6 transition">
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-gray-200 mb-5">
               <div className="flex items-center justify-between mb-4 border-b pb-3 border-gray-200">
-                <span className="bg-purple-100 text-purple-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                  Part 2: Individual Long Turn — Cue Card
+                <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">
+                  Part 2: Individual chiqish — Cue Card
                 </span>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                   partStatus[2] === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                 }`}>
-                  {partStatus[2] === 'completed' ? 'Bajarildi ✓' : partStatus[2] === 'uploading' ? 'Yuklanmoqda...' : 'Kutilmoqda'}
+                  {partStatus[2] === 'completed' ? 'Bajarildi' : partStatus[2] === 'uploading' ? 'Yuklanmoqda...' : 'Kutilmoqda'}
                 </span>
               </div>
 
               {/* Rasmiy Cue Card Kartasi */}
-              <div className="bg-amber-50/70 border-2 border-amber-300 rounded-xl p-5 mb-5 font-serif text-gray-900 leading-relaxed">
-                <h3 className="text-xs uppercase tracking-widest font-sans font-black text-amber-800 mb-2">CANDIDATE CUE CARD</h3>
-                <div className="whitespace-pre-wrap font-medium">{part2Prompt}</div>
+              <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 mb-4 font-serif text-gray-900 leading-relaxed text-sm">
+                <h3 className="text-xs uppercase tracking-widest font-sans font-bold text-amber-800 mb-2">CANDIDATE CUE CARD</h3>
+                <div className="whitespace-pre-wrap">{part2Prompt}</div>
               </div>
 
               {/* 1 daqiqalik tayyorgarlik vositasi */}
               {partStatus[2] === 'pending' && (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-gray-700 flex items-center space-x-1.5">
-                      <span>⏱️</span>
-                      <span>1 Daqiqalik Tayyorgarlik Taymeri &amp; Qoralama Bloknot</span>
+                    <span className="text-xs font-semibold text-gray-700">
+                      1 daqiqalik tayyorgarlik va qoralama
                     </span>
-                    <span className={`font-mono font-bold text-sm px-2.5 py-0.5 rounded-full ${
+                    <span className={`font-mono font-bold text-xs px-2 py-0.5 rounded-md ${
                       prepTimeLeft > 0 ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                     }`}>
-                      {prepTimeLeft > 0 ? `00:${String(prepTimeLeft).padStart(2, '0')}` : 'Vaqt tugadi!'}
+                      {prepTimeLeft > 0 ? `00:${String(prepTimeLeft).padStart(2, '0')}` : 'Vaqt tugadi'}
                     </span>
                   </div>
 
                   {!isPrepActive && !prepDone && (
                     <button
                       onClick={() => setIsPrepActive(true)}
-                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition mb-3"
+                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg transition mb-2.5 cursor-pointer"
                     >
                       Tayyorgarlik vaqtini boshlash (1 min)
                     </button>
@@ -225,7 +218,7 @@ export default function SpeakingTestPage() {
                     onChange={(e) => { setPrepNotes(e.target.value); saveDraft(`ielts_prep_${testId}`, e.target.value); }}
                     placeholder="Qoralama eslatmalar (Notes)..."
                     rows={2}
-                    className="w-full text-xs p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                    className="w-full text-xs p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                   />
                 </div>
               )}
@@ -234,72 +227,60 @@ export default function SpeakingTestPage() {
                 <AudioRecorder disabled={expired} maxSeconds={120} onRecordingComplete={(blob) => handleAudioComplete(2, blob)} />
               )}
               {partStatus[2] === 'uploading' && (
-                <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Audio qabul qilinmoqda va tahlil qilinmoqda...</span>
+                <div className="text-center py-4 text-blue-600 text-xs font-semibold animate-pulse">
+                  Audio saqlanmoqda va tahlil qilinmoqda...
                 </div>
               )}
               {partStatus[2] === 'completed' && (
-                <div className="bg-green-50 text-green-800 p-4 rounded-xl font-bold flex items-center justify-between">
-                  <span className="flex items-center space-x-2">
-                    <span>✓</span>
-                    <span>Part 2 (Cue card) nutqi muvaffaqiyatli saqlandi!</span>
-                  </span>
-                  <span className="text-xs text-green-800 bg-green-200/70 font-bold px-3 py-1 rounded-full">
-                    ✓ Saqlandi
-                  </span>
+                <div className="bg-green-50 text-green-800 p-3 rounded-xl text-xs font-semibold flex items-center justify-between border border-green-200">
+                  <span>Part 2 audio yozuvi saqlandi</span>
+                  <span className="text-xs bg-green-200/70 px-2.5 py-0.5 rounded-md">Saqlandi</span>
                 </div>
               )}
             </div>
 
             {/* PART 3: TWO-WAY DISCUSSION */}
-            <div className="bg-white p-6 sm:p-7 rounded-2xl shadow-xs border border-gray-200 mb-6 transition">
+            <div className="bg-white p-5 sm:p-6 rounded-xl border border-gray-200 mb-5">
               <div className="flex items-center justify-between mb-4 border-b pb-3 border-gray-200">
-                <span className="bg-indigo-100 text-indigo-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                  Part 3: Two-way Discussion (4-5 daqiqa)
+                <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                  Part 3: Muhokama savollari (4-5 daqiqa)
                 </span>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                   partStatus[3] === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                 }`}>
-                  {partStatus[3] === 'completed' ? 'Bajarildi ✓' : partStatus[3] === 'uploading' ? 'Yuklanmoqda...' : 'Kutilmoqda'}
+                  {partStatus[3] === 'completed' ? 'Bajarildi' : partStatus[3] === 'uploading' ? 'Yuklanmoqda...' : 'Kutilmoqda'}
                 </span>
               </div>
-              <p className="text-gray-800 mb-6 whitespace-pre-wrap leading-relaxed font-serif text-base">{part3Prompt}</p>
+              <p className="text-gray-800 mb-5 whitespace-pre-wrap leading-relaxed font-serif text-sm">{part3Prompt}</p>
 
               {partStatus[3] !== 'completed' && (
                 <AudioRecorder disabled={expired} onRecordingComplete={(blob) => handleAudioComplete(3, blob)} />
               )}
               {partStatus[3] === 'uploading' && (
-                <div className="text-center py-6 text-blue-600 font-bold animate-pulse flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Audio qabul qilinmoqda va tahlil qilinmoqda...</span>
+                <div className="text-center py-4 text-blue-600 text-xs font-semibold animate-pulse">
+                  Audio saqlanmoqda va tahlil qilinmoqda...
                 </div>
               )}
               {partStatus[3] === 'completed' && (
-                <div className="bg-green-50 text-green-800 p-4 rounded-xl font-bold flex items-center justify-between">
-                  <span className="flex items-center space-x-2">
-                    <span>✓</span>
-                    <span>Part 3 audio yozuvi qabul qilindi va tahlil qilindi!</span>
-                  </span>
-                  <span className="text-xs text-green-800 bg-green-200/70 font-bold px-3 py-1 rounded-full">
-                    ✓ Saqlandi
-                  </span>
+                <div className="bg-green-50 text-green-800 p-3 rounded-xl text-xs font-semibold flex items-center justify-between border border-green-200">
+                  <span>Part 3 audio yozuvi saqlandi</span>
+                  <span className="text-xs bg-green-200/70 px-2.5 py-0.5 rounded-md">Saqlandi</span>
                 </div>
               )}
             </div>
 
             {/* BARCHA BO'LIMLAR YAKUNLANGANIDA NATIJA TUGMASI */}
             {allCompleted && (
-              <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white p-8 rounded-3xl text-center mt-8 shadow-xl animate-in zoom-in-95">
-                <h2 className="text-3xl font-black mb-2">Speaking javoblari qabul qilindi!</h2>
-                <p className="text-blue-100 mb-6 text-sm max-w-lg mx-auto">
-                  Javoblaringiz ustoz tekshiruviga yuborildi. Baho va izohlar tasdiqlangandan so&apos;ng ko&apos;rinadi.
+              <div className="bg-white border border-gray-200 p-8 rounded-2xl text-center mt-6 shadow-xs max-w-md mx-auto">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Speaking bo&apos;limi yakunlandi</h2>
+                <p className="text-gray-600 mb-6 text-sm">
+                  Ovozli javoblaringiz saqlandi va tekshiruv uchun yuborildi.
                 </p>
                 <button
                   onClick={() => router.push(`/test/${testId}/results`)}
-                  className="bg-white text-blue-900 hover:bg-blue-50 px-10 py-4 rounded-2xl font-black text-lg transition shadow-2xl transform hover:scale-105"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-6 rounded-xl font-semibold text-sm transition cursor-pointer"
                 >
-                  Natijalar holatini ko&apos;rish &rarr;
+                  Natijalarni ko&apos;rish &rarr;
                 </button>
               </div>
             )}

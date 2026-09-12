@@ -56,7 +56,9 @@ export default function QuestionCard({
             }`}
             title="Savolga qaytish uchun belgilash (Review)"
           >
-            <span className={isReviewed ? 'text-amber-600' : 'opacity-60'}>🚩</span>
+            <svg className={`w-3.5 h-3.5 ${isReviewed ? 'text-amber-600 fill-amber-600' : 'text-slate-400 stroke-current'}`} viewBox="0 0 24 24" fill={isReviewed ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+            </svg>
             <span>{isReviewed ? 'Review qilingan' : 'Review'}</span>
           </button>
         )}

@@ -90,82 +90,61 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto py-8 px-4">
         {loadError && <p role="alert" className="p-4 bg-red-50 text-red-800 rounded-xl mb-4">{loadError}</p>}
         {/* Banner va Boshqaruv */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Talaba Kabineti
-            </span>
-            <h1 className="text-3xl font-extrabold text-gray-900 mt-1">Salom, {user?.full_name}!</h1>
-            <p className="text-gray-500 text-sm">O&apos;z bilimingizni sinab ko&apos;rishga tayyormisiz?</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Salom, {user?.full_name}</h1>
+            <p className="text-gray-500 text-sm mt-0.5">IELTS mock imtihonlari va natijalar monitoringi</p>
           </div>
           
           <button 
             onClick={() => setShowConfigModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-black shadow-xl transition transform hover:scale-105 flex items-center gap-2 cursor-pointer"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-sm transition flex items-center gap-2 cursor-pointer text-sm"
           >
-            <span>🚀</span>
-            <span>Yangi Test Boshlash</span>
+            <span>Yangi test boshlash</span>
           </button>
         </div>
 
-        {/* Target Band Tracker & O'quv Statistikasi Widgeti */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 mb-8 shadow-xl">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-2">
-              <span className="text-xs font-black uppercase tracking-widest text-blue-300 bg-white/10 px-3 py-1 rounded-full">
-                IELTS Maqsadingiz
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-black">
-                Mening Maqsadim: <span className="text-yellow-400">Band 7.5+</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-300 max-w-lg leading-relaxed">
-                Muntazam mock testlar topshirish va natijalarni tahlil qilish orqali o&apos;z ko&apos;nikmalaringizni oshiring.
-              </p>
+        {/* Natijalar qisqacha ko'rsatkichlari */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-xs">
+          <div className="grid grid-cols-3 gap-4 text-center divide-x divide-gray-100">
+            <div>
+              <span className="text-xs text-gray-500 font-medium block">Jami topshirilgan</span>
+              <span className="text-2xl font-bold text-gray-900 mt-1 block">{tests.length}</span>
             </div>
-
-            {/* Statistik Kartochkalar */}
-            <div className="grid grid-cols-3 gap-3 w-full md:w-auto">
-              <div className="bg-white/10 backdrop-blur-md p-3 sm:p-4 rounded-2xl text-center border border-white/10">
-                <span className="text-[10px] sm:text-xs text-gray-300 font-bold uppercase block">Jami Test</span>
-                <span className="text-2xl sm:text-3xl font-black text-white">{tests.length}</span>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md p-3 sm:p-4 rounded-2xl text-center border border-white/10">
-                <span className="text-[10px] sm:text-xs text-gray-300 font-bold uppercase block">Eng Yuqori</span>
-                <span className="text-2xl sm:text-3xl font-black text-yellow-400">
-                  {tests.length > 0 && Math.max(...tests.map(t => t.overall_band_score || 0)) > 0
-                    ? Math.max(...tests.map(t => t.overall_band_score || 0)).toFixed(1)
-                    : '—'}
-                </span>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md p-3 sm:p-4 rounded-2xl text-center border border-white/10">
-                <span className="text-[10px] sm:text-xs text-gray-300 font-bold uppercase block">O&apos;rtacha</span>
-                <span className="text-2xl sm:text-3xl font-black text-green-400">
-                  {(() => {
-                    const completed = tests.filter(t => t.overall_band_score && t.overall_band_score > 0);
-                    if (completed.length === 0) return '—';
-                    const avg = completed.reduce((a, b) => a + (b.overall_band_score || 0), 0) / completed.length;
-                    return avg.toFixed(1);
-                  })()}
-                </span>
-              </div>
+            <div>
+              <span className="text-xs text-gray-500 font-medium block">Eng yuqori ball</span>
+              <span className="text-2xl font-bold text-blue-600 mt-1 block">
+                {tests.length > 0 && Math.max(...tests.map(t => t.overall_band_score || 0)) > 0
+                  ? Math.max(...tests.map(t => t.overall_band_score || 0)).toFixed(1)
+                  : '—'}
+              </span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-medium block">O&apos;rtacha ball</span>
+              <span className="text-2xl font-bold text-emerald-600 mt-1 block">
+                {(() => {
+                  const completed = tests.filter(t => t.overall_band_score && t.overall_band_score > 0);
+                  if (completed.length === 0) return '—';
+                  const avg = completed.reduce((a, b) => a + (b.overall_band_score || 0), 0) / completed.length;
+                  return avg.toFixed(1);
+                })()}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Tezkor Bo'lim Tanlash Kartochkalari */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Tezkor bo'lim kartochkalari */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div 
             onClick={() => {
               setSelectedSection('reading');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
-              📖
-            </div>
-            <h3 className="font-extrabold text-gray-900 text-base">Reading</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Akademik matn va savollar</p>
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
+            <h3 className="font-bold text-gray-900 text-base">Reading</h3>
+            <p className="text-xs text-gray-500 mt-0.5">60 daqiqa &bull; 40 savol</p>
           </div>
 
           <div 
@@ -173,13 +152,11 @@ export default function Dashboard() {
               setSelectedSection('listening');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
-              🎧
-            </div>
-            <h3 className="font-extrabold text-gray-900 text-base">Listening</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Audio dialoglar va faktlar</p>
+            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
+            <h3 className="font-bold text-gray-900 text-base">Listening</h3>
+            <p className="text-xs text-gray-500 mt-0.5">30 daqiqa &bull; 40 savol</p>
           </div>
 
           <div 
@@ -187,13 +164,11 @@ export default function Dashboard() {
               setSelectedSection('writing');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
-              ✍️
-            </div>
-            <h3 className="font-extrabold text-gray-900 text-base">Writing</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Task 1 va Task 2 insholari</p>
+            <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
+            <h3 className="font-bold text-gray-900 text-base">Writing</h3>
+            <p className="text-xs text-gray-500 mt-0.5">60 daqiqa &bull; 2 topshiriq</p>
           </div>
 
           <div 
@@ -201,13 +176,11 @@ export default function Dashboard() {
               setSelectedSection('speaking');
               setShowConfigModal(true);
             }}
-            className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs hover:shadow-md hover:border-blue-400 transition cursor-pointer group"
+            className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition">
-              🗣️
-            </div>
-            <h3 className="font-extrabold text-gray-900 text-base">Speaking</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Part 1, 2, 3 ovozli suhbat</p>
+            <span className="text-xs font-bold text-teal-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
+            <h3 className="font-bold text-gray-900 text-base">Speaking</h3>
+            <p className="text-xs text-gray-500 mt-0.5">11-14 daqiqa &bull; 3 qism</p>
           </div>
         </div>
 
@@ -240,14 +213,13 @@ export default function Dashboard() {
             <div className="py-16 flex justify-center"><LoadingSpinner /></div>
           ) : tests.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="text-5xl mb-3">📝</div>
-              <h3 className="text-lg font-bold text-gray-800 mb-1">Hali hech qanday test topshirmadingiz</h3>
-              <p className="text-gray-500 text-sm mb-6">Birinchi to&apos;liq IELTS mock testingizni hoziroq boshlang!</p>
+              <h3 className="text-base font-semibold text-gray-800 mb-1">Hozircha topshirilgan testlar yo&apos;q</h3>
+              <p className="text-gray-500 text-sm mb-5">Bilimingizni sinash uchun yangi test boshlang.</p>
               <button 
                 onClick={() => setShowConfigModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl shadow transition cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-xs transition cursor-pointer text-sm"
               >
-                Testni Boshlash
+                Testni boshlash
               </button>
             </div>
           ) : (
@@ -259,7 +231,7 @@ export default function Dashboard() {
                     <th className="px-6 py-4 font-bold">Boshlangan Sana</th>
                     <th className="px-6 py-4 font-bold">Holat</th>
                     <th className="px-6 py-4 font-bold text-center">Band Score</th>
-                    <th className="px-6 py-4 font-bold text-center">Bo&apos;limlarga O&apos;tish</th>
+                    <th className="px-6 py-4 font-bold text-center">Bo&apos;lim</th>
                     <th className="px-6 py-4 font-bold text-right">Amal</th>
                   </tr>
                 </thead>
@@ -271,30 +243,29 @@ export default function Dashboard() {
                         {test.started_at ? new Date(test.started_at).toLocaleString('uz-UZ') : '-'}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                           test.status === 'completed' 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {test.status === 'completed' ? 'Tasdiqlangan ✓' : test.status === 'pending_review' ? 'Ustoz tekshiruvida' : test.status === 'terminated' ? 'Bekor qilingan' : 'Jarayonda'}
+                          {test.status === 'completed' ? 'Tasdiqlangan' : test.status === 'pending_review' ? 'Tekshiruvda' : test.status === 'terminated' ? 'To\'xtatilgan' : 'Jarayonda'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-black text-center text-base text-blue-700">
+                      <td className="px-6 py-4 font-bold text-center text-base text-blue-700">
                         {test.overall_band_score != null ? test.overall_band_score.toFixed(1) : '-'}
                       </td>
                       
-                      {/* Har bir bo'limga tezkor kirish tugmalari */}
                       <td className="px-6 py-4 text-center">
                         <span className="text-xs text-gray-500">Set {test.set_number} · {test.test_mode === 'full' ? '4 bo‘lim' : test.test_mode}</span>
-                        {test.status === 'in_progress' && <Link className="block text-blue-700 underline font-bold mt-1" href={nextExamRoute(test)}>Davom ettirish →</Link>}
+                        {test.status === 'in_progress' && <Link className="block text-blue-700 underline font-semibold mt-1 text-xs" href={nextExamRoute(test)}>Davom ettirish &rarr;</Link>}
                       </td>
 
                       <td className="px-6 py-4 text-right space-x-2">
                         <Link 
                           href={`/test/${test.id}/results`} 
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold px-4 py-2 rounded-xl text-xs transition inline-block border border-blue-200"
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold px-3 py-1.5 rounded-lg text-xs transition inline-block border border-blue-200"
                         >
-                          Natijani Ko&apos;rish →
+                          Natijalar &rarr;
                         </Link>
                       </td>
                     </tr>
@@ -305,144 +276,140 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ⚙️ IMTIHONNI TANLASH VA SOZLASH MODALI */}
+        {/* IMTIHONNI TANLASH VA SOZLASH MODALI */}
         {showConfigModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-gray-200 animate-fadeIn">
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-7 shadow-xl border border-gray-200">
               
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-5">
                 <div>
-                  <span className="text-xs font-black text-blue-600 uppercase tracking-wider block">IELTS Mock Configurator</span>
-                  <h2 className="text-2xl font-black text-gray-900 mt-0.5">Test Bo&apos;limi va Variantini Tanlang</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Test parametrlarini tanlang</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Kerakli bo&apos;lim va topshiriqlar to&apos;plamini belgilang</p>
                 </div>
                 <button 
                   onClick={() => setShowConfigModal(false)}
-                  className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-lg transition"
+                  className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm transition"
                 >
                   ✕
                 </button>
               </div>
 
               {/* 1. Bo'lim tanlash */}
-              <div className="mb-6">
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">
-                  1. Imtihon Rejimi:
+              <div className="mb-5">
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                  1. Imtihon formati:
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div 
                     onClick={() => setSelectedSection('full')}
-                    className={`p-3.5 rounded-2xl border-2 transition cursor-pointer flex items-center space-x-3 ${
+                    className={`p-3 rounded-xl border transition cursor-pointer ${
                       selectedSection === 'full' 
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm' 
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-medium' 
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    <span className="text-2xl">🎯</span>
-                    <div>
-                      <div className="font-extrabold text-sm">To&apos;liq Mock (4 ta bo&apos;lim)</div>
-                      <div className="text-[11px] text-gray-500">Reading → Listening → Writing → Speaking</div>
-                    </div>
+                    <div className="font-bold text-sm">To&apos;liq Mock (4 ta bo&apos;lim)</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">Reading &bull; Listening &bull; Writing &bull; Speaking</div>
                   </div>
 
                   <div 
                     onClick={() => setSelectedSection('reading')}
-                    className={`p-3.5 rounded-2xl border-2 transition cursor-pointer flex items-center space-x-3 ${
+                    className={`p-3 rounded-xl border transition cursor-pointer ${
                       selectedSection === 'reading' 
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm' 
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-medium' 
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    <span className="text-2xl">📖</span>
-                    <div>
-                      <div className="font-extrabold text-sm">Faqat Reading</div>
-                      <div className="text-[11px] text-gray-500">60 daqiqa &bull; Akademik matn</div>
-                    </div>
+                    <div className="font-bold text-sm">Faqat Reading</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">60 daqiqa &bull; 40 savol</div>
                   </div>
 
                   <div 
                     onClick={() => setSelectedSection('listening')}
-                    className={`p-3.5 rounded-2xl border-2 transition cursor-pointer flex items-center space-x-3 ${
+                    className={`p-3 rounded-xl border transition cursor-pointer ${
                       selectedSection === 'listening' 
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm' 
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-medium' 
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    <span className="text-2xl">🎧</span>
-                    <div>
-                      <div className="font-extrabold text-sm">Faqat Listening</div>
-                      <div className="text-[11px] text-gray-500">30 daqiqa &bull; Audio yozuv</div>
-                    </div>
+                    <div className="font-bold text-sm">Faqat Listening</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">30 daqiqa &bull; 40 savol</div>
                   </div>
 
                   <div 
                     onClick={() => setSelectedSection('writing')}
-                    className={`p-3.5 rounded-2xl border-2 transition cursor-pointer flex items-center space-x-3 ${
+                    className={`p-3 rounded-xl border transition cursor-pointer ${
                       selectedSection === 'writing' 
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm' 
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-medium' 
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    <span className="text-2xl">✍️</span>
-                    <div>
-                      <div className="font-extrabold text-sm">Faqat Writing</div>
-                      <div className="text-[11px] text-gray-500">Task 1 &bull; Task 2 insho</div>
-                    </div>
+                    <div className="font-bold text-sm">Faqat Writing</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">Task 1 va Task 2 insholari</div>
                   </div>
 
                   <div 
                     onClick={() => setSelectedSection('speaking')}
-                    className={`p-3.5 rounded-2xl border-2 transition cursor-pointer flex items-center space-x-3 sm:col-span-2 ${
+                    className={`p-3 rounded-xl border transition cursor-pointer sm:col-span-2 ${
                       selectedSection === 'speaking' 
-                        ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-sm' 
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 font-medium' 
                         : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    <span className="text-2xl">🗣️</span>
-                    <div>
-                      <div className="font-extrabold text-sm">Faqat Speaking</div>
-                      <div className="text-[11px] text-gray-500">Part 1, 2, 3 audio yozib olish</div>
-                    </div>
+                    <div className="font-bold text-sm">Faqat Speaking</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5">Part 1, 2, 3 ovozli suhbat</div>
                   </div>
                 </div>
               </div>
 
               {/* 2. Variant / Set tanlash */}
-              <div className="mb-6">
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2">
-                  2. Imtihon Varianti (Test Set):
+              <div className="mb-5">
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                  2. Savollar to&apos;plami (Set):
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {catalog.map(set => <button key={set.set_number} type="button" onClick={() => setSelectedSet(set.set_number)} disabled={!set.available_modes.includes(selectedSection)} className={`text-left p-4 rounded-2xl border-2 disabled:opacity-40 ${selectedSet === set.set_number ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}>
-                    <strong className="block text-sm">{set.title}</strong>
-                    <span className="block text-xs text-gray-600 mt-1">{set.is_complete ? 'To‘liq mashq' : 'Demo'} · R {set.counts.reading} / L {set.counts.listening} / W {set.counts.writing} / S {set.counts.speaking}</span>
-                    {!set.audio_ready && <span className="text-xs text-amber-700">Listening audio tayyor emas</span>}
-                  </button>)}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {catalog.map(set => (
+                    <button 
+                      key={set.set_number} 
+                      type="button" 
+                      onClick={() => setSelectedSet(set.set_number)} 
+                      disabled={!set.available_modes.includes(selectedSection)} 
+                      className={`text-left p-3 rounded-xl border transition disabled:opacity-40 cursor-pointer ${
+                        selectedSet === set.set_number 
+                          ? 'border-blue-600 bg-blue-50/50' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <strong className="block text-sm text-gray-900">{set.title}</strong>
+                      <span className="block text-xs text-gray-500 mt-0.5">
+                        {set.is_complete ? 'To‘liq to‘plam' : 'Demo'} &bull; R: {set.counts.reading}, L: {set.counts.listening}, W: {set.counts.writing}, S: {set.counts.speaking}
+                      </span>
+                      {!set.audio_ready && <span className="text-xs text-amber-700 block mt-0.5">Audio tayyorlanmoqda</span>}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* 3. Xavfsizlik shartlari eslatmasi */}
-              <div className="bg-blue-50 text-blue-900 border border-blue-200 p-4 rounded-2xl mb-6 text-xs flex items-center space-x-3">
-                <span className="text-2xl">🖥️</span>
-                <div>
-                  <strong className="block font-bold">Imtihon rejimi</strong>
-                  Test haqiqiy IELTS formati kabi to&apos;liq ekranda (Fullscreen) o&apos;tkaziladi.
-                </div>
+              {/* 3. Xavfsizlik eslatmasi */}
+              <div className="bg-slate-50 text-slate-700 border border-slate-200 p-3 rounded-xl mb-5 text-xs">
+                <strong className="block font-semibold text-slate-800 mb-0.5">To&apos;liq ekran tartibi</strong>
+                Test xalqaro standartlarga muvofiq to&apos;liq ekran rejimida o&apos;tkaziladi.
               </div>
 
               {/* Tugmalar */}
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowConfigModal(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-2xl transition cursor-pointer"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition cursor-pointer text-sm"
                 >
                   Bekor qilish
                 </button>
                 <button
                   onClick={handleStartExam}
                   disabled={startingTest || !catalog.some(s => s.set_number === selectedSet && s.available_modes.includes(selectedSection))}
-                  className="flex-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-black py-3.5 px-6 rounded-2xl transition shadow-lg transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="flex-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-xl transition shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 text-sm"
                 >
-                  <span>{startingTest ? 'Boshlanmoqda...' : '🖥️ To\'liq Ekranda Boshlash'}</span>
+                  <span>{startingTest ? 'Boshlanmoqda...' : 'Imtihonni boshlash'}</span>
                 </button>
               </div>
 

@@ -67,25 +67,22 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-bold text-gray-900 mb-4">Tezkor Amallar</h2>
             <Link href="/admin/tests" className="inline-block text-blue-700 font-bold underline mb-5">Barcha talabalar testlarini ko‘rish →</Link>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Link href="/admin/students" className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-200 text-center flex flex-col items-center justify-center h-40 group">
-                <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">👥</span>
-                <span className="font-bold text-gray-900 text-lg">Talabalar Ro&apos;yxati</span>
-                <span className="text-xs text-gray-500 mt-1">Barcha foydalanuvchilar va statistikalar</span>
+              <Link href="/admin/students" className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-blue-400 transition border border-gray-200 text-center flex flex-col items-center justify-center h-36">
+                <span className="font-bold text-gray-900 text-base">Talabalar ro&apos;yxati</span>
+                <span className="text-xs text-gray-500 mt-1">Foydalanuvchilar va umumiy statistika</span>
               </Link>
-              <Link href="/admin/review" className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-200 text-center flex flex-col items-center justify-center h-40 group relative">
+              <Link href="/admin/review" className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-blue-400 transition border border-gray-200 text-center flex flex-col items-center justify-center h-36 relative">
                 {stats.pending_reviews > 0 && (
-                  <div className="absolute top-4 right-4 bg-orange-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow">
+                  <div className="absolute top-4 right-4 bg-orange-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
                     {stats.pending_reviews} ta
                   </div>
                 )}
-                <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">📝</span>
-                <span className="font-bold text-gray-900 text-lg">Tekshirish Navbati</span>
-                <span className="text-xs text-gray-500 mt-1">Writing & Speaking javoblari</span>
+                <span className="font-bold text-gray-900 text-base">Tekshirish navbati</span>
+                <span className="text-xs text-gray-500 mt-1">Writing va Speaking topshiriqlari</span>
               </Link>
-              <Link href="/admin/questions" className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-200 text-center flex flex-col items-center justify-center h-40 group">
-                <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">➕</span>
-                <span className="font-bold text-gray-900 text-lg">Savol Qo&apos;shish</span>
-                <span className="text-xs text-gray-500 mt-1">Reading, Listening, Writing, Speaking</span>
+              <Link href="/admin/questions" className="bg-white p-6 rounded-2xl shadow-xs hover:shadow-md hover:border-blue-400 transition border border-gray-200 text-center flex flex-col items-center justify-center h-36">
+                <span className="font-bold text-gray-900 text-base">Savol qo&apos;shish</span>
+                <span className="text-xs text-gray-500 mt-1">4 ta bo&apos;lim uchun yangi savollar</span>
               </Link>
             </div>
           </>

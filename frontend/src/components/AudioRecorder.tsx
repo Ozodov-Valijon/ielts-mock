@@ -146,17 +146,16 @@ export default function AudioRecorder({ onRecordingComplete, disabled = false, m
             <button
               onClick={handleReset}
               disabled={busy || disabled}
-              className="flex-1 py-2.5 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-bold text-xs transition"
+              className="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-semibold text-xs transition cursor-pointer"
             >
-              🔄 Qayta yozish
+              Qayta yozish
             </button>
             <button
               onClick={handleConfirmAndUpload}
               disabled={busy || !recordedBlob.size}
-              className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-xs transition shadow-md flex items-center justify-center space-x-1"
+              className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-xs transition shadow-xs flex items-center justify-center cursor-pointer"
             >
               <span>{busy ? 'Yuklanmoqda…' : 'Serverga yuklash'}</span>
-              <span>✓</span>
             </button>
           </div>
         </div>

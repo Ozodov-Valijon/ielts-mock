@@ -109,17 +109,15 @@ export default function TextHighlighter({ content, className = '' }: TextHighlig
         >
           <button
             onClick={handleHighlight}
-            className="flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold hover:bg-yellow-500 hover:text-black rounded transition"
+            className="px-2.5 py-1 text-xs font-semibold hover:bg-yellow-500 hover:text-black rounded transition"
           >
-            <span>🖍️</span>
             <span>Highlight</span>
           </button>
           <div className="w-px h-4 bg-gray-700" />
           <button
             onClick={handleAddNote}
-            className="flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold hover:bg-blue-600 rounded transition"
+            className="px-2.5 py-1 text-xs font-semibold hover:bg-blue-600 rounded transition"
           >
-            <span>📝</span>
             <span>Note</span>
           </button>
         </div>
@@ -136,9 +134,8 @@ export default function TextHighlighter({ content, className = '' }: TextHighlig
       {/* Eslatmalar Ro'yxati (Agar mavjud bo'lsa) */}
       {notes.length > 0 && (
         <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 flex items-center space-x-1">
-            <span>📝</span>
-            <span>Sizning eslatmalaringiz ({notes.length})</span>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+            Eslatmalar ({notes.length})
           </h4>
           <div className="space-y-2">
             {notes.map((item) => (
@@ -166,9 +163,8 @@ export default function TextHighlighter({ content, className = '' }: TextHighlig
       {showNoteModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl max-w-sm w-full p-5 shadow-2xl">
-            <h3 className="text-sm font-bold text-gray-900 mb-1 flex items-center space-x-1.5">
-              <span>📝</span>
-              <span>Matnga izoh qoldirish</span>
+            <h3 className="text-sm font-bold text-gray-900 mb-1">
+              Matnga izoh qoldirish
             </h3>
             <p className="text-xs text-gray-500 mb-3 italic line-clamp-2">
               &ldquo;{selectedText}&rdquo;

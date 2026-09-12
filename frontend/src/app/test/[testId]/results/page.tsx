@@ -58,16 +58,17 @@ export default function ResultsPage() {
   if (error || !feedback) {
     return (
       <ProtectedRoute>
-        <div className="max-w-md mx-auto my-20 p-8 bg-white rounded-2xl border border-red-200 text-center shadow-sm">
-          <div className="text-red-500 text-5xl mb-3">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Natija Topilmadi</h2>
-          <p className="text-gray-600 text-sm mb-6">{error || "Ushbu test bo'yicha ma'lumot mavjud emas."}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition"
-          >
-            Dashboard ga qaytish
-          </button>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 max-w-md w-full text-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Natijalarni yuklab bo&apos;lmadi</h2>
+            <p className="text-gray-600 text-sm mb-6">{error || "Ma'lumot topilmadi"}</p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl transition text-sm"
+            >
+              Bosh sahifaga qaytish
+            </button>
+          </div>
         </div>
       </ProtectedRoute>
     );
@@ -90,38 +91,39 @@ export default function ResultsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-6xl mx-auto py-8 px-4">
-        {/* Asosiy Ko'rinish Tanlash Tablari (Faqat ekranda ko'rinadi) */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 print:hidden">
+      <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-6">
+        {/* Navigation & Header */}
+        <div className="max-w-4xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
           <div>
-            <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-              IELTS Mock Assessment &bull; Test #{testId}
-            </span>
-            <h1 className="text-3xl font-black text-gray-900 mt-1">Mashq Natijalari va Hisobot</h1>
+            <button 
+              onClick={() => router.push('/dashboard')}
+              className="text-gray-500 hover:text-gray-800 text-xs font-semibold flex items-center gap-1 mb-1 transition"
+            >
+              &larr; Kabinetga qaytish
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Mashq natijalari va hisobot</h1>
           </div>
 
-          <div className="flex bg-gray-200 p-1.5 rounded-2xl shadow-inner border border-gray-300">
+          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
             <button
               onClick={() => setActiveMainTab('trf')}
-              className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition flex items-center space-x-2 ${
+              className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition ${
                 activeMainTab === 'trf'
-                  ? 'bg-blue-700 text-white shadow-md'
-                  : 'text-gray-700 hover:text-gray-950'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <span>📜</span>
-              <span>Mashq hisoboti</span>
+              Mashq hisoboti
             </button>
             <button
               onClick={() => setActiveMainTab('analytics')}
-              className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition flex items-center space-x-2 ${
+              className={`px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition ${
                 activeMainTab === 'analytics'
-                  ? 'bg-blue-700 text-white shadow-md'
-                  : 'text-gray-700 hover:text-gray-950'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <span>📊</span>
-              <span>Batafsil Tahlil &amp; Xatolar</span>
+              Batafsil tahlil
             </button>
           </div>
         </div>
@@ -136,52 +138,44 @@ export default function ResultsPage() {
         {/* 2. DIAGNOSTIKA VA TAHLIL BO'LIMI */}
         {activeMainTab === 'analytics' && (
           <div className="animate-in fade-in duration-200">
-            {/* Anti-Cheat Xavfsizlik Audit Kartasi */}
-            <div className={`p-4 rounded-2xl border mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs ${
+            {/* Nazorat qaydlari audit kartasi */}
+            <div className={`p-4 rounded-xl border mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs ${
               antiCheat.is_flagged_cheating 
-                ? 'bg-red-50 border-red-300 text-red-900' 
+                ? 'bg-red-50 border-red-200 text-red-900' 
                 : antiCheat.tab_switches > 0 
-                ? 'bg-yellow-50 border-yellow-300 text-yellow-900' 
-                : 'bg-green-50 border-green-300 text-green-900'
+                ? 'bg-yellow-50 border-yellow-200 text-yellow-900' 
+                : 'bg-green-50 border-green-200 text-green-900'
             }`}>
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">
-                  {antiCheat.is_flagged_cheating ? '🚨' : antiCheat.tab_switches > 0 ? '⚠️' : '🛡️'}
-                </span>
-                <div>
-                  <h4 className="font-bold text-sm uppercase tracking-wide">
-                    {antiCheat.is_flagged_cheating 
-                      ? 'Chiterlik Shubhasi Qayd Etildi' 
-                      : antiCheat.tab_switches > 0 
-                      ? 'Kichik Qoidabuzarliklar Aniqlangan' 
-                      : 'Qoidabuzarlik qayd etilmagan'}
-                  </h4>
-                  <p className="text-xs opacity-90">
-                    Tab almashtirishlar: <strong>{antiCheat.tab_switches} marta</strong> &bull; Tashqaridan matn ko&apos;chirish (Paste): <strong>{antiCheat.paste_attempts} marta</strong>
-                  </p>
-                </div>
+              <div>
+                <h4 className="font-bold text-sm uppercase tracking-wide">
+                  {antiCheat.is_flagged_cheating 
+                    ? 'Qoidabuzarlik holati qayd etilgan' 
+                    : antiCheat.tab_switches > 0 
+                    ? 'Ogohlantirishlar mavjud' 
+                    : 'Qoidabuzarlik holati aniqlanmadi'}
+                </h4>
+                <p className="text-xs opacity-90 mt-0.5">
+                  Oynadan chiqish: <strong>{antiCheat.tab_switches} marta</strong> &bull; Matn ko&apos;chirish: <strong>{antiCheat.paste_attempts} marta</strong>
+                </p>
               </div>
-              <span className={`text-xs font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider ${
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
                 antiCheat.is_flagged_cheating 
                   ? 'bg-red-600 text-white' 
                   : antiCheat.tab_switches > 0 
                   ? 'bg-yellow-200 text-yellow-900' 
                   : 'bg-green-600 text-white'
               }`}>
-                {antiCheat.is_flagged_cheating ? 'Belgilangan (Flagged)' : antiCheat.tab_switches > 0 ? 'Ogohlantirilgan' : 'Qayd mavjud emas'}
+                {antiCheat.is_flagged_cheating ? 'Shubhali' : antiCheat.tab_switches > 0 ? 'Ogohlantirilgan' : 'Me\'yorda'}
               </span>
             </div>
 
             {/* Ustoz tekshiruvi kutilmoqda bildirishnomasi */}
             {feedback.is_approved === false && (
-              <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 mb-8 flex items-center space-x-4 shadow-xs">
-                <span className="text-3xl">⏳</span>
-                <div>
-                  <h3 className="font-extrabold text-amber-900 text-base">Natijalar Ustoz Tekshiruvida (Kutilmoqda)</h3>
-                  <p className="text-xs text-amber-900 mt-1">
-                    Reading va Listening natijalaringiz avtomatik hisoblangan. Writing (holat: <span className="font-bold">{feedback.writing_status || 'kutilmoqda'}</span>) va Speaking (holat: <span className="font-bold">{feedback.speaking_status || 'kutilmoqda'}</span>) bo&apos;limlaringiz ustoz tomonidan tekshirilmoqda. Tekshiruv yakunlangach, yakuniy overall ball va mashq hisoboti yangilanadi.
-                  </p>
-                </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm text-amber-900">
+                <h3 className="font-bold text-sm">Natijalar tekshiruvda</h3>
+                <p className="text-xs text-amber-800 mt-0.5">
+                  Writing va Speaking javoblar mentor tomonidan tekshirilgach, yakuniy ballar yangilanadi.
+                </p>
               </div>
             )}
 
@@ -324,32 +318,32 @@ export default function ResultsPage() {
             </div>
 
             {/* Kuchli va Zaif tomonlar */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-green-50 p-6 rounded-2xl border border-green-200 shadow-xs">
-                <h3 className="text-lg font-bold text-green-900 mb-3 flex items-center">
-                  <span className="text-2xl mr-2">💪</span> Kuchli Tomonlar
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-emerald-50/70 p-5 rounded-xl border border-emerald-200">
+                <h3 className="text-base font-bold text-emerald-900 mb-2">
+                  Kuchli tomonlar
                 </h3>
-                <div className="text-green-950 text-sm leading-relaxed whitespace-pre-line font-medium">
+                <div className="text-emerald-950 text-sm leading-relaxed whitespace-pre-line">
                   {feedback.strengths || "Tahlil hali mavjud emas."}
                 </div>
               </div>
-              <div className="bg-orange-50 p-6 rounded-2xl border border-orange-200 shadow-xs">
-                <h3 className="text-lg font-bold text-orange-900 mb-3 flex items-center">
-                  <span className="text-2xl mr-2">⚠️</span> Zaif Nuqtalar va Kamchiliklar
+              <div className="bg-amber-50/70 p-5 rounded-xl border border-amber-200">
+                <h3 className="text-base font-bold text-amber-900 mb-2">
+                  Rivojlantirish kerak bo&apos;lgan sohalar
                 </h3>
-                <div className="text-orange-950 text-sm leading-relaxed whitespace-pre-line font-medium">
+                <div className="text-amber-950 text-sm leading-relaxed whitespace-pre-line">
                   {feedback.weaknesses || "Tahlil hali mavjud emas."}
                 </div>
               </div>
             </div>
 
-            {/* Gemini AI va Mentor Tavsiyalari */}
+            {/* AI va Mentor Tavsiyalari */}
             {feedback.recommendations && (
-              <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200 mb-8 shadow-xs">
-                <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center">
-                  <span className="text-2xl mr-2">💡</span> Tavsiyalar va Yo&apos;nalishlar
+              <div className="bg-blue-50/70 p-5 rounded-xl border border-blue-200 mb-6">
+                <h3 className="text-base font-bold text-blue-900 mb-2">
+                  Tavsiyalar va ko&apos;rsatmalar
                 </h3>
-                <div className="text-blue-950 text-sm leading-relaxed whitespace-pre-line font-medium">
+                <div className="text-blue-950 text-sm leading-relaxed whitespace-pre-line">
                   {feedback.recommendations}
                 </div>
               </div>
@@ -357,26 +351,26 @@ export default function ResultsPage() {
 
             {/* Ustoz Xulosasi va Sharhlari (Admin Notes & Feedback) */}
             {(feedback.admin_notes || feedback.writing_feedback || feedback.speaking_feedback) && (
-              <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 mb-10 shadow-xs">
-                <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center">
-                  <span className="text-2xl mr-2">👨‍🏫</span> Ustoz (Admin) Sharhlari va Fikrlari
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8">
+                <h3 className="text-base font-bold text-slate-900 mb-3">
+                  Ekspert xulosasi va sharhlari
                 </h3>
                 {feedback.admin_notes && (
-                  <div className="mb-4 text-indigo-950 text-sm">
-                    <span className="font-bold block text-xs uppercase tracking-wider text-indigo-700 mb-1">Umumiy xulosa:</span>
-                    <p className="whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-indigo-100 font-medium">{feedback.admin_notes}</p>
+                  <div className="mb-3 text-slate-900 text-sm">
+                    <span className="font-semibold block text-xs uppercase tracking-wider text-slate-600 mb-1">Umumiy xulosa:</span>
+                    <p className="whitespace-pre-line bg-white p-3 rounded-lg border border-slate-200">{feedback.admin_notes}</p>
                   </div>
                 )}
                 {feedback.writing_feedback && (
-                  <div className="mb-4 text-indigo-950 text-sm">
-                    <span className="font-bold block text-xs uppercase tracking-wider text-indigo-700 mb-1">Writing bo&apos;yicha ustoz fikri:</span>
-                    <p className="whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-indigo-100 font-medium">{feedback.writing_feedback}</p>
+                  <div className="mb-3 text-slate-900 text-sm">
+                    <span className="font-semibold block text-xs uppercase tracking-wider text-slate-600 mb-1">Writing bo&apos;yicha sharh:</span>
+                    <p className="whitespace-pre-line bg-white p-3 rounded-lg border border-slate-200">{feedback.writing_feedback}</p>
                   </div>
                 )}
                 {feedback.speaking_feedback && (
-                  <div className="text-indigo-950 text-sm">
-                    <span className="font-bold block text-xs uppercase tracking-wider text-indigo-700 mb-1">Speaking bo&apos;yicha ustoz fikri:</span>
-                    <p className="whitespace-pre-line bg-white/80 p-3.5 rounded-xl border border-indigo-100 font-medium">{feedback.speaking_feedback}</p>
+                  <div className="text-slate-900 text-sm">
+                    <span className="font-semibold block text-xs uppercase tracking-wider text-slate-600 mb-1">Speaking bo&apos;yicha sharh:</span>
+                    <p className="whitespace-pre-line bg-white p-3 rounded-lg border border-slate-200">{feedback.speaking_feedback}</p>
                   </div>
                 )}
               </div>

@@ -152,18 +152,18 @@ export default function ListeningTestPage() {
               contrast === 'high-contrast' ? 'bg-gray-950 border-yellow-500' : 'bg-white border-gray-200'
             }`}>
               {resultScore !== null ? (
-                <div className="p-8 rounded-2xl border border-green-200 text-center my-auto bg-green-50/50">
-                  <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl font-extrabold mx-auto mb-4">
-                    ✓
-                  </div>
-                  <h3 className="text-2xl font-black text-gray-900 mb-2">Listening Muvaffaqiyatli Yakunlandi!</h3>
-                  <p className="text-gray-600 mb-4">Ushbu mashq bo&apos;yicha taxminiy band:</p>
-                  <div className="text-6xl font-black text-blue-700 mb-6">{resultScore.toFixed(1)}</div>
+                <div className="p-8 rounded-xl border border-gray-200 text-center my-auto bg-white shadow-xs max-w-md mx-auto">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 block mb-1">
+                    Bo&apos;lim yakunlandi
+                  </span>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Listening natijasi</h3>
+                  <div className="text-5xl font-black text-blue-700 my-3">{resultScore.toFixed(1)}</div>
+                  <p className="text-xs text-gray-500 mb-6">Band Score</p>
                   <button
                     onClick={handleProceed}
-                    className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition transform hover:scale-105"
+                    className="bg-blue-700 hover:bg-blue-800 text-white font-semibold px-6 py-2.5 rounded-xl transition text-sm cursor-pointer"
                   >
-                    {session.test?.test_mode === 'full' ? 'Keyingi: Writing' : 'Natijalarni ko‘rish'} &rarr;
+                    {session.test?.test_mode === 'full' ? 'Writing bo‘limiga o‘tish' : 'Natijalarni ko‘rish'} &rarr;
                   </button>
                 </div>
               ) : (
