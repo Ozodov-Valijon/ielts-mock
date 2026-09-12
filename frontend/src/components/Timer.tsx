@@ -28,7 +28,7 @@ export default function Timer({ durationMinutes, onTimeUp }: TimerProps) {
   const isWarning = timeLeft < 5 * 60;
 
   return (
-    <div className={`text-2xl font-bold p-4 rounded-lg bg-white shadow text-center ${isWarning ? 'text-red-600 animate-pulse' : 'text-gray-800'}`}>
+    <div className={`text-2xl font-mono font-bold p-4 rounded-lg bg-white border border-gray-200 text-center ${isWarning ? 'text-red-700 font-black' : 'text-gray-800'}`}>
       {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
     </div>
   );

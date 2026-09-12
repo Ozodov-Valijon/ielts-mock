@@ -14,7 +14,7 @@ from app.models.listening import ListeningAnswer
 from app.schemas.question import QuestionCreate, QuestionResponse
 from app.schemas.answer import AdminReview
 from app.services.scoring import calculate_reading_score, calculate_listening_score, calculate_overall_band
-from datetime import datetime
+from datetime import datetime, timezone
 from app.services.exam import update_completion
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -115,7 +115,7 @@ def review_writing(id: int, review: AdminReview, admin: User = Depends(get_curre
     w.admin_score = review.admin_score
     w.admin_feedback = review.admin_feedback
     w.status = "approved"
-    w.reviewed_at = datetime.utcnow()
+    w.reviewed_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     check_and_finalize_test(w.test_id, db)
     return {"message": "Writing muvaffaqiyatli baholandi va tasdiqlandi", "answer": w}
@@ -154,7 +154,7 @@ def review_speaking(id: int, review: AdminReview, admin: User = Depends(get_curr
     s.admin_score = review.admin_score
     s.admin_feedback = review.admin_feedback
     s.status = "approved"
-    s.reviewed_at = datetime.utcnow()
+    s.reviewed_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     check_and_finalize_test(s.test_id, db)
     return {"message": "Speaking muvaffaqiyatli baholandi va tasdiqlandi", "answer": s}

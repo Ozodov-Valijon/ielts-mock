@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Boolean, JSON
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class Test(Base):
@@ -12,7 +12,7 @@ class Test(Base):
     test_mode = Column(String, default="full")
     section_state = Column(JSON, default=dict, nullable=False)
     overall_band_score = Column(Float, nullable=True)
-    started_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     completed_at = Column(DateTime, nullable=True)
 
     # Anti-cheat monitoring ustunlari

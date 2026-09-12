@@ -142,7 +142,6 @@ export default function Dashboard() {
             }}
             className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
             <h3 className="font-bold text-gray-900 text-base">Reading</h3>
             <p className="text-xs text-gray-500 mt-0.5">60 daqiqa &bull; 40 savol</p>
           </div>
@@ -154,7 +153,6 @@ export default function Dashboard() {
             }}
             className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
             <h3 className="font-bold text-gray-900 text-base">Listening</h3>
             <p className="text-xs text-gray-500 mt-0.5">30 daqiqa &bull; 40 savol</p>
           </div>
@@ -166,7 +164,6 @@ export default function Dashboard() {
             }}
             className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <span className="text-xs font-bold text-purple-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
             <h3 className="font-bold text-gray-900 text-base">Writing</h3>
             <p className="text-xs text-gray-500 mt-0.5">60 daqiqa &bull; 2 topshiriq</p>
           </div>
@@ -178,7 +175,6 @@ export default function Dashboard() {
             }}
             className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-400 hover:shadow-xs transition cursor-pointer"
           >
-            <span className="text-xs font-bold text-teal-600 uppercase tracking-wider block mb-1">Bo&apos;lim</span>
             <h3 className="font-bold text-gray-900 text-base">Speaking</h3>
             <p className="text-xs text-gray-500 mt-0.5">11-14 daqiqa &bull; 3 qism</p>
           </div>

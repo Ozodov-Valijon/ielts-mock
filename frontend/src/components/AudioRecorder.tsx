@@ -166,18 +166,18 @@ export default function AudioRecorder({ onRecordingComplete, disabled = false, m
             <button
               onClick={startRecording}
               disabled={disabled || busy}
-              className="flex items-center space-x-2.5 bg-red-600 hover:bg-red-700 text-white px-7 py-3 rounded-full transition shadow-md transform hover:scale-105 font-bold text-sm"
+              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-full transition shadow-xs font-semibold text-sm cursor-pointer"
             >
-              <div className="w-3.5 h-3.5 rounded-full bg-white"></div>
-              <span>Javobni Yozishni Boshlash</span>
+              <div className="w-3 h-3 rounded-full bg-white"></div>
+              <span>Yozishni boshlash</span>
             </button>
           ) : (
             <button
               onClick={stopRecording}
-              className="flex items-center space-x-2.5 bg-gray-900 hover:bg-black text-white px-7 py-3 rounded-full transition shadow-lg transform hover:scale-105 font-bold text-sm"
+              className="flex items-center space-x-2 bg-gray-900 hover:bg-black text-white px-6 py-2.5 rounded-full transition shadow-xs font-semibold text-sm cursor-pointer"
             >
-              <div className="w-3.5 h-3.5 bg-red-500 animate-ping rounded-full"></div>
-              <span>Yozuvni To&apos;xtatish &amp; Saqlash</span>
+              <div className="w-3 h-3 bg-red-500 rounded-xs"></div>
+              <span>Yozishni to&apos;xtatish</span>
             </button>
           )}
         </div>

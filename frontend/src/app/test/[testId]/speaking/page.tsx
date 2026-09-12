@@ -159,8 +159,9 @@ export default function SpeakingTestPage() {
                 <AudioRecorder disabled={expired} onRecordingComplete={(blob) => handleAudioComplete(1, blob)} />
               )}
               {partStatus[1] === 'uploading' && (
-                <div className="text-center py-4 text-blue-600 text-xs font-semibold animate-pulse">
-                  Audio saqlanmoqda va tahlil qilinmoqda...
+                <div className="flex items-center justify-center gap-2 py-4 text-blue-700 text-xs font-medium">
+                  <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Audio saqlanmoqda va tahlil qilinmoqda...</span>
                 </div>
               )}
               {partStatus[1] === 'completed' && (
@@ -227,8 +228,9 @@ export default function SpeakingTestPage() {
                 <AudioRecorder disabled={expired} maxSeconds={120} onRecordingComplete={(blob) => handleAudioComplete(2, blob)} />
               )}
               {partStatus[2] === 'uploading' && (
-                <div className="text-center py-4 text-blue-600 text-xs font-semibold animate-pulse">
-                  Audio saqlanmoqda va tahlil qilinmoqda...
+                <div className="flex items-center justify-center gap-2 py-4 text-blue-700 text-xs font-medium">
+                  <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Audio saqlanmoqda va tahlil qilinmoqda...</span>
                 </div>
               )}
               {partStatus[2] === 'completed' && (
@@ -257,8 +259,9 @@ export default function SpeakingTestPage() {
                 <AudioRecorder disabled={expired} onRecordingComplete={(blob) => handleAudioComplete(3, blob)} />
               )}
               {partStatus[3] === 'uploading' && (
-                <div className="text-center py-4 text-blue-600 text-xs font-semibold animate-pulse">
-                  Audio saqlanmoqda va tahlil qilinmoqda...
+                <div className="flex items-center justify-center gap-2 py-4 text-blue-700 text-xs font-medium">
+                  <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Audio saqlanmoqda va tahlil qilinmoqda...</span>
                 </div>
               )}
               {partStatus[3] === 'completed' && (

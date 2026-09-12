@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -61,7 +61,7 @@ def log_anticheat_event(test_id: int, event: AntiCheatEvent,
         test.is_flagged_cheating = True
         test.status = "terminated"
         test.overall_band_score = None
-        test.completed_at = datetime.utcnow()
+        test.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     return {
         "tab_switches": test.tab_switches, "paste_attempts": test.paste_attempts,

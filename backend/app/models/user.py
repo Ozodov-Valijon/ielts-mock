@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class User(Base):
@@ -11,5 +11,5 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     full_name = Column(String)
     role = Column(String, default="student")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     tests = relationship("Test", back_populates="user")

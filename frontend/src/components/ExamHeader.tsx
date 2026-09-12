@@ -90,7 +90,7 @@ export default function ExamHeader({
           <div className="flex items-center space-x-2">
             <div className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg font-mono font-bold text-base transition-all ${
               isLowTime 
-                ? 'bg-red-600 text-white animate-pulse' 
+                ? 'bg-red-700 text-white' 
                 : contrast === 'high-contrast'
                 ? 'bg-yellow-400 text-black'
                 : 'bg-white/15 text-white'

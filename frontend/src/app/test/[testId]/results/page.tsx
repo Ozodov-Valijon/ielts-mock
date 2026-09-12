@@ -49,7 +49,7 @@ export default function ResultsPage() {
       <ProtectedRoute>
         <div className="min-h-[60vh] flex flex-col items-center justify-center">
           <LoadingSpinner />
-          <p className="mt-4 text-gray-600 font-medium animate-pulse">Mashq natijalaringiz yuklanmoqda...</p>
+          <p className="mt-4 text-gray-600 font-medium">Mashq natijalaringiz yuklanmoqda...</p>
         </div>
       </ProtectedRoute>
     );

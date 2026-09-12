@@ -93,9 +93,9 @@ export default function AudioWaveform({ stream, isRecording, className = '' }: A
         className="w-full max-w-xs h-12 bg-gray-900 rounded-xl shadow-inner border border-gray-800"
       />
       <div className="flex items-center space-x-1.5 mt-2">
-        <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-        <span className="text-[11px] font-semibold tracking-wider text-red-600 uppercase">
-          Jonli Mikrofon Ovoz To&apos;lqini
+        <span className="w-2 h-2 rounded-full bg-red-600"></span>
+        <span className="text-[11px] font-medium text-red-600">
+          Mikrofon faol
         </span>
       </div>
     </div>

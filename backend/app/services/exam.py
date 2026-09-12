@@ -185,7 +185,7 @@ def update_completion(db, test):
     if snapshot["is_approved"]:
         test.status = "completed"
         test.overall_band_score = snapshot["overall_band"]
-        test.completed_at = test.completed_at or datetime.utcnow()
+        test.completed_at = test.completed_at or utcnow().replace(tzinfo=None)
     elif all(section_is_submitted(db, test, s) for s in required_sections(test)):
         test.status = "pending_review"
         test.overall_band_score = None

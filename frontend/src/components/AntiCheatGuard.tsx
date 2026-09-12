@@ -59,8 +59,8 @@ export default function AntiCheatGuard({
   const [cheaterMessage, setCheaterMessage] = useState('');
   const soundIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 🔊 Sirena ovozini yaratish (Web Audio API orqali har qanday brauzerda 100% ishlaydi)
-  const playSiren = useCallback(() => {
+  // Ovozli ogohlantirish signali (Web Audio API)
+  const playAlertTone = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
@@ -68,24 +68,21 @@ export default function AntiCheatGuard({
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc.type = 'sawtooth';
+      osc.type = 'sine';
       const now = ctx.currentTime;
-      osc.frequency.setValueAtTime(900, now);
-      osc.frequency.linearRampToValueAtTime(450, now + 0.25);
-      osc.frequency.linearRampToValueAtTime(900, now + 0.5);
-      osc.frequency.linearRampToValueAtTime(450, now + 0.75);
-      osc.frequency.linearRampToValueAtTime(900, now + 1.0);
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(330, now + 0.25);
 
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 1.2);
+      osc.stop(now + 0.3);
       osc.onended = () => { void ctx.close(); };
     } catch (e) {
-      console.warn("Siren audio xatoligi:", e);
+      console.warn("Alert audio xatoligi:", e);
     }
   }, []);
 
@@ -97,7 +94,7 @@ export default function AntiCheatGuard({
         const utterance = new SpeechSynthesisUtterance("Qoidabuzarlik qayd etildi. Iltimos, testga qayting.");
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
-        utterance.volume = 0.9;
+        utterance.volume = 0.8;
         window.speechSynthesis.speak(utterance);
       }
     } catch (e) {
@@ -113,7 +110,7 @@ export default function AntiCheatGuard({
         const utterance = new SpeechSynthesisUtterance("Qoidabuzarliklar soni chegaradan oshdi. Test yakunlandi.");
         utterance.rate = 1.0;
         utterance.pitch = 1.0;
-        utterance.volume = 0.9;
+        utterance.volume = 0.8;
         window.speechSynthesis.speak(utterance);
       }
     } catch (e) {
@@ -157,21 +154,14 @@ export default function AntiCheatGuard({
     return () => clearInterval(timer);
   }, [lockoutSeconds]);
 
-  // Ovoz va sirenani ishga tushirish funksiyasi
+  // Ogohlantirishni ishga tushirish funksiyasi
   const triggerAlarm = useCallback((message: string) => {
     setCheaterMessage(message);
     setShowCheaterAlarm(true);
-    setLockoutSeconds(5); // 5 soniyalik jarima qulfi
-    playSiren();
+    setLockoutSeconds(5);
+    playAlertTone();
     speakCheater();
-
-    // Agar ekranga qaytmasa, har 3.5 soniyada qayta ogohlantirib turadi
-    if (soundIntervalRef.current) clearInterval(soundIntervalRef.current);
-    soundIntervalRef.current = setInterval(() => {
-      playSiren();
-      speakCheater();
-    }, 3500);
-  }, [playSiren, speakCheater]);
+  }, [playAlertTone, speakCheater]);
 
   // Alarmni to'xtatish
   const stopAlarm = useCallback(() => {
@@ -212,13 +202,13 @@ export default function AntiCheatGuard({
           clearInterval(soundIntervalRef.current);
           soundIntervalRef.current = null;
         }
-        playSiren();
+        playAlertTone();
         speakTermination();
       }
     } catch (err) {
       console.error("Anti-cheat hodisasini yuborishda xatolik:", err);
     }
-  }, [active, testId, triggerAlarm, playSiren, speakTermination]);
+  }, [active, testId, triggerAlarm, playAlertTone, speakTermination]);
 
   // 🛑 Test bekor qilinganda 3 soniyadan keyin natijalar sahifasiga yo'naltirish
   useEffect(() => {
