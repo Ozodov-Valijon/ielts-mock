@@ -101,7 +101,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled = false, m
   };
 
   const handleConfirmAndUpload = async () => {
-    if (!recordedBlob || busy || disabled) return;
+    if (!recordedBlob || busy) return;
     setBusy(true); setError('');
     try { await onRecordingComplete(recordedBlob); }
     catch (err) { setError(err instanceof Error ? err.message : 'Audio yuklanmadi. Qayta urinib ko‘ring.'); }
@@ -123,7 +123,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled = false, m
   return (
     <div className="flex flex-col items-center p-6 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
       {error && <p role="alert" className="text-sm text-red-700 mb-3">{error}</p>}
-      {disabled && <p className="text-sm text-amber-800 mb-3">Bo‘lim vaqti tugadi.</p>}
+      {disabled && <p className="text-sm text-amber-800 mb-3">Yozish vaqti tugadi. Tayyor yozuvni 60 soniya ichida serverga yuboring.</p>}
       {/* Taymer va Ovoz to'lqini */}
       <div className="text-2xl mb-3 font-mono font-black text-gray-800 tracking-wider">
         {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
@@ -152,7 +152,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled = false, m
             </button>
             <button
               onClick={handleConfirmAndUpload}
-              disabled={busy || disabled || !recordedBlob.size}
+              disabled={busy || !recordedBlob.size}
               className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-xs transition shadow-md flex items-center justify-center space-x-1"
             >
               <span>{busy ? 'Yuklanmoqda…' : 'Serverga yuklash'}</span>

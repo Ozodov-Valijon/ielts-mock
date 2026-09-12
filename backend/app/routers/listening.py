@@ -7,6 +7,7 @@ from app.schemas.answer import AnswerBatchSubmit, SectionResult, AnswerResult
 from app.services.auth import get_current_user
 from app.models.user import User
 from app.services.scoring import check_answer, calculate_listening_score
+from app.routers.content import student_audio_url
 from app.services.exam import owned_test, section_questions, ensure_submission, mark_submitted, update_completion, set_section_state, timestamp, utcnow
 
 router = APIRouter(prefix="/tests/{test_id}/listening", tags=["listening"])
@@ -15,7 +16,8 @@ router = APIRouter(prefix="/tests/{test_id}/listening", tags=["listening"])
 @router.get("/questions", response_model=list[QuestionForStudent])
 def get_questions(test_id: int, set_number: int | None = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     test = owned_test(db, test_id, current_user)
-    return section_questions(db, test, "listening", set_number)
+    questions = section_questions(db, test, "listening", set_number)
+    return [QuestionForStudent.model_validate(q).model_copy(update={"audio_url": student_audio_url(q)}) for q in questions]
 
 
 @router.post("/audio/start")

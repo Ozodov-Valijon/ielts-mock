@@ -36,9 +36,10 @@ async def save_upload(file: UploadFile, directory: Path | None = None) -> Path:
     directory = (directory or settings.UPLOAD_DIR).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{uuid4().hex}{suffix}"
+    partial = path.with_suffix(path.suffix + ".partial")
     size = 0
     try:
-        with path.open("xb") as stream:
+        with partial.open("xb") as stream:
             while chunk := await file.read(64 * 1024):
                 if size == 0 and not valid_header(chunk, suffix):
                     raise HTTPException(415, "Fayl tarkibi audio formatiga mos emas.")
@@ -48,8 +49,10 @@ async def save_upload(file: UploadFile, directory: Path | None = None) -> Path:
                 stream.write(chunk)
         if size < 16:
             raise HTTPException(422, "Audio yozuvi bo'sh yoki buzilgan.")
+        partial.rename(path)
     except BaseException:
         path.unlink(missing_ok=True)
+        partial.unlink(missing_ok=True)
         raise
     finally:
         await file.close()

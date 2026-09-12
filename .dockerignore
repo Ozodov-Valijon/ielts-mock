@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/venv
+**/.venv
+**/.next
+**/__pycache__
+**/*.pyc
+**/*.db
+**/*.sqlite*
+**/.env
+**/.env.local
+backend/uploads
+backend/backups
+.runtime

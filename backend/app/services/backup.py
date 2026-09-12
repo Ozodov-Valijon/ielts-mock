@@ -52,7 +52,7 @@ def create_backup(label: str = "scheduled") -> Path:
                 for directory, prefix in ((settings.UPLOAD_DIR, "uploads"), (settings.CONTENT_AUDIO_DIR, "content_audio")):
                     if directory.exists():
                         files.extend((p, f"{prefix}/{p.relative_to(directory).as_posix()}")
-                                     for p in directory.rglob("*") if p.is_file() and not p.is_symlink())
+                                     for p in directory.rglob("*") if p.is_file() and not p.is_symlink() and not p.name.endswith('.partial'))
                 for path, name in files:
                     archive.write(path, name)
                     with path.open("rb") as stream:

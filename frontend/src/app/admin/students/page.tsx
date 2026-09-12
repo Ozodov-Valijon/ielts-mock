@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 interface AdminStudentItem {
   id: number;
-  email: string;
+  email: string | null;
   full_name: string;
   phone?: string;
   test_count: number;

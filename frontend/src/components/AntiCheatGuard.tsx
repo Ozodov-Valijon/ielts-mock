@@ -9,13 +9,15 @@ interface AntiCheatGuardProps {
   children: React.ReactNode;
   allowPaste?: boolean;
   requireFullscreen?: boolean;
+  active?: boolean;
 }
 
 export default function AntiCheatGuard({ 
   testId, 
   children, 
   allowPaste = false,
-  requireFullscreen = true 
+  requireFullscreen = true,
+  active = true
 }: AntiCheatGuardProps) {
   const router = useRouter();
   const [warnings, setWarnings] = useState(0);
@@ -36,6 +38,7 @@ export default function AntiCheatGuard({
   
   // Fullscreen nazorati
   const [isFullscreen, setIsFullscreen] = useState(!requireFullscreen);
+  const [fullscreenError, setFullscreenError] = useState('');
   const [hasEnteredOnce, setHasEnteredOnce] = useState(() => {
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem(`ielts_exam_active_${testId}`) === 'true';
@@ -80,6 +83,7 @@ export default function AntiCheatGuard({
       gain.connect(ctx.destination);
       osc.start(now);
       osc.stop(now + 1.2);
+      osc.onended = () => { void ctx.close(); };
     } catch (e) {
       console.warn("Siren audio xatoligi:", e);
     }
@@ -126,7 +130,7 @@ export default function AntiCheatGuard({
         if (!isMounted) return;
         const totalViolations = (test.tab_switches || 0) + (test.paste_attempts || 0);
         setWarnings(totalViolations);
-        if (test.is_flagged_cheating || totalViolations >= 3 || test.status === 'completed') {
+        if (test.is_flagged_cheating || totalViolations >= 3 || test.status === 'terminated') {
           setIsTerminated(true);
           speakTermination();
         }
@@ -185,6 +189,7 @@ export default function AntiCheatGuard({
 
   // Backend ga hodisani yuborish
   const reportEvent = useCallback(async (eventType: 'tab_switch' | 'paste_attempt' | 'fullscreen_exit', message: string) => {
+    if (!active) return;
     const now = Date.now();
     if ((eventType === 'tab_switch' || eventType === 'fullscreen_exit') && now - lastEventTimeRef.current < 1500) {
       return;
@@ -213,7 +218,7 @@ export default function AntiCheatGuard({
     } catch (err) {
       console.error("Anti-cheat hodisasini yuborishda xatolik:", err);
     }
-  }, [testId, triggerAlarm, playSiren, speakTermination]);
+  }, [active, testId, triggerAlarm, playSiren, speakTermination]);
 
   // 🛑 Test bekor qilinganda 3 soniyadan keyin natijalar sahifasiga yo'naltirish
   useEffect(() => {
@@ -235,6 +240,7 @@ export default function AntiCheatGuard({
 
   // To'liq ekranga o'tish funksiyasi
   const enterFullscreen = async () => {
+    setFullscreenError('');
     try {
       interface ExtendedElement extends HTMLElement {
         webkitRequestFullscreen?: () => Promise<void>;
@@ -250,15 +256,18 @@ export default function AntiCheatGuard({
         await docEl.mozRequestFullScreen();
       } else if (docEl.msRequestFullscreen) {
         await docEl.msRequestFullscreen();
+      } else {
+        throw new Error('Bu brauzer to‘liq ekran rejimini qo‘llamaydi. Kompyuterda Chrome yoki Edge orqali oching.');
       }
+      const fullDocument = document as Document & { webkitFullscreenElement?: Element; mozFullScreenElement?: Element; msFullscreenElement?: Element };
+      if (!(document.fullscreenElement || fullDocument.webkitFullscreenElement || fullDocument.mozFullScreenElement || fullDocument.msFullscreenElement)) throw new Error('To‘liq ekran ochilmadi. Ruxsatni tekshirib qayta urinib ko‘ring.');
       setIsFullscreen(true);
       markEntered();
       stopAlarm();
     } catch (err) {
       console.warn("Fullscreen ochishda brauzer cheklovi:", err);
-      setIsFullscreen(true);
-      markEntered();
-      stopAlarm();
+      setIsFullscreen(false);
+      setFullscreenError(err instanceof Error ? err.message : 'To‘liq ekran ochilmadi.');
     }
   };
 
@@ -453,8 +462,11 @@ export default function AntiCheatGuard({
     };
   }, [allowPaste, reportEvent, triggerAlarm]);
 
+  if (!active) return <>{children}</>;
+
   return (
     <div className="relative select-none">
+      {fullscreenError && <p role="alert" className="fixed top-4 left-4 right-4 z-[30000] bg-red-100 text-red-900 p-4 rounded-xl text-center">{fullscreenError}</p>}
       {/* 🛑 TEST QOIDABUZARLIK TUFAYLI AVTOMATIK YAKUNLANDI PARDASI */}
       {isTerminated && (
         <div className="fixed inset-0 z-[20000] bg-black/98 flex flex-col items-center justify-center p-4 text-center select-none backdrop-blur-3xl animate-in fade-in zoom-in-95">

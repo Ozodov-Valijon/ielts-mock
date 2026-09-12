@@ -21,6 +21,8 @@ export default function SpeakingTestPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [expired, setExpired] = useState(false);
+  const [finishError, setFinishError] = useState('');
+  const [finishing, setFinishing] = useState(false);
 
   const [partStatus, setPartStatus] = useState<Record<number, 'pending' | 'uploading' | 'completed'>>({
     1: 'pending', 2: 'pending', 3: 'pending'
@@ -103,25 +105,32 @@ export default function SpeakingTestPage() {
   };
 
   const allCompleted = Object.values(partStatus).every(s => s === 'completed');
+  const finish = async () => {
+    if (finishing || Object.values(partStatus).includes('uploading')) return;
+    setFinishing(true); setFinishError('');
+    try { await api.finishSpeaking(testId); router.push(`/test/${testId}/results`); }
+    catch (err) { setFinishError(err instanceof Error ? err.message : 'Speaking yakunlanmadi'); }
+    finally { setFinishing(false); }
+  };
   if (session.error || loadError) return <ProtectedRoute><ExamError message={session.error || loadError} /></ProtectedRoute>;
   if (loading || !session.ready) return <ProtectedRoute><LoadingSpinner /></ProtectedRoute>;
 
   return (
     <ProtectedRoute>
-      <AntiCheatGuard testId={testId}>
+      <AntiCheatGuard testId={testId} active={!allCompleted && !expired}>
         <div className="min-h-screen flex flex-col bg-[#f8fafc] text-gray-900">
           {/* Rasmiy Cambridge Imtihon Headeri */}
           <ExamHeader
             testTitle={`Academic Speaking — Set #${setNumber}`}
             durationMinutes={15}
             deadlineAt={session.state?.deadline_at}
-            onTimeUp={() => { setExpired(true); void api.finishSpeaking(testId).catch(err => setLoadError(err instanceof Error ? err.message : 'Bo‘lim yakunlanmadi')); }}
+            onTimeUp={() => setExpired(true)}
             isCompleted={allCompleted}
             storageKey={`ielts_timer_${testId}_speaking`}
           />
 
           <main className="flex-1 max-w-4xl w-full mx-auto py-8 px-4">
-            {expired && <div role="alert" className="p-4 mb-5 bg-amber-50 border border-amber-300 rounded-xl">Speaking vaqti tugadi. Saqlangan javoblaringiz ustozga yuborilgan. <button className="underline font-bold" onClick={() => router.push(`/test/${testId}/results`)}>Natijalar holatini ko‘rish</button></div>}
+            {expired && <div role="alert" className="p-4 mb-5 bg-amber-50 border border-amber-300 rounded-xl">Speaking vaqti tugadi. Tayyor yozuvlarni 60 soniya ichida yuklang, so‘ng tekshiruvga yuboring. <button className="underline font-bold disabled:opacity-50" disabled={finishing || Object.values(partStatus).includes('uploading')} onClick={finish}>{finishing ? 'Yuborilmoqda…' : 'Speakingni yakunlash'}</button>{finishError && <p className="text-red-700 mt-2">{finishError}</p>}</div>}
             <div className="text-center mb-8">
               <span className="bg-blue-100 text-blue-800 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
                 IELTS Speaking

@@ -1,13 +1,12 @@
 import re
+import unicodedata
 
 def normalize_text(text: str) -> str:
     """Matnni tinish belgilari va ortiqcha bo'shliqlardan tozalash"""
     if not text:
         return ""
-    # Tinish belgilarini bo'shliq bilan almashtiramiz
-    cleaned = re.sub(r'[^\w\s]', ' ', text.strip().lower())
-    # Ortiqcha ketma-ket bo'shliqlarni bitta bo'shliqqa aylantiramiz
-    return re.sub(r'\s+', ' ', cleaned).strip()
+    cleaned = unicodedata.normalize("NFKC", text).casefold().replace("’", "'")
+    return re.sub(r'\s+', ' ', cleaned).strip().rstrip(".,!?")
 
 def check_answer(user_answer: str, correct_answer: str) -> bool:
     """
@@ -24,7 +23,7 @@ def check_answer(user_answer: str, correct_answer: str) -> bool:
         return False
 
     # To'g'ri javoblar ro'yxatini ajratamiz (masalan: "Emperor Shennong / Shennong")
-    variants = re.split(r'[/;|]', correct_answer)
+    variants = re.split(r'[;|]|\s+/\s+|(?<!\d)/(?!\d)', correct_answer)
     
     number_words = {
         '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
@@ -48,11 +47,15 @@ def check_answer(user_answer: str, correct_answer: str) -> bool:
         if norm_var == 'not given' and norm_user in ['not given', 'ng', 'notgiven']:
             return True
 
-        # Raqamlar ekvivalenti: "6" == "six", "6 pm" == "6:00 pm"
-        user_no_pm = re.sub(r'\b(pm|am|o clock)\b', '', norm_user).strip()
-        var_no_pm = re.sub(r'\b(pm|am|o clock)\b', '', norm_var).strip()
-        if user_no_pm == var_no_pm:
-            return True
+        # Preserve AM/PM and decimals: 6 AM must never match 6 PM.
+        time_pattern = r'(\d{1,2})(?::(\d{2}))?\s*(am|pm)'
+        user_time = re.fullmatch(time_pattern, norm_user)
+        correct_time = re.fullmatch(time_pattern, norm_var)
+        if user_time and correct_time:
+            user_parts = (int(user_time[1]), user_time[2] or '00', user_time[3])
+            correct_parts = (int(correct_time[1]), correct_time[2] or '00', correct_time[3])
+            if user_parts == correct_parts:
+                return True
 
         # Raqam so'z shakli
         if norm_user in number_words and number_words[norm_user] == norm_var:
@@ -64,7 +67,7 @@ def check_answer(user_answer: str, correct_answer: str) -> bool:
 
 def _score_by_percentage(percentage: float) -> float:
     """
-    Rasmiy Cambridge / British Council IELTS ball shkalasi (foizga moslashtirilgan):
+    Legacy demo-only approximation; this is not an official IELTS conversion:
     90%-100% -> 9.0
     82%-89%  -> 8.5
     75%-81%  -> 8.0
@@ -103,7 +106,7 @@ def calculate_reading_score(correct_count: int, total_questions: int = 40) -> fl
     if total_questions <= 0 or correct_count <= 0:
         return 0.0
     
-    # 40 talik to'liq test bo'lsa rasmiy jadval
+    # Practice conversion; actual IELTS raw-score boundaries vary by test.
     if total_questions == 40:
         if correct_count >= 39: return 9.0
         if correct_count >= 37: return 8.5

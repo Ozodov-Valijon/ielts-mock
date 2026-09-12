@@ -1,8 +1,9 @@
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.writing import WritingAnswer
-from app.schemas.answer import WritingSubmit
+from app.schemas.answer import WritingSubmit, WritingBatchSubmit
 from app.schemas.question import QuestionForStudent
 from app.services.auth import get_current_user
 from app.models.user import User
@@ -10,6 +11,28 @@ from app.services.ai_writing import analyze_writing
 from app.services.exam import owned_test, section_questions, ensure_submission, mark_submitted, update_completion, student_answer
 
 router = APIRouter(prefix="/tests/{test_id}/writing", tags=["writing"])
+
+
+@router.post("/submit-batch")
+async def submit_writing_batch(test_id: int, batch: WritingBatchSubmit,
+                               current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    test = owned_test(db, test_id, current_user, lock=True)
+    ensure_submission(db, test, "writing")
+    questions = {q.order_num: q for q in section_questions(db, test, "writing")}
+    if not {1, 2}.issubset(questions):
+        raise HTTPException(409, "Writing to'plami to'liq emas")
+    if db.query(WritingAnswer).filter(WritingAnswer.test_id == test.id).first():
+        raise HTTPException(409, "Saqlangan Writing javobi mavjud; qolgan topshiriqni alohida yuboring")
+    # Validate the deadline once for the whole submission, before provider latency.
+    analyses = await asyncio.gather(*(analyze_writing(item.user_text, item.task_number,
+        questions[item.task_number].question_text) for item in batch.tasks))
+    for item, analysis in zip(batch.tasks, analyses):
+        db.add(WritingAnswer(test_id=test.id, task_number=item.task_number, user_text=item.user_text,
+            ai_analysis=analysis['ai_analysis'], ai_score=analysis['ai_score'], status='pending'))
+    mark_submitted(test, 'writing')
+    update_completion(db, test)
+    db.commit()
+    return {'status': 'pending', 'message': "Ikkala insho saqlandi. Ustoz tekshiruvini kuting."}
 
 
 @router.post("/submit")

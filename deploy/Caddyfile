@@ -1,0 +1,15 @@
+{$DOMAIN} {
+    encode zstd gzip
+    header X-Content-Type-Options nosniff
+    header Referrer-Policy same-origin
+    header Strict-Transport-Security "max-age=31536000"
+    handle /api/v1/* {
+        request_body {
+            max_size 27MB
+        }
+        reverse_proxy backend:8000
+    }
+    handle {
+        reverse_proxy frontend:3000
+    }
+}

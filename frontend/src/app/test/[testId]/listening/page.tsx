@@ -114,7 +114,7 @@ export default function ListeningTestPage() {
 
   return (
     <ProtectedRoute>
-      <AntiCheatGuard testId={testId}>
+      <AntiCheatGuard testId={testId} active={resultScore === null}>
         <div className={`min-h-screen flex flex-col ${contrast === 'high-contrast' ? 'bg-black text-yellow-300' : 'bg-[#f8fafc] text-gray-900'}`}>
           {/* Rasmiy Cambridge Imtihon Headeri */}
           <ExamHeader

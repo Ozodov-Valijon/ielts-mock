@@ -122,7 +122,7 @@ export default function ReadingTestPage() {
 
   return (
     <ProtectedRoute>
-      <AntiCheatGuard testId={testId}>
+      <AntiCheatGuard testId={testId} active={resultScore === null}>
         <div className={`h-screen flex flex-col overflow-hidden ${contrast === 'high-contrast' ? 'bg-black text-yellow-300' : 'bg-[#f8fafc] text-gray-900'}`}>
           {/* Rasmiy Cambridge Imtihon Headeri */}
           <div className="shrink-0">

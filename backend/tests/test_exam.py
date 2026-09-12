@@ -181,6 +181,20 @@ class ExamRegressionTests(unittest.TestCase):
         self.assertIsNone(result["overall_band"])
         self.assertEqual(result["status"], "in_progress")
 
+    def test_writing_batch_is_atomic_and_pending(self):
+        test_id = self.create('writing')
+        self.start(test_id, 'writing')
+        url = f'/api/v1/tests/{test_id}/writing/submit-batch'
+        duplicate = {'tasks': [{'task_number': 1, 'user_text': 'essay'}] * 2}
+        self.assertEqual(self.client.post(url, json=duplicate).status_code, 422)
+        self.assertEqual(self.db.query(WritingAnswer).count(), 0)
+        response = self.client.post(url, json={'tasks': [{'task_number': n, 'user_text': f'Essay {n}'} for n in (1, 2)]})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(self.db.query(WritingAnswer).count(), 2)
+        self.assertEqual(self.db.get(Test, test_id).status, 'pending_review')
+        self.assertNotIn('ai_score', response.json())
+        self.assertEqual(self.client.post(url, json={'tasks': [{'task_number': n, 'user_text': 'changed'} for n in (1, 2)]}).status_code, 409)
+
     def test_listening_audio_start_cannot_reset(self):
         test_id = self.create("listening")
         self.start(test_id, "listening")
@@ -239,6 +253,55 @@ class ExamRegressionTests(unittest.TestCase):
         self.assertIn("average_band", stats)
         self.assertIsNone(stats["average_band"])
         self.assertEqual(self.client.get("/api/v1/admin/tests").status_code, 200)
+
+    def test_complete_original_set_through_mentor_release(self):
+        from seed_practice import seed_practice_set
+        from app.services.scoring import check_answer
+        seed_practice_set(self.db)
+        self.db.commit()
+        self.catalog_patch.stop()
+        response = self.client.post('/api/v1/tests', json={'set_number': 3, 'test_mode': 'full'})
+        self.assertEqual(response.status_code, 200, response.text)
+        test_id = response.json()['id']
+        for section in ('reading', 'listening'):
+            self.start(test_id, section)
+            questions = self.client.get(f'/api/v1/tests/{test_id}/{section}/questions').json()
+            self.assertEqual(len(questions), 40)
+            self.assertTrue(all('correct_answer' not in q for q in questions))
+            batch = []
+            for question in questions:
+                answer = self.db.get(TestQuestion, question['id']).correct_answer
+                candidate = answer.split(' / ')[0].split('|')[0].split(';')[0]
+                self.assertTrue(check_answer(candidate, answer))
+                batch.append({'question_id': question['id'], 'user_answer': candidate})
+            submitted = self.client.post(f'/api/v1/tests/{test_id}/{section}/submit', json={'answers': batch})
+            self.assertEqual(submitted.status_code, 200, submitted.text)
+            self.assertEqual(submitted.json()['score'], 9)
+        self.start(test_id, 'writing')
+        response = self.client.post(f'/api/v1/tests/{test_id}/writing/submit-batch', json={'tasks': [
+            {'task_number': number, 'user_text': 'Practice essay'} for number in (1, 2)]})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.start(test_id, 'speaking')
+        audio = b'RIFF' + b'\0' * 4 + b'WAVE' + b'\0' * 40
+        for part in (1, 2, 3):
+            response = self.client.post(f'/api/v1/tests/{test_id}/speaking/upload', data={'part_number': part}, files={'file': ('voice.wav', audio, 'audio/wav')})
+            self.assertEqual(response.status_code, 200, response.text)
+        pending = self.client.get(f'/api/v1/tests/{test_id}/feedback').json()
+        self.assertEqual(pending['status'], 'pending_review')
+        self.assertIsNone(pending['overall_band'])
+        self.assertIsNone(pending['writing_score'])
+        self.assertIsNone(pending['speaking_score'])
+        self.actor = self.admin
+        for section, model in [('writing', WritingAnswer), ('speaking', SpeakingAnswer)]:
+            for answer in self.db.query(model).filter_by(test_id=test_id).all():
+                response = self.client.put(f'/api/v1/admin/{section}/{answer.id}/review', json={'admin_score': 7, 'admin_feedback': 'Mentor checked the answer.'})
+                self.assertEqual(response.status_code, 200, response.text)
+        self.actor = self.user
+        result = self.client.get(f'/api/v1/tests/{test_id}/feedback').json()
+        self.assertTrue(result['is_approved'])
+        self.assertEqual(result['status'], 'completed')
+        self.assertEqual(result['overall_band'], 8)
+        self.assertIn('Mentor checked', result['writing_feedback'])
 
 
 if __name__ == "__main__":

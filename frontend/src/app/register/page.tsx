@@ -25,6 +25,11 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!formData.email.trim() && !formData.phone.trim()) {
+      setError('Email yoki telefon raqamingizdan birini kiriting.');
+      return;
+    }
     
     if (formData.password !== formData.confirm_password) {
       setError('Kiritilgan parollar bir-biriga mos kelmadi');
@@ -35,7 +40,7 @@ export default function RegisterPage() {
     try {
       await register({
         full_name: formData.full_name,
-        email: formData.email,
+        email: formData.email.trim() || undefined,
         phone: formData.phone || undefined,
         password: formData.password
       });
@@ -77,6 +82,8 @@ export default function RegisterPage() {
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
               placeholder="Masalan: Valijon Ozodov"
               required
+              minLength={2}
+              maxLength={120}
             />
           </div>
           <div>
@@ -88,18 +95,19 @@ export default function RegisterPage() {
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
               placeholder="talaba@ielts.uz"
-              required
+              required={!formData.phone.trim()}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Telefon Raqam (ixtiyoriy)</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Telefon Raqam (email bo‘lmasa majburiy)</label>
             <input
-              type="text"
+              type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
               placeholder="+998 90 123 45 67"
+              required={!formData.email.trim()}
             />
           </div>
           <div>
@@ -110,9 +118,10 @@ export default function RegisterPage() {
               value={formData.password}
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
-              placeholder="Kamida 6 ta belgi"
+              placeholder="Kamida 8 ta belgi"
               required
-              minLength={6}
+              minLength={8}
+              maxLength={72}
             />
           </div>
           <div>
@@ -125,7 +134,8 @@ export default function RegisterPage() {
               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
               placeholder="Parolni qayta kiriting"
               required
-              minLength={6}
+              minLength={8}
+              maxLength={72}
             />
           </div>
           <button

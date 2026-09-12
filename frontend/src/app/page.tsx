@@ -12,7 +12,7 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto">
           <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-blue-200 mb-6 border border-white/15">
             <span>✨</span>
-            <span>Rasmiy Cambridge IELTS Standarti</span>
+            <span>IELTS formatidagi mustaqil mashq platformasi</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight leading-tight">
@@ -23,7 +23,7 @@ export default function Home() {
           </h1>
 
           <p className="text-base sm:text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed font-normal">
-            Haqiqiy <strong>Computer-Delivered IELTS</strong> formati, to&apos;liq mock testlar va rasmiy natijalar tahlili.
+            <strong>Computer-Delivered IELTS</strong> formatiga tayyorgarlik, mock testlar va mashq natijalari tahlili.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -67,7 +67,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-black mb-2 text-gray-900">Listening</h3>
             <p className="text-gray-600 text-xs leading-relaxed">
-              Original audio materiallar, turli aksentlar va rasmiy baholash mezoni.
+              Mashq audio materiallari va avtomatik javob tekshiruvi. Original to&apos;plamda sintezlangan nutq ishlatiladi.
             </p>
           </div>
 
@@ -99,19 +99,19 @@ export default function Home() {
           <div className="text-4xl mb-4">🛡️</div>
           <h3 className="text-2xl font-black mb-3 text-blue-300">Xavfsiz Imtihon Muhiti</h3>
           <p className="text-slate-300 text-sm leading-relaxed mb-6">
-            Haqiqiy imtihon sharoiti, to&apos;liq ekran rejimi va zamonaviy xavfsizlik choralari orqali xolis va aniq natijalar ta&apos;minlanadi.
+            To&apos;liq ekran rejimi va qoidabuzarlik qaydlari diqqatni mashqqa qaratishga yordam beradi. Bu masofaviy nazorat yoki natija aniqligi kafolati emas.
           </p>
           <div className="inline-flex items-center space-x-2 bg-blue-600/20 text-blue-300 text-xs font-bold px-3.5 py-1.5 rounded-xl border border-blue-500/30">
             <span>🛡️</span>
-            <span>To&apos;liq Ekran Rejimi &bull; Rasmiy Format</span>
+            <span>To&apos;liq Ekran Rejimi &bull; Mashq Formati</span>
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-blue-900 to-indigo-950 text-white p-8 sm:p-10 rounded-3xl relative overflow-hidden shadow-xl">
           <div className="text-4xl mb-4">📜</div>
-          <h3 className="text-2xl font-black mb-3 text-yellow-400">Rasmiy IELTS TRF Sertifikati</h3>
+          <h3 className="text-2xl font-black mb-3 text-yellow-400">Mashq Natijalari Hisoboti</h3>
           <p className="text-blue-100 text-sm leading-relaxed mb-6">
-            Imtihon yakunlangach, rasmiy ko&apos;rinishdagi A4 TRF sertifikati shakllanadi va uni PDF formatida saqlab olishingiz mumkin.
+            Tasdiqlangan mashq natijasini A4 shaklida chop etish yoki PDF sifatida saqlash mumkin. Bu rasmiy IELTS sertifikati emas; bandlar tayyorgarlik uchun taxminiy ko&apos;rsatkichdir.
           </p>
           <div className="inline-flex items-center space-x-2 bg-blue-500/20 text-blue-200 text-xs font-bold px-3.5 py-1.5 rounded-xl border border-blue-400/30">
             <span>🖨️</span>

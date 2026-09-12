@@ -11,7 +11,7 @@ interface LoginData {
 }
 
 interface RegisterData {
-  email: string;
+  email?: string;
   full_name: string;
   password: string;
   phone?: string;

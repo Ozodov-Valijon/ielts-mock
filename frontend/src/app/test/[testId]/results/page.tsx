@@ -49,7 +49,7 @@ export default function ResultsPage() {
       <ProtectedRoute>
         <div className="min-h-[60vh] flex flex-col items-center justify-center">
           <LoadingSpinner />
-          <p className="mt-4 text-gray-600 font-medium animate-pulse">Rasmiy IELTS ballaringiz hisoblanmoqda...</p>
+          <p className="mt-4 text-gray-600 font-medium animate-pulse">Mashq natijalaringiz yuklanmoqda...</p>
         </div>
       </ProtectedRoute>
     );
@@ -97,7 +97,7 @@ export default function ResultsPage() {
             <span className="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
               IELTS Mock Assessment &bull; Test #{testId}
             </span>
-            <h1 className="text-3xl font-black text-gray-900 mt-1">Imtihon Natijalari &amp; Sertifikat</h1>
+            <h1 className="text-3xl font-black text-gray-900 mt-1">Mashq Natijalari va Hisobot</h1>
           </div>
 
           <div className="flex bg-gray-200 p-1.5 rounded-2xl shadow-inner border border-gray-300">
@@ -110,7 +110,7 @@ export default function ResultsPage() {
               }`}
             >
               <span>📜</span>
-              <span>Rasmiy TRF Sertifikat</span>
+              <span>Mashq hisoboti</span>
             </button>
             <button
               onClick={() => setActiveMainTab('analytics')}
@@ -154,7 +154,7 @@ export default function ResultsPage() {
                       ? 'Chiterlik Shubhasi Qayd Etildi' 
                       : antiCheat.tab_switches > 0 
                       ? 'Kichik Qoidabuzarliklar Aniqlangan' 
-                      : 'Anti-Cheat: Imtihon 100% Halol Topshirildi'}
+                      : 'Qoidabuzarlik qayd etilmagan'}
                   </h4>
                   <p className="text-xs opacity-90">
                     Tab almashtirishlar: <strong>{antiCheat.tab_switches} marta</strong> &bull; Tashqaridan matn ko&apos;chirish (Paste): <strong>{antiCheat.paste_attempts} marta</strong>
@@ -168,7 +168,7 @@ export default function ResultsPage() {
                   ? 'bg-yellow-200 text-yellow-900' 
                   : 'bg-green-600 text-white'
               }`}>
-                {antiCheat.is_flagged_cheating ? 'Belgilangan (Flagged)' : antiCheat.tab_switches > 0 ? 'Ogohlantirilgan' : 'Toza (Verified) ✓'}
+                {antiCheat.is_flagged_cheating ? 'Belgilangan (Flagged)' : antiCheat.tab_switches > 0 ? 'Ogohlantirilgan' : 'Qayd mavjud emas'}
               </span>
             </div>
 
@@ -179,7 +179,7 @@ export default function ResultsPage() {
                 <div>
                   <h3 className="font-extrabold text-amber-900 text-base">Natijalar Ustoz Tekshiruvida (Kutilmoqda)</h3>
                   <p className="text-xs text-amber-900 mt-1">
-                    Reading va Listening natijalaringiz avtomatik hisoblangan. Writing (holat: <span className="font-bold">{feedback.writing_status || 'kutilmoqda'}</span>) va Speaking (holat: <span className="font-bold">{feedback.speaking_status || 'kutilmoqda'}</span>) bo&apos;limlaringiz ustoz tomonidan tekshirilmoqda. Tekshiruv yakunlangach, yakuniy overall ball va to&apos;liq sertifikat chiqariladi.
+                    Reading va Listening natijalaringiz avtomatik hisoblangan. Writing (holat: <span className="font-bold">{feedback.writing_status || 'kutilmoqda'}</span>) va Speaking (holat: <span className="font-bold">{feedback.speaking_status || 'kutilmoqda'}</span>) bo&apos;limlaringiz ustoz tomonidan tekshirilmoqda. Tekshiruv yakunlangach, yakuniy overall ball va mashq hisoboti yangilanadi.
                   </p>
                 </div>
               </div>
@@ -330,7 +330,7 @@ export default function ResultsPage() {
                   <span className="text-2xl mr-2">💪</span> Kuchli Tomonlar
                 </h3>
                 <div className="text-green-950 text-sm leading-relaxed whitespace-pre-line font-medium">
-                  {feedback.strengths || "Yaxshi natija ko'rsatildi."}
+                  {feedback.strengths || "Tahlil hali mavjud emas."}
                 </div>
               </div>
               <div className="bg-orange-50 p-6 rounded-2xl border border-orange-200 shadow-xs">
@@ -338,7 +338,7 @@ export default function ResultsPage() {
                   <span className="text-2xl mr-2">⚠️</span> Zaif Nuqtalar va Kamchiliklar
                 </h3>
                 <div className="text-orange-950 text-sm leading-relaxed whitespace-pre-line font-medium">
-                  {feedback.weaknesses || "Katta kamchiliklar kuzatilmadi."}
+                  {feedback.weaknesses || "Tahlil hali mavjud emas."}
                 </div>
               </div>
             </div>

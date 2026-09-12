@@ -5,14 +5,16 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { api } from '@/lib/api';
 import Link from 'next/link';
+import { AdminStats } from '@/lib/types';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<AdminStats>({
     total_students: 0,
     total_tests: 0,
     pending_reviews: 0
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function loadStats() {
@@ -22,6 +24,7 @@ export default function AdminDashboard() {
         setStats(data);
       } catch (err) {
         console.error("Statistikani yuklashda xatolik:", err);
+        setError(err instanceof Error ? err.message : 'Statistika yuklanmadi');
       } finally {
         setLoading(false);
       }
@@ -40,11 +43,13 @@ export default function AdminDashboard() {
           <p className="text-gray-500 text-sm">Platforma statistikasi va o&apos;quv jarayonini boshqarish</p>
         </div>
         
+        {error && <p role="alert" className="text-red-700 mb-4">{error}</p>}
         {loading ? (
           <div className="py-20 flex justify-center"><LoadingSpinner /></div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 text-center"><span className="text-gray-500 font-bold text-xs uppercase">O‘rtacha tasdiqlangan band</span><p className="text-5xl font-black text-purple-600 mt-2">{stats.average_band?.toFixed(1) ?? '—'}</p></div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center justify-center">
                 <span className="text-gray-500 font-bold text-xs uppercase tracking-wider mb-2">Jami Talabalar</span>
                 <span className="text-5xl font-black text-blue-600">{stats.total_students}</span>
@@ -60,6 +65,7 @@ export default function AdminDashboard() {
             </div>
 
             <h2 className="text-xl font-bold text-gray-900 mb-4">Tezkor Amallar</h2>
+            <Link href="/admin/tests" className="inline-block text-blue-700 font-bold underline mb-5">Barcha talabalar testlarini ko‘rish →</Link>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Link href="/admin/students" className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition border border-gray-200 text-center flex flex-col items-center justify-center h-40 group">
                 <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">👥</span>

@@ -38,7 +38,7 @@ export const api = {
   // Auth
   login: (data: { identifier: string; password: string }) => 
     fetchApi<{access_token: string}>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
-  register: (data: { email: string; full_name: string; password: string; phone?: string }) => 
+  register: (data: { email?: string; full_name: string; password: string; phone?: string }) =>
     fetchApi('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => fetchApi<User>('/auth/me'),
 
@@ -69,6 +69,10 @@ export const api = {
     fetchApi<SectionResult>(`/tests/${testId}/listening/submit`, { method: 'POST', body: JSON.stringify({ answers }) }),
 
   // Writing
+  submitWritingBatch: (testId: number | string, task1: string, task2: string) =>
+    fetchApi(`/tests/${testId}/writing/submit-batch`, {method: 'POST', body: JSON.stringify({tasks: [
+      {task_number: 1, user_text: task1}, {task_number: 2, user_text: task2}
+    ]})}),
   getWritingTopics: (testId: number | string, set_number?: number) => 
     fetchApi<Question[]>(`/tests/${testId}/writing/topics${set_number ? `?set_number=${set_number}` : ''}`),
   submitWriting: (testId: number | string, task_number: number, user_text: string) => 
@@ -104,7 +108,7 @@ export const api = {
 
   // Admin
   adminGetStudents: () => 
-    fetchApi<(Omit<User, 'role' | 'email'> & {email: string; test_count: number})[]>('/admin/students'),
+    fetchApi<(Omit<User, 'role'> & {test_count: number})[]>('/admin/students'),
   adminGetPendingReviews: () => 
     fetchApi<{writing_pending: (WritingAnswer & ReviewIdentity)[]; speaking_pending: (SpeakingAnswer & ReviewIdentity)[]}>('/admin/pending-reviews'),
   adminGetWritingDetail: (id: number | string) =>

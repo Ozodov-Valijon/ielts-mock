@@ -38,6 +38,18 @@ class Settings(BaseSettings):
     BACKUP_DIR: Path = BACKEND_DIR / "backups"
     BACKUP_INTERVAL_HOURS: int = Field(default=24, ge=1)
 
+    @field_validator("DATABASE_URL", mode="after")
+    @classmethod
+    def absolute_sqlite(cls, value: str) -> str:
+        from sqlalchemy.engine import make_url
+        url = make_url(value)
+        if url.get_backend_name() == "sqlite" and url.database and url.database != ":memory:":
+            path = Path(url.database)
+            if not path.is_absolute():
+                url = url.set(database=(BACKEND_DIR / path).resolve().as_posix())
+                return url.render_as_string(hide_password=False)
+        return value
+
     @field_validator("UPLOAD_DIR", "CONTENT_AUDIO_DIR", "BACKUP_DIR", mode="after")
     @classmethod
     def absolute_directory(cls, value: Path) -> Path:

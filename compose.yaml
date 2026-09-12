@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ielts
+      POSTGRES_DB: ielts
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ielts -d ielts"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql://ielts:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/ielts
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY}
+      FRONTEND_ORIGINS: '["https://${DOMAIN:?Set DOMAIN}"]'
+      UPLOAD_DIR: /data/uploads
+      BACKUP_DIR: /data/backups
+      AI_ENABLED: ${AI_ENABLED:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      AI_DAILY_REQUEST_LIMIT: ${AI_DAILY_REQUEST_LIMIT:-100}
+    volumes:
+      - uploads:/data/uploads
+      - backups:/data/backups
+      - content_audio:/app/content_audio
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    restart: unless-stopped
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - frontend
+    restart: unless-stopped
+volumes:
+  database:
+  uploads:
+  backups:
+  content_audio:
+  caddy_data:

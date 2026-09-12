@@ -31,6 +31,8 @@ backend/uploads/
 uploads/
 backend/backups/
 *.partial
+.runtime/
+frontend/.next-check/
 
 # Node & Next.js
 node_modules/

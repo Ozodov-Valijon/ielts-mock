@@ -117,6 +117,11 @@ export default function WritingTestPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      if (submittedTasks.current.size === 0) {
+        await api.submitWritingBatch(testId, task1Text, task2Text);
+        submittedTasks.current.add(1);
+        submittedTasks.current.add(2);
+      }
       for (const task of [1, 2]) {
         if (submittedTasks.current.has(task)) continue;
         await api.submitWriting(testId, task, task === 1 ? task1Text : task2Text);
@@ -146,7 +151,7 @@ export default function WritingTestPage() {
 
   return (
     <ProtectedRoute>
-      <AntiCheatGuard testId={testId} allowPaste={false}>
+      <AntiCheatGuard testId={testId} allowPaste={false} active={!isSubmitted}>
         <div className={`min-h-screen flex flex-col ${contrast === 'high-contrast' ? 'bg-black text-yellow-300' : 'bg-[#f8fafc] text-gray-900'}`}>
           {/* Rasmiy Cambridge Imtihon Headeri */}
           <ExamHeader

@@ -28,6 +28,15 @@ class WritingSubmit(BaseModel):
     task_number: Literal[1, 2]
     user_text: str = Field(max_length=50000)
 
+class WritingBatchSubmit(BaseModel):
+    tasks: List[WritingSubmit] = Field(min_length=2, max_length=2)
+
+    @model_validator(mode="after")
+    def both_tasks(self):
+        if {task.task_number for task in self.tasks} != {1, 2}:
+            raise ValueError("Task 1 va Task 2 birga yuborilishi kerak")
+        return self
+
 class SpeakingSubmit(BaseModel):
     part_number: Literal[1, 2, 3]
 

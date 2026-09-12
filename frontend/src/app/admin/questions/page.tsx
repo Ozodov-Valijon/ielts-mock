@@ -14,6 +14,7 @@ export default function AdminQuestionsPage() {
   const [qText, setQText] = useState('');
   const [passageText, setPassageText] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [orderNum, setOrderNum] = useState(1);
   const [options, setOptions] = useState<string[]>(['', '']);
@@ -102,7 +103,7 @@ export default function AdminQuestionsPage() {
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Bo&apos;lim (Section)</label>
               <select 
                 value={section} 
-                onChange={(e) => setSection(e.target.value)} 
+                onChange={(e) => { const value = e.target.value; setSection(value); setQType(value === 'writing' ? 'writing_task_1' : value === 'speaking' ? 'speaking_part_1' : 'multiple_choice'); setOrderNum(1); }}
                 className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
               >
                 <option value="reading">Reading (O&apos;qish)</option>
@@ -113,31 +114,27 @@ export default function AdminQuestionsPage() {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">To&apos;plam (Set #)</label>
-              <select 
+              <input type="number" min={1} required
                 value={setNumber} 
                 onChange={(e) => setSetNumber(Number(e.target.value))} 
                 className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
-              >
-                <option value={1}>Cambridge Test Set 1</option>
-                <option value={2}>Cambridge Test Set 2</option>
-                <option value={3}>Cambridge Test Set 3</option>
-              </select>
+              />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Savol turi (Type)</label>
               <select 
                 value={qType} 
-                onChange={(e) => setQType(e.target.value)} 
+                onChange={(e) => { setQType(e.target.value); if (section === 'writing' || section === 'speaking') setOrderNum(Number(e.target.value.slice(-1))); }}
                 className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm font-medium"
               >
-                <option value="multiple_choice">Multiple Choice (Variantli)</option>
+                {(section === 'reading' || section === 'listening') && <><option value="multiple_choice">Multiple Choice (Variantli)</option>
                 <option value="true_false">True / False / Not Given</option>
-                <option value="fill_blank">Fill in the Blank (Bo&apos;sh joy to&apos;ldirish)</option>
-                <option value="writing_task_1">Writing Task 1</option>
-                <option value="writing_task_2">Writing Task 2</option>
-                <option value="speaking_part_1">Speaking Part 1</option>
+                <option value="fill_blank">Fill in the Blank (Bo&apos;sh joy to&apos;ldirish)</option></>}
+                {section === 'writing' && <><option value="writing_task_1">Writing Task 1</option>
+                <option value="writing_task_2">Writing Task 2</option></>}
+                {section === 'speaking' && <><option value="speaking_part_1">Speaking Part 1</option>
                 <option value="speaking_part_2">Speaking Part 2</option>
-                <option value="speaking_part_3">Speaking Part 3</option>
+                <option value="speaking_part_3">Speaking Part 3</option></>}
               </select>
             </div>
           </div>
@@ -167,13 +164,23 @@ export default function AdminQuestionsPage() {
 
           {section === 'listening' && (
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Audio URL (MP3 havola)</label>
+              <label htmlFor="listening-audio" className="block text-xs font-bold text-gray-700 uppercase mb-1">Listening audio fayli (25 MB gacha)</label>
+              <input id="listening-audio" type="file" accept="audio/*,.webm,.m4a" disabled={uploadingAudio || submitting} onChange={async event => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                setUploadingAudio(true); setError('');
+                try { const uploaded = await api.adminUploadAudio(file); setAudioUrl(uploaded.audio_url); }
+                catch (err) { setError(err instanceof Error ? err.message : 'Audio yuklanmadi'); }
+                finally { setUploadingAudio(false); }
+              }} className="block w-full mb-3" />
+              {uploadingAudio && <p role="status">Audio yuklanmoqda…</p>}
               <input 
-                type="url" 
+                type="text"
                 value={audioUrl}
                 onChange={(e) => setAudioUrl(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" 
-                placeholder="https://misol.uz/audio.mp3" 
+                placeholder="/api/v1/content/audio/oldin-yuklangan-fayl.wav"
+                required
               />
             </div>
           )}
@@ -239,7 +246,7 @@ export default function AdminQuestionsPage() {
 
           <button 
             type="submit" 
-            disabled={submitting}
+            disabled={submitting || uploadingAudio}
             className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl transition shadow disabled:opacity-50"
           >
             {submitting ? "Qo'shilmoqda..." : 'Savolni Saqlash'}
